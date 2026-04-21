@@ -401,7 +401,10 @@ function renderGantt(){
   // overlay booking bars
   const roomBookings = {};
   ROOMS.forEach(r=>{ roomBookings[r.id]=[]; });
-  bookings.forEach(b=>{ if(b.roomtype && roomBookings[b.roomtype]) roomBookings[b.roomtype].push(b); });
+  bookings.forEach(b=>{
+    const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+    rooms.forEach(r=>{ if(roomBookings[r]) roomBookings[r].push(b); });
+  });
 
   ROOMS.forEach(room=>{
     const rbs = roomBookings[room.id];
@@ -474,7 +477,10 @@ function renderGantt(){
 }
 
 window.onCellClick = function(date, room){
-  const existing = bookings.find(b=> b.roomtype===room && bookingOverlapsDay(b,date));
+  const existing = bookings.find(b=>{
+    const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+    return rooms.includes(room) && bookingOverlapsDay(b,date);
+  });
   if(existing){ openModal(existing); }
   else{ openModal(null, date, room); }
 };
