@@ -458,9 +458,11 @@ function renderGantt(){
         const span = Math.min(cm.endDay, days) - d + 1;
         const color = roomColor[room.id];
         const b = cm.b;
-        html += `<td class="gantt-cell ${cls}" colspan="${span}" style="padding:2px 3px;" onclick="openModal(window.__bmap&&window.__bmap['${b.firestoreId}']?window.__bmap['${b.firestoreId}']:null,'${ds}','${room.id}')">
-          <div style="background:${color};color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:28px;line-height:28px;cursor:pointer;">
-            ${b.name||''}${b.pax>1?' ×'+b.pax:''}
+        const fid = b.firestoreId;
+        html += `<td class="gantt-cell ${cls}" colspan="${span}" style="padding:2px 3px;">
+          <div class="gantt-bar" data-fid="${fid}" data-room="${room.id}" data-start="${d}" data-span="${span}" style="background:${color};color:#fff;border-radius:4px;padding:2px 6px 2px 8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;height:28px;line-height:28px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;position:relative;">
+            <span class="bar-label">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span>
+            <span class="bar-resize" data-fid="${fid}" style="width:10px;height:100%;cursor:ew-resize;opacity:0.6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⋮</span>
           </div>
         </td>`;
         d += span;
@@ -477,6 +479,76 @@ function renderGantt(){
   document.getElementById('ganttTable').innerHTML = html;
   window.__bmap = {};
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
+
+  // 綁定 bar 點擊和拖拉
+  document.querySelectorAll('.gantt-bar').forEach(bar=>{
+    const fid = bar.dataset.fid;
+    const b = window.__bmap[fid];
+    if(!b) return;
+
+    // 點擊 label 開啟編輯
+    bar.querySelector('.bar-label')?.addEventListener('click', e=>{
+      e.stopPropagation();
+      openModal(b);
+    });
+
+    // 拖拉右側 handle 調整天數
+    const handle = bar.querySelector('.bar-resize');
+    if(!handle) return;
+    handle.addEventListener('mousedown', e=>{
+      e.stopPropagation();
+      e.preventDefault();
+      const startX = e.clientX;
+      const origNights = parseInt(b.nights)||1;
+      const cellW = bar.closest('td')?.offsetWidth / parseInt(bar.closest('td')?.getAttribute('colspan')||1) || 32;
+      let currentNights = origNights;
+
+      const onMove = ev=>{
+        const diff = Math.round((ev.clientX - startX) / cellW);
+        currentNights = Math.max(1, origNights + diff);
+        bar.style.opacity = '0.75';
+      };
+      const onUp = async ev=>{
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        bar.style.opacity = '1';
+        if(currentNights !== origNights){
+          const newCheckout = addDays(b.checkin, currentNights);
+          await updateDoc(doc(db,'bookings',fid),{nights:currentNights, checkout:newCheckout});
+          showToast(`已更新為 ${currentNights} 晚`);
+        }
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // 手機觸控拖拉
+    handle.addEventListener('touchstart', e=>{
+      e.stopPropagation();
+      const startX = e.touches[0].clientX;
+      const origNights = parseInt(b.nights)||1;
+      const cellW = bar.closest('td')?.offsetWidth / parseInt(bar.closest('td')?.getAttribute('colspan')||1) || 32;
+      let currentNights = origNights;
+
+      const onMove = ev=>{
+        const diff = Math.round((ev.touches[0].clientX - startX) / cellW);
+        currentNights = Math.max(1, origNights + diff);
+        bar.style.opacity = '0.75';
+      };
+      const onUp = async ()=>{
+        handle.removeEventListener('touchmove', onMove);
+        handle.removeEventListener('touchend', onUp);
+        bar.style.opacity = '1';
+        if(currentNights !== origNights){
+          const newCheckout = addDays(b.checkin, currentNights);
+          await updateDoc(doc(db,'bookings',fid),{nights:currentNights, checkout:newCheckout});
+          showToast(`已更新為 ${currentNights} 晚`);
+        }
+      };
+      handle.addEventListener('touchmove', onMove, {passive:true});
+      handle.addEventListener('touchend', onUp);
+    },{passive:true});
+  });
 
 window.onCellClick = function(date, room){
   const existing = bookings.find(b=>{
