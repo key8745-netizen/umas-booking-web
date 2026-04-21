@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>統計分析 — 兀瑪斯農莊</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:13px;}
+#loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
+.spinner{width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#378ADD;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#login-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
+#login-screen.show{display:flex;}
+.login-card{background:#fff;border-radius:16px;padding:40px;width:340px;text-align:center;border:1px solid #e0e0e0;}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;font-weight:500;cursor:pointer;}
+.login-btn:hover{background:#f5f5f5;}
+.login-btn img{width:18px;height:18px;}
+#denied-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
+#denied-screen.show{display:flex;}
+.app{display:none;flex-direction:column;min-height:100vh;}
+.app.ready{display:flex;}
+header{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
+header h1{font-size:14px;font-weight:600;flex:1;}
+.nav-tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#666;border:1px solid transparent;text-decoration:none;}
+.nav-tab:hover{background:#f0f2f5;}
+.nav-tab.active{background:#378ADD;color:#fff;}
+.user-avatar{width:26px;height:26px;border-radius:50%;}
+.btn-sm{padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:11px;cursor:pointer;color:#666;}
+.btn-sm:hover{background:#f5f5f5;}
+.content{padding:20px;flex:1;}
+
+/* 篩選列 */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-bar select{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;background:#fff;}
+.filter-bar label{font-size:12px;color:#666;}
+.btn-refresh{padding:6px 14px;border:1px solid #378ADD;border-radius:6px;background:#378ADD;color:#fff;font-size:12px;cursor:pointer;font-weight:500;}
+.btn-refresh:hover{background:#185FA5;}
+
+/* KPI 卡片 */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{background:#fff;border-radius:10px;padding:16px;border:1px solid #e0e0e0;}
+.kpi-label{font-size:11px;color:#888;margin-bottom:6px;}
+.kpi-value{font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:2px;}
+.kpi-sub{font-size:11px;color:#aaa;}
+.kpi-card.blue .kpi-value{color:#1a73e8;}
+.kpi-card.green .kpi-value{color:#1e7e34;}
+.kpi-card.red .kpi-value{color:#c62828;}
+.kpi-card.orange .kpi-value{color:#e65100;}
+.kpi-card.purple .kpi-value{color:#6a0dad;}
+
+/* 圖表區 */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-card{background:#fff;border-radius:10px;padding:16px;border:1px solid #e0e0e0;}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-size:13px;font-weight:600;color:#333;margin-bottom:12px;}
+.chart-wrap{position:relative;height:220px;}
+
+/* 未收款表格 */
+.table-card{background:#fff;border-radius:10px;padding:16px;border:1px solid #e0e0e0;margin-bottom:20px;}
+.table-title{font-size:13px;font-weight:600;color:#333;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.unpaid-badge{background:#fce8e6;color:#c62828;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:600;color:#888;text-align:left;padding:6px 8px;border-bottom:1px solid #e0e0e0;background:#f8f9fa;}
+td{font-size:12px;padding:7px 8px;border-bottom:1px solid #f0f0f0;color:#333;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+.due-amount{color:#c62828;font-weight:600;}
+
+/* AI 分析區 */
+.ai-card{background:#fff;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:20px;overflow:hidden;}
+.ai-header{background:linear-gradient(135deg,#667eea,#764ba2);padding:14px 18px;display:flex;align-items:center;gap:10px;}
+.ai-header h2{font-size:14px;font-weight:600;color:#fff;flex:1;}
+.ai-body{padding:0;}
+.ai-chat{max-height:420px;overflow-y:auto;padding:16px;}
+.ai-chat::-webkit-scrollbar{width:4px;}
+.ai-chat::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.msg{display:flex;gap:10px;margin-bottom:14px;align-items:flex-start;}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.msg-avatar.ai{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:12px;font-weight:700;}
+.msg-avatar.user{background:#378ADD;color:#fff;font-size:11px;}
+.msg-bubble{max-width:80%;padding:10px 13px;border-radius:12px;font-size:12px;line-height:1.6;}
+.msg-bubble.ai{background:#f8f9fa;color:#333;border-radius:4px 12px 12px 12px;}
+.msg-bubble.user{background:#378ADD;color:#fff;border-radius:12px 4px 12px 12px;}
+.msg-bubble.loading{color:#aaa;font-style:italic;}
+.ai-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #f0f0f0;background:#fafafa;}
+.ai-input{flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:20px;font-size:12px;outline:none;}
+.ai-input:focus{border-color:#378ADD;}
+.ai-send{padding:8px 16px;background:#378ADD;color:#fff;border:none;border-radius:20px;font-size:12px;cursor:pointer;font-weight:500;}
+.ai-send:hover{background:#185FA5;}
+.ai-send:disabled{background:#ccc;cursor:not-allowed;}
+.quick-btns{display:flex;gap:6px;padding:8px 16px;flex-wrap:wrap;border-top:1px solid #f0f0f0;}
+.quick-btn{padding:4px 12px;border:1px solid #ddd;border-radius:999px;font-size:11px;cursor:pointer;background:#fff;color:#555;white-space:nowrap;}
+.quick-btn:hover{background:#e8f0fe;border-color:#378ADD;color:#1a73e8;}
+</style>
+</head>
+<body>
+
+<div id="loading-screen"><div class="spinner"></div><p style="font-size:12px;color:#888;">載入中...</p></div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div style="font-size:28px;margin-bottom:8px;">🏡</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px;">兀瑪斯農莊管理</div>
+    <div style="font-size:12px;color:#888;margin-bottom:20px;">請使用授權帳號登入</div>
+    <button class="login-btn" id="loginBtn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">使用 Google 帳號登入
+    </button>
+  </div>
+</div>
+
+<div id="denied-screen">
+  <div class="login-card">
+    <div style="font-size:32px;margin-bottom:10px;">🚫</div>
+    <div style="font-size:14px;font-weight:600;color:#c62828;margin-bottom:8px;">無法存取</div>
+    <div style="font-size:12px;color:#888;margin-bottom:14px;">此帳號沒有使用權限</div>
+    <button class="btn-sm" id="logoutDeniedBtn">登出</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <h1>🏡 兀瑪斯農莊管理</h1>
+    <a href="index.html" class="nav-tab">看板</a>
+    <a href="calendar.html" class="nav-tab">📅 日曆</a>
+    <span class="nav-tab active">📊 統計</span>
+    <img class="user-avatar" id="userAvatar" src="">
+    <button class="btn-sm" id="logoutBtn">登出</button>
+  </header>
+
+  <div class="content">
+    <div class="filter-bar">
+      <label>時間範圍：</label>
+      <select id="filterYear" onchange="refresh()"></select>
+      <select id="filterMonth" onchange="refresh()">
+        <option value="0">全年</option>
+        <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+      <button class="btn-refresh" onclick="refresh()">🔄 更新</button>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- 圖表 -->
+    <div class="charts-grid">
+      <div class="chart-card full">
+        <div class="chart-title">每月營收趨勢</div>
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">各房型使用率</div>
+        <div class="chart-wrap"><canvas id="roomChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">訂房來源分佈</div>
+        <div class="chart-wrap"><canvas id="sourceChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">平日 vs 假日 營收比較</div>
+        <div class="chart-wrap"><canvas id="dayTypeChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">訂單狀態分佈</div>
+        <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 未收款 -->
+    <div class="table-card">
+      <div class="table-title">
+        未收款追蹤
+        <span class="unpaid-badge" id="unpaidBadge">0 筆</span>
+      </div>
+      <table>
+        <thead><tr><th>姓名</th><th>入住日期</th><th>房型</th><th>報價</th><th>已付</th><th>應收尾款</th><th>狀態</th></tr></thead>
+        <tbody id="unpaidTable"></tbody>
+      </table>
+    </div>
+
+    <!-- AI 分析 -->
+    <div class="ai-card">
+      <div class="ai-header">
+        <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
+        <h2>AI 經營顧問</h2>
+        <span style="font-size:11px;color:rgba(255,255,255,0.7);">由 Claude 提供分析</span>
+      </div>
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="askAI('幫我分析本期的整體經營狀況')">整體分析</button>
+        <button class="quick-btn" onclick="askAI('哪些房型的使用率最高？有什麼建議？')">房型建議</button>
+        <button class="quick-btn" onclick="askAI('平日和假日的收益差異大嗎？如何提升平日訂房率？')">平日策略</button>
+        <button class="quick-btn" onclick="askAI('根據目前數據，未來三個月有什麼行銷建議？')">行銷建議</button>
+        <button class="quick-btn" onclick="askAI('目前有哪些未收款需要追蹤？')">未收款分析</button>
+        <button class="quick-btn" onclick="askAI('如何提升整體營收？給我具體可執行的策略')">提升營收</button>
+      </div>
+      <div class="ai-chat" id="aiChat">
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-bubble ai">你好！我是你的 AI 經營顧問。我已經讀取了你的訂房數據，可以幫你分析營收趨勢、房型使用率、提供經營策略建議。點選上方快捷按鈕，或直接輸入問題！</div>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="aiInput" placeholder="問我任何關於經營的問題..." onkeydown="if(event.key==='Enter')sendAI()">
+        <button class="ai-send" id="aiSendBtn" onclick="sendAI()">送出</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",
+  authDomain: "umas-booking-manager.firebaseapp.com",
+  projectId: "umas-booking-manager",
+  storageBucket: "umas-booking-manager.firebasestorage.app",
+  messagingSenderId: "7381346891",
+  appId: "1:7381346891:web:2affb529e6b8614f6b7bce"
+};
+const ALLOWED = ["key8745@gmail.com","princessangel45@gmail.com"];
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+
+let bookings = [], charts = {}, unsubscribe = null;
+
+// 初始化年份選單
+const yearSel = document.getElementById('filterYear');
+const now = new Date();
+for(let y = now.getFullYear(); y >= now.getFullYear()-3; y--){
+  const o = document.createElement('option');
+  o.value = y; o.textContent = y+'年';
+  if(y === now.getFullYear()) o.selected = true;
+  yearSel.appendChild(o);
+}
+document.getElementById('filterMonth').value = now.getMonth()+1;
+
+function getFiltered(){
+  const yr = parseInt(document.getElementById('filterYear').value);
+  const mo = parseInt(document.getElementById('filterMonth').value);
+  return bookings.filter(b=>{
+    if(!b.checkin) return false;
+    const d = new Date(b.checkin+'T00:00');
+    if(d.getFullYear() !== yr) return false;
+    if(mo > 0 && d.getMonth()+1 !== mo) return false;
+    return true;
+  });
+}
+
+function getRevenue(b){ return parseFloat(b.quote)||0; }
+function getRooms(b){ return Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);}
+
+window.refresh = function(){
+  const data = getFiltered();
+  renderKPI(data);
+  renderRevenueChart(data);
+  renderRoomChart(data);
+  renderSourceChart(data);
+  renderDayTypeChart(data);
+  renderStatusChart(data);
+  renderUnpaidTable(data);
+};
+
+// KPI
+function renderKPI(data){
+  const totalRev = data.reduce((s,b)=>s+getRevenue(b),0);
+  const totalDue = data.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
+  const cancelled = data.filter(b=>b.status==='no-show').length;
+  const cancelRate = data.length>0 ? Math.round(cancelled/data.length*100) : 0;
+  const totalPax = data.reduce((s,b)=>s+(parseInt(b.pax)||0),0);
+  const unpaidCount = data.filter(b=>(parseFloat(b.due)||0)>0 && b.status!=='closed').length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">總營收</div><div class="kpi-value">NT$${Math.round(totalRev).toLocaleString()}</div><div class="kpi-sub">${data.length} 筆訂單</div></div>
+    <div class="kpi-card red"><div class="kpi-label">未收尾款</div><div class="kpi-value">NT$${Math.round(totalDue).toLocaleString()}</div><div class="kpi-sub">${unpaidCount} 筆待收</div></div>
+    <div class="kpi-card green"><div class="kpi-label">入住人次</div><div class="kpi-value">${totalPax}</div><div class="kpi-sub">人次</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">取消/未到率</div><div class="kpi-value">${cancelRate}%</div><div class="kpi-sub">${cancelled} 筆取消</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">平均訂單金額</div><div class="kpi-value">NT$${data.length>0?Math.round(totalRev/data.length).toLocaleString():0}</div><div class="kpi-sub">每筆平均</div></div>
+  `;
+}
+
+// 每月營收折線圖
+function renderRevenueChart(data){
+  const mo = parseInt(document.getElementById('filterMonth').value);
+  const yr = parseInt(document.getElementById('filterYear').value);
+  let labels=[], revenues=[], counts=[];
+  if(mo>0){
+    // 顯示當月每週
+    const days = new Date(yr,mo,0).getDate();
+    const weeks = Math.ceil(days/7);
+    labels = Array.from({length:weeks},(_,i)=>`第${i+1}週`);
+    revenues = Array(weeks).fill(0);
+    counts = Array(weeks).fill(0);
+    data.forEach(b=>{
+      const d=new Date(b.checkin+'T00:00');
+      const w=Math.min(Math.floor((d.getDate()-1)/7),weeks-1);
+      revenues[w]+=getRevenue(b); counts[w]++;
+    });
+  } else {
+    labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    revenues=Array(12).fill(0); counts=Array(12).fill(0);
+    data.forEach(b=>{
+      const m=new Date(b.checkin+'T00:00').getMonth();
+      revenues[m]+=getRevenue(b); counts[m]++;
+    });
+  }
+  if(charts.revenue) charts.revenue.destroy();
+  charts.revenue = new Chart(document.getElementById('revenueChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'營收 (NT$)',data:revenues,backgroundColor:'#378ADD44',borderColor:'#378ADD',borderWidth:2,yAxisID:'y'},
+      {label:'訂單數',data:counts,type:'line',borderColor:'#f4845f',backgroundColor:'#f4845f',borderWidth:2,pointRadius:4,yAxisID:'y1'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'NT$'+v.toLocaleString(),font:{size:10}}},y1:{position:'right',beginAtZero:true,ticks:{font:{size:10}},grid:{drawOnChartArea:false}}}}
+  });
+}
+
+// 房型使用率長條圖
+function renderRoomChart(data){
+  const roomCount = {};
+  data.forEach(b=>{ getRooms(b).forEach(r=>{ roomCount[r]=(roomCount[r]||0)+1; }); });
+  const sorted = Object.entries(roomCount).sort((a,b)=>b[1]-a[1]);
+  if(charts.room) charts.room.destroy();
+  charts.room = new Chart(document.getElementById('roomChart'),{
+    type:'bar',
+    data:{labels:sorted.map(x=>x[0]),datasets:[{label:'訂房次數',data:sorted.map(x=>x[1]),backgroundColor:['#7C83FD','#56CFE1','#FF9F1C','#2EC4B6','#E84855','#6A994E','#C77DFF','#F4845F','#52B788','#E9C46A','#4CC9F0','#F72585','#B5838D']}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  });
+}
+
+// 訂房來源圓餅圖
+function renderSourceChart(data){
+  const src={platform:0,hiking:0,normal:0,direct:0};
+  data.forEach(b=>{
+    if(b.plan==='hiking') src.hiking++;
+    else if(b.platform&&b.platform.trim()) src.platform++;
+    else src.normal++;
+  });
+  if(charts.source) charts.source.destroy();
+  charts.source = new Chart(document.getElementById('sourceChart'),{
+    type:'doughnut',
+    data:{labels:['訂房平台','登山方案','一般直接'],datasets:[{data:[src.platform,src.hiking,src.normal],backgroundColor:['#378ADD','#52B788','#F4845F']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}}}
+  });
+}
+
+// 平日/假日長條圖（用週幾粗估）
+function renderDayTypeChart(data){
+  let wdRev=0,holRev=0,wdCnt=0,holCnt=0;
+  data.forEach(b=>{
+    if(!b.checkin) return;
+    const dow=new Date(b.checkin+'T00:00').getDay();
+    const rev=getRevenue(b);
+    const md=b.checkin.slice(5);
+    const isSpecial=md==='12-24'||md==='12-25';
+    if(isSpecial||dow===5||dow===6){holRev+=rev;holCnt++;}
+    else{wdRev+=rev;wdCnt++;}
+  });
+  if(charts.daytype) charts.daytype.destroy();
+  charts.daytype = new Chart(document.getElementById('dayTypeChart'),{
+    type:'bar',
+    data:{labels:['平日','假日/週末'],datasets:[
+      {label:'總營收',data:[Math.round(wdRev),Math.round(holRev)],backgroundColor:['#56CFE1','#FF9F1C']},
+      {label:'訂單數',data:[wdCnt,holCnt],backgroundColor:['#56CFE144','#FF9F1C44']}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:11}}},y:{beginAtZero:true,ticks:{callback:v=>'NT$'+v.toLocaleString(),font:{size:10}}}}}
+  });
+}
+
+// 訂單狀態圓餅圖
+function renderStatusChart(data){
+  const STATUS_LABEL={'new-case':'新接案','platform':'訂房平台','pending':'待確認','confirmed':'確認接訂','week-check':'一周前確認','checkin':'入住中','delayed':'延期','no-show':'未到取消','closed':'已結案','unpaid':'未收款'};
+  const sc={};
+  data.forEach(b=>{ sc[b.status]=(sc[b.status]||0)+1; });
+  const entries=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  const COLORS=['#7C83FD','#56CFE1','#FF9F1C','#2EC4B6','#E84855','#6A994E','#C77DFF','#F4845F','#52B788','#E9C46A'];
+  if(charts.status) charts.status.destroy();
+  charts.status = new Chart(document.getElementById('statusChart'),{
+    type:'doughnut',
+    data:{labels:entries.map(e=>STATUS_LABEL[e[0]]||e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:COLORS}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}}
+  });
+}
+
+// 未收款表格
+function renderUnpaidTable(data){
+  const STATUS_LABEL={'new-case':'新接案','platform':'訂房平台','pending':'待確認','confirmed':'確認接訂','week-check':'一周前確認','checkin':'入住中','delayed':'延期','no-show':'未到取消','closed':'已結案','unpaid':'未收款'};
+  const unpaid = data.filter(b=>(parseFloat(b.due)||0)>0 && b.status!=='closed' && b.status!=='no-show');
+  document.getElementById('unpaidBadge').textContent = unpaid.length+' 筆';
+  const tbody = document.getElementById('unpaidTable');
+  if(unpaid.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px;">目前沒有未收款項目 🎉</td></tr>';
+    return;
+  }
+  tbody.innerHTML = unpaid.sort((a,b)=>(b.due||0)-(a.due||0)).map(b=>{
+    const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'—');
+    return`<tr>
+      <td><strong>${b.name||'—'}</strong><br><span style="color:#aaa;font-size:10px;">${b.phone||''}</span></td>
+      <td>${b.checkin||'—'}</td>
+      <td style="font-size:11px;">${rooms}</td>
+      <td>NT$${(parseFloat(b.quote)||0).toLocaleString()}</td>
+      <td style="color:#1e7e34;">NT$${(parseFloat(b.deposit)||0).toLocaleString()}</td>
+      <td class="due-amount">NT$${(parseFloat(b.due)||0).toLocaleString()}</td>
+      <td><span style="background:#faeeda;color:#633806;font-size:10px;padding:2px 7px;border-radius:999px;">${STATUS_LABEL[b.status]||b.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── AI 分析 ──
+let aiHistory = [];
+
+function buildDataSummary(){
+  const data = getFiltered();
+  const yr = document.getElementById('filterYear').value;
+  const mo = document.getElementById('filterMonth').value;
+  const period = mo==='0' ? `${yr}年全年` : `${yr}年${mo}月`;
+  const totalRev = data.reduce((s,b)=>s+getRevenue(b),0);
+  const totalDue = data.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
+  const cancelled = data.filter(b=>b.status==='no-show').length;
+  const totalPax = data.reduce((s,b)=>s+(parseInt(b.pax)||0),0);
+  const roomCount={};
+  data.forEach(b=>getRooms(b).forEach(r=>{roomCount[r]=(roomCount[r]||0)+1;}));
+  const topRooms=Object.entries(roomCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([r,c])=>`${r}:${c}次`).join('、');
+  const srcPlatform=data.filter(b=>b.platform&&b.platform.trim()&&b.plan!=='hiking').length;
+  const srcHiking=data.filter(b=>b.plan==='hiking').length;
+  const srcNormal=data.length-srcPlatform-srcHiking;
+  const unpaid=data.filter(b=>(parseFloat(b.due)||0)>0&&b.status!=='closed'&&b.status!=='no-show');
+
+  return `【兀瑪斯農莊 ${period} 數據摘要】
+總訂單：${data.length} 筆 | 總營收：NT$${Math.round(totalRev).toLocaleString()} | 入住人次：${totalPax}人
+未收尾款：NT$${Math.round(totalDue).toLocaleString()}（${unpaid.length} 筆待收）
+取消/未到：${cancelled} 筆（${data.length>0?Math.round(cancelled/data.length*100):0}%）
+平均訂單金額：NT$${data.length>0?Math.round(totalRev/data.length).toLocaleString():0}
+熱門房型：${topRooms||'無數據'}
+訂房來源：平台訂房 ${srcPlatform} 筆、登山方案 ${srcHiking} 筆、一般訂房 ${srcNormal} 筆
+農莊介紹：位於南投信義鄉，提供 A/B/C 三棟共 13 間房（套房+通鋪），有登山優惠方案，附近有玉山、郡大山等百岳。`;
+}
+
+function appendMsg(role, text){
+  const chat = document.getElementById('aiChat');
+  const div = document.createElement('div');
+  div.className = `msg ${role==='user'?'user':''}`;
+  const isUser = role==='user';
+  div.innerHTML = `
+    <div class="msg-avatar ${isUser?'user':'ai'}">${isUser?'你':'AI'}</div>
+    <div class="msg-bubble ${isUser?'user':'ai'}">${text.replace(/\n/g,'<br>')}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function callClaude(userMsg){
+  const summary = buildDataSummary();
+  const systemPrompt = `你是兀瑪斯農莊（台灣南投山區民宿）的 AI 經營顧問。請根據以下數據用繁體中文回答，給出具體可執行的建議，語氣親切專業，回答簡潔有重點（不超過300字）。\n\n${summary}`;
+  aiHistory.push({role:'user',content:userMsg});
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:systemPrompt,
+      messages:aiHistory
+    })
+  });
+  const data = await res.json();
+  const reply = data.content?.[0]?.text || '抱歉，無法取得回應，請稍後再試。';
+  aiHistory.push({role:'assistant',content:reply});
+  if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
+  return reply;
+}
+
+window.askAI = async function(msg){
+  document.getElementById('aiInput').value = msg;
+  await sendAI();
+};
+
+window.sendAI = async function(){
+  const input = document.getElementById('aiInput');
+  const btn = document.getElementById('aiSendBtn');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value='';
+  appendMsg('user', msg);
+  btn.disabled=true;
+  const loadingDiv = appendMsg('ai','<span class="loading">分析中...</span>');
+  try{
+    const reply = await callClaude(msg);
+    loadingDiv.querySelector('.msg-bubble').innerHTML = reply.replace(/\n/g,'<br>');
+  } catch(e){
+    loadingDiv.querySelector('.msg-bubble').innerHTML='連線失敗，請稍後再試。';
+  }
+  btn.disabled=false;
+  document.getElementById('aiChat').scrollTop=99999;
+};
+
+// Auth
+document.getElementById('loginBtn').addEventListener('click',async()=>{
+  try{await signInWithPopup(auth,provider);}catch(e){if(e.code!=='auth/popup-closed-by-user')alert('登入失敗：'+e.message);}
+});
+async function doLogout(){if(unsubscribe){unsubscribe();unsubscribe=null;}await signOut(auth);}
+document.getElementById('logoutBtn').addEventListener('click',doLogout);
+document.getElementById('logoutDeniedBtn').addEventListener('click',doLogout);
+
+onAuthStateChanged(auth,user=>{
+  document.getElementById('loading-screen').style.display='none';
+  if(!user){document.getElementById('login-screen').classList.add('show');document.getElementById('app').classList.remove('ready');return;}
+  if(!ALLOWED.includes(user.email)){document.getElementById('login-screen').classList.remove('show');document.getElementById('denied-screen').classList.add('show');document.getElementById('app').classList.remove('ready');return;}
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('denied-screen').classList.remove('show');
+  document.getElementById('app').classList.add('ready');
+  document.getElementById('userAvatar').src=user.photoURL||'';
+  if(unsubscribe) unsubscribe();
+  unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
+    bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    refresh();
+  });
+});
+</script>
+</body>
+</html>
