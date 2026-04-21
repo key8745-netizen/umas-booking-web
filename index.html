@@ -313,24 +313,39 @@ window.onCheckinChange=function(){
   const ci=document.getElementById('f-checkin').value;
   const coEl=document.getElementById('f-checkout');
   const nightsEl=document.getElementById('f-nights');
-  if(!ci) return;
+  if(!ci){coEl.min='';return;}
+  // 退房最早是隔天
   const minCo=dateAddDays(ci,1);
   coEl.min=minCo;
-  const n=Math.max(1,parseInt(nightsEl.value)||1);
-  coEl.value=dateAddDays(ci,n);
-  nightsEl.value=n;
+  // 如果目前退房日比入住日早或相同，自動設為隔天
+  if(!coEl.value||coEl.value<=ci){
+    coEl.value=minCo;
+    nightsEl.value=1;
+  } else {
+    // 退房日保持不變，重新計算天數
+    nightsEl.value=dateDiffDays(ci,coEl.value);
+  }
   autoCalc();
 };
 window.onCheckoutChange=function(){
   const ci=document.getElementById('f-checkin').value;
   const co=document.getElementById('f-checkout').value;
-  if(ci&&co&&co>ci){document.getElementById('f-nights').value=dateDiffDays(ci,co);}
+  if(!ci||!co) return;
+  if(co<=ci){
+    // 不允許退房早於或等於入住，自動修正為隔天
+    const minCo=dateAddDays(ci,1);
+    document.getElementById('f-checkout').value=minCo;
+    document.getElementById('f-nights').value=1;
+  } else {
+    document.getElementById('f-nights').value=dateDiffDays(ci,co);
+  }
   autoCalc();
 };
 window.onNightsChange=function(){
   const ci=document.getElementById('f-checkin').value;
-  const n=parseInt(document.getElementById('f-nights').value);
-  if(ci&&n>0){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
+  const n=Math.max(1,parseInt(document.getElementById('f-nights').value)||1);
+  document.getElementById('f-nights').value=n;
+  if(ci){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
   autoCalc();
 };
 const ROOM_INFO={'A-101':{type:'suite',maxPax:4},'A-102':{type:'suite',maxPax:4},'A-103':{type:'suite',maxPax:4},'A-201':{type:'dorm',maxPax:6,fixed:true},'A-202':{type:'dorm',maxPax:3,fixed:true},'A-203':{type:'dorm',maxPax:7,fixed:true},'B-201':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-202':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-203':{type:'dorm',maxPax:6,fixed:false,minPax:2},'B-204':{type:'dorm',maxPax:3,fixed:false,minPax:0},'C-201':{type:'suite',maxPax:3},'C-202':{type:'suite',maxPax:3},'C-203':{type:'suite',maxPax:3}};

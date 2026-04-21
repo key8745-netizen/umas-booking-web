@@ -311,22 +311,32 @@ window.calOnCheckinChange=function(){
   const ci=document.getElementById('f-checkin').value;
   const coEl=document.getElementById('f-checkout');
   const nightsEl=document.getElementById('f-nights');
-  if(!ci) return;
+  if(!ci){coEl.min='';return;}
   const minCo=calDateAddDays(ci,1);
   coEl.min=minCo;
-  const n=Math.max(1,parseInt(nightsEl.value)||1);
-  const newCo=calDateAddDays(ci,n);
-  coEl.value=newCo;
-  nightsEl.value=n;
+  if(!coEl.value||coEl.value<=ci){
+    coEl.value=minCo;
+    nightsEl.value=1;
+  } else {
+    nightsEl.value=calDateDiff(ci,coEl.value);
+  }
 };
 window.calOnCheckoutChange=function(){
   const ci=document.getElementById('f-checkin').value;
   const co=document.getElementById('f-checkout').value;
-  if(ci&&co&&co>ci) document.getElementById('f-nights').value=calDateDiff(ci,co);
+  if(!ci||!co) return;
+  if(co<=ci){
+    const minCo=calDateAddDays(ci,1);
+    document.getElementById('f-checkout').value=minCo;
+    document.getElementById('f-nights').value=1;
+  } else {
+    document.getElementById('f-nights').value=calDateDiff(ci,co);
+  }
 };
 window.calOnNightsChange=function(){
   const ci=document.getElementById('f-checkin').value;
-  const n=parseInt(document.getElementById('f-nights').value)||1;
+  const n=Math.max(1,parseInt(document.getElementById('f-nights').value)||1);
+  document.getElementById('f-nights').value=n;
   if(ci) document.getElementById('f-checkout').value=calDateAddDays(ci,n);
 };
 
@@ -549,6 +559,7 @@ function renderGantt(){
       handle.addEventListener('touchend', onUp);
     },{passive:true});
   });
+}
 
 window.onCellClick = function(date, room){
   const existing = bookings.find(b=>{
