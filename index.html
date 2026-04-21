@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訂房管理看板</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:14px;}
+#loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
+#loading-screen .spinner{width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#378ADD;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading-screen p{font-size:13px;color:#888;}
+#login-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:20px;}
+#login-screen.show{display:flex;}
+.login-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
+.login-logo{font-size:32px;margin-bottom:8px;}
+.login-title{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:6px;}
+.login-sub{font-size:13px;color:#888;margin-bottom:28px;}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:#333;}
+.login-btn:hover{background:#f5f5f5;}
+.login-btn img{width:20px;height:20px;}
+#denied-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:20px;}
+#denied-screen.show{display:flex;}
+.denied-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
+.denied-icon{font-size:40px;margin-bottom:12px;}
+.denied-title{font-size:16px;font-weight:600;color:#c62828;margin-bottom:8px;}
+.denied-sub{font-size:13px;color:#888;margin-bottom:20px;line-height:1.6;}
+.app{display:none;flex-direction:column;height:100vh;}
+.app.ready{display:flex;}
+header{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;display:flex;align-items:center;gap:12px;height:52px;flex-shrink:0;}
+header h1{font-size:15px;font-weight:600;color:#1a1a1a;flex:1;}
+.user-info{display:flex;align-items:center;gap:8px;font-size:12px;color:#666;}
+.user-avatar{width:28px;height:28px;border-radius:50%;border:1px solid #e0e0e0;}
+.sync-status{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:500;}
+.sync-status.online{background:#e6f4ea;color:#1e7e34;}
+.sync-status.offline{background:#fce8e6;color:#c62828;}
+.sync-status.syncing{background:#e8f0fe;color:#1a73e8;}
+.btn-logout{padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#666;font-size:11px;cursor:pointer;}
+.btn-logout:hover{background:#fce8e6;color:#c62828;border-color:#f5c6c6;}
+.toolbar{background:#fff;border-bottom:1px solid #e0e0e0;padding:8px 20px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+.search-box{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:180px;outline:none;}
+.search-box:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD22;}
+select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;background:#fff;}
+.sort-label{font-size:12px;color:#666;}
+.btn{padding:6px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#333;font-size:12px;cursor:pointer;font-weight:500;}
+.btn:hover{background:#f5f5f5;}
+.btn.primary{background:#378ADD;color:#fff;border-color:#378ADD;}
+.btn.primary:hover{background:#185FA5;}
+.board-wrap{flex:1;overflow-x:auto;overflow-y:hidden;padding:16px 20px;cursor:grab;user-select:none;}
+.board-wrap.dragging-board{cursor:grabbing;}
+.board{display:flex;gap:12px;align-items:flex-start;min-width:max-content;height:100%;}
+.column{background:#ebecf0;border-radius:10px;padding:10px;width:220px;flex-shrink:0;max-height:calc(100vh - 140px);display:flex;flex-direction:column;}
+.col-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.col-label{display:flex;align-items:center;gap:6px;color:#5e6c84;}
+.col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.col-count{background:#fff;border-radius:999px;padding:1px 7px;font-size:10px;color:#5e6c84;}
+.cards-area{overflow-y:auto;flex:1;}
+.cards-area::-webkit-scrollbar{width:4px;}
+.cards-area::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px;}
+.card{background:#fff;border-radius:8px;padding:10px;margin-bottom:6px;cursor:grab;border:1px solid #e0e0e0;transition:box-shadow 0.15s;}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.card.dragging{opacity:0.4;cursor:grabbing;}
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;margin-bottom:5px;font-weight:600;}
+.sort-key{font-size:10px;color:#999;background:#f5f5f5;border-radius:4px;padding:1px 5px;display:inline-block;float:right;}
+.card-name{font-size:13px;font-weight:600;color:#172b4d;margin-bottom:2px;clear:both;}
+.card-hotel{font-size:11px;color:#5e6c84;margin-bottom:4px;}
+.card-row{font-size:11px;color:#5e6c84;margin-bottom:2px;display:flex;gap:4px;}
+.card-row-label{color:#aaa;flex-shrink:0;}
+.card-money{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;}
+.money-item{flex:1;text-align:center;}
+.money-label{font-size:9px;color:#aaa;margin-bottom:1px;}
+.money-val{font-size:11px;font-weight:600;}
+.money-val.total{color:#1a73e8;}
+.money-val.paid{color:#1e7e34;}
+.money-val.due{color:#c62828;}
+.card-actions{display:flex;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;}
+.icon-btn{font-size:11px;color:#888;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;}
+.icon-btn:hover{background:#f0f0f0;color:#333;}
+.icon-btn.del:hover{color:#c62828;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:24px;width:460px;max-width:100%;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:16px;}
+.section-label{font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #f0f0f0;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr;}
+.form-row label{font-size:11px;color:#666;display:block;margin-bottom:3px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD22;}
+.form-row textarea{resize:vertical;min-height:52px;}
+.form-row.full{grid-column:1/-1;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 20px;border-radius:999px;font-size:12px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
+.toast.show{opacity:1;}
+.drop-hint{border:2px dashed #aaa;border-radius:8px;padding:12px;text-align:center;font-size:11px;color:#aaa;margin-bottom:6px;display:none;}
+.drop-hint.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p>載入中...</p>
+</div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🏨</div>
+    <div class="login-title">訂房管理看板</div>
+    <div class="login-sub">請使用授權的 Google 帳號登入</div>
+    <button class="login-btn" id="loginBtn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      使用 Google 帳號登入
+    </button>
+  </div>
+</div>
+
+<div id="denied-screen">
+  <div class="denied-card">
+    <div class="denied-icon">🚫</div>
+    <div class="denied-title">無法存取</div>
+    <div class="denied-sub">你的帳號沒有使用權限。<br>請聯絡管理員取得授權。</div>
+    <button class="btn" id="logoutDeniedBtn">登出並重試</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <h1 style="font-size:14px;">🏡 木屋民宿管理</h1>
+    <div style="display:flex;gap:4px;">
+      <span style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;background:#378ADD;color:#fff;">看板</span>
+      <a href="calendar.html" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#666;border:1px solid #ddd;text-decoration:none;background:#fff;">📅 日曆</a>
+      <a href="analytics.html" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#666;border:1px solid #ddd;text-decoration:none;background:#fff;">📊 統計</a>
+    </div>
+    <div class="user-info">
+      <img class="user-avatar" id="userAvatar" src="" alt="">
+      <span id="userName"></span>
+    </div>
+    <span class="sync-status syncing" id="syncStatus">連線中...</span>
+    <button class="btn-logout" id="logoutBtn">登出</button>
+  </header>
+  <div class="toolbar">
+    <input class="search-box" type="text" placeholder="搜尋姓名、住宿、編號..." id="searchInput" oninput="filterCards()">
+    <span class="sort-label">排序：</span>
+    <select id="sortKey" onchange="renderAll()">
+      <option value="checkin">入住日期</option>
+      <option value="created">建立時間</option>
+      <option value="confirm">訂單編號</option>
+    </select>
+    <select id="sortDir" onchange="renderAll()">
+      <option value="asc">由小到大 ↑</option>
+      <option value="desc">由大到小 ↓</option>
+    </select>
+    <button class="btn primary" onclick="openModal()">+ 新增訂房</button>
+  </div>
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">新增訂房</h3>
+    <div class="section-label">客戶資訊</div>
+    <div class="form-grid">
+      <div class="form-row"><label>姓名 *</label><input id="f-name" placeholder="例：張欣如"></div>
+      <div class="form-row"><label>電話</label><input id="f-phone" placeholder="0933-000-000"></div>
+      <div class="form-row"><label>Line ID</label><input id="f-line" placeholder="Line 帳號"></div>
+      <div class="form-row"><label>Facebook</label><input id="f-fb" placeholder="FB 名稱"></div>
+    </div>
+    <div class="section-label">訂房資訊</div>
+    <div class="form-grid">
+      <div class="form-row"><label>住宿名稱 / 地點</label><input id="f-hotel" placeholder="例：山林小屋"></div>
+      <div class="form-row"><label>狀態</label><select id="f-status"></select></div>
+      <div class="form-row"><label>訂房平台</label><input id="f-platform" placeholder="Booking、Agoda..."></div>
+      <div class="form-row"><label>Booking 訂單編號</label><input id="f-confirm" placeholder="BK-001"></div>
+      <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date" onchange="autoCalc()"></div>
+      <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" placeholder="1" onchange="autoCalc()"></div>
+      <div class="form-row"><label>人數</label><input id="f-pax" type="number" min="1" placeholder="3" onchange="autoCalc()"></div>
+      <div class="form-row"><label>訪客類型</label><input id="f-guesttype" placeholder="登山、觀光..."></div>
+      <div class="form-row full">
+        <label>預定房型（可複選）</label>
+        <div id="f-roomtype" style="border:1px solid #ddd;border-radius:6px;padding:8px 10px;margin-top:2px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 12px;">
+          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:2px 0 2px;">A棟一樓</div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-101" style="width:auto;" onchange="autoCalc()"> A-101 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-102" style="width:auto;" onchange="autoCalc()"> A-102 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-103" style="width:auto;" onchange="autoCalc()"> A-103 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
+          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">A棟二樓</div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-201" style="width:auto;" onchange="autoCalc()"> A-201 <span style="color:#aaa;font-size:10px;">6人通鋪</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-202" style="width:auto;" onchange="autoCalc()"> A-202 <span style="color:#aaa;font-size:10px;">1-3人通鋪</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-203" style="width:auto;" onchange="autoCalc()"> A-203 <span style="color:#aaa;font-size:10px;">7人通鋪</span></label>
+          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">B棟二樓</div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-201" style="width:auto;" onchange="autoCalc()"> B-201 <span style="color:#aaa;font-size:10px;">2-4人通鋪</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-202" style="width:auto;" onchange="autoCalc()"> B-202 <span style="color:#aaa;font-size:10px;">2-4人通鋪</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-203" style="width:auto;" onchange="autoCalc()"> B-203 <span style="color:#aaa;font-size:10px;">2-6人通鋪</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-204" style="width:auto;" onchange="autoCalc()"> B-204 <span style="color:#aaa;font-size:10px;">1-3人通鋪</span></label>
+          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">C棟二樓</div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-201" style="width:auto;" onchange="autoCalc()"> C-201 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-202" style="width:auto;" onchange="autoCalc()"> C-202 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-203" style="width:auto;" onchange="autoCalc()"> C-203 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">用餐 / 活動</div>
+    <div class="form-grid col3">
+      <div class="form-row"><label>用餐類型</label><input id="f-meal" placeholder="早餐、半膳..."></div>
+      <div class="form-row"><label>用餐人數</label><input id="f-mealpax" type="number" min="0" placeholder="0"></div>
+      <div class="form-row"><label>特殊需求</label><input id="f-special" placeholder="素食、過敏..."></div>
+      <div class="form-row"><label>額外服務</label><input id="f-extra" placeholder="接駁、租借..."></div>
+      <div class="form-row"><label>合作社活動</label><input id="f-activity" placeholder="活動名稱"></div>
+      <div class="form-row"><label>參加人數</label><input id="f-actpax" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="section-label">費用</div>
+    <div class="form-grid" style="margin-bottom:8px;">
+      <div class="form-row">
+        <label>住宿方案</label>
+        <select id="f-plan" onchange="autoCalc()">
+          <option value="normal">一般住宿（含早餐）</option>
+          <option value="hiking">登山方案（不含早餐）</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>入住日類型</label>
+        <select id="f-daytype" onchange="autoCalc()">
+          <option value="auto">自動判斷</option>
+          <option value="weekday">平日</option>
+          <option value="holiday">假日</option>
+          <option value="special">定價（聖誕/春節）</option>
+        </select>
+      </div>
+    </div>
+    <div id="price-breakdown" style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#555;display:none;"></div>
+    <div class="form-grid col3">
+      <div class="form-row">
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          報價金額 (NT$)
+          <span id="auto-calc-btn" onclick="autoCalc()" style="font-size:10px;color:#378ADD;cursor:pointer;font-weight:500;">🔄 重新試算</span>
+        </label>
+        <input id="f-quote" type="number" placeholder="自動試算" oninput="calcDue()">
+      </div>
+      <div class="form-row"><label>已付訂金 (NT$)</label><input id="f-deposit" type="number" placeholder="30% 訂金" oninput="calcDue()"></div>
+      <div class="form-row"><label>應收尾款 (NT$)</label><input id="f-due" type="number" readonly style="background:#f9f9f9;color:#888;"></div>
+    </div>
+    <div class="section-label">備註</div>
+    <div class="form-row"><textarea id="f-note" placeholder="其他備註事項..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn" style="background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" onclick="showDepositCard()">📋 發布訂金通知</button>
+      <button class="btn primary" id="saveBtn" onclick="saveBooking()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="depositBg">
+  <div class="modal" style="width:400px;padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="font-size:14px;font-weight:600;">訂金通知圖卡</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyDepositText()">📋 複製全文</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="closeDeposit()">關閉</button>
+      </div>
+    </div>
+    <div id="depositCard" style="background:#e8f0e0;padding:12px;border-radius:12px;user-select:text;-webkit-user-select:text;"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",
+  authDomain: "umas-booking-manager.firebaseapp.com",
+  projectId: "umas-booking-manager",
+  storageBucket: "umas-booking-manager.firebasestorage.app",
+  messagingSenderId: "7381346891",
+  appId: "1:7381346891:web:2affb529e6b8614f6b7bce"
+};
+
+const ALLOWED_EMAILS = [
+  "key8745@gmail.com",
+  "princessangel45@gmail.com"
+];
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+const COLS=[{id:'new-case',label:'新接案',dot:'#7F77DD'},{id:'platform',label:'訂房平台',dot:'#378ADD'},{id:'pending',label:'暫時保留待確認',dot:'#EF9F27'},{id:'confirmed',label:'確認接訂',dot:'#1D9E75'},{id:'week-check',label:'一周前確認',dot:'#5DCAA5'},{id:'checkin',label:'入住中',dot:'#639922'},{id:'delayed',label:'延期',dot:'#D85A30'},{id:'no-show',label:'未到取消',dot:'#E24B4A'},{id:'closed',label:'已結案',dot:'#888780'},{id:'unpaid',label:'未收款',dot:'#BA7517'}];
+const TAG={'new-case':'background:#EEEDFE;color:#3C3489','platform':'background:#E6F1FB;color:#0C447C','pending':'background:#FAEEDA;color:#633806','confirmed':'background:#E1F5EE;color:#085041','week-check':'background:#E1F5EE;color:#0F6E56','checkin':'background:#EAF3DE;color:#27500A','delayed':'background:#FAECE7;color:#712B13','no-show':'background:#FCEBEB;color:#791F1F','closed':'background:#F1EFE8;color:#444441','unpaid':'background:#FAEEDA;color:#854F0B'};
+
+let bookings=[],editId=null,dragId=null,searchQ='',unsubscribe=null;
+
+window.filterCards=()=>{searchQ=document.getElementById('searchInput').value;renderAll();};
+window.calcDue=()=>{const q=parseFloat(document.getElementById('f-quote').value)||0,d=parseFloat(document.getElementById('f-deposit').value)||0;document.getElementById('f-due').value=Math.round(q-d)||'';};
+
+// ── 定價規則 ──
+const ROOM_INFO={'A-101':{type:'suite',maxPax:4},'A-102':{type:'suite',maxPax:4},'A-103':{type:'suite',maxPax:4},'A-201':{type:'dorm',maxPax:6,fixed:true},'A-202':{type:'dorm',maxPax:3,fixed:true},'A-203':{type:'dorm',maxPax:7,fixed:true},'B-201':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-202':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-203':{type:'dorm',maxPax:6,fixed:false,minPax:2},'B-204':{type:'dorm',maxPax:3,fixed:false,minPax:0},'C-201':{type:'suite',maxPax:3},'C-202':{type:'suite',maxPax:3},'C-203':{type:'suite',maxPax:3}};
+const SUITE_PRICE={'A-101':{weekday:3000,holiday:3600,special:3960},'A-102':{weekday:3000,holiday:3600,special:3960},'A-103':{weekday:3000,holiday:3600,special:3960},'C-201':{weekday:2200,holiday:2700,special:2970},'C-202':{weekday:2200,holiday:2700,special:2970},'C-203':{weekday:2200,holiday:2700,special:2970}};
+const DORM_FIXED={'A-201':{weekday:3168,holiday:3960},'A-202':{weekday:3168,holiday:3960},'A-203':{weekday:3168,holiday:3960},'B-201':{weekday:2112,holiday:2640},'B-202':{weekday:2112,holiday:2640}};
+const DORM_PER={'B-203':{weekday:528,holiday:660},'B-204':{weekday:528,holiday:660}};
+let _holCache={};
+
+function isSpecial(ds){const md=ds.slice(5);return md==='12-24'||md==='12-25';}
+
+async function getDateType(ds){
+  if(!ds) return 'weekday';
+  if(isSpecial(ds)) return 'special';
+  const dow=new Date(ds+'T00:00').getDay();
+  if(dow===5||dow===6) return 'holiday';
+  const yr=ds.slice(0,4);
+  if(!_holCache[yr]){
+    try{
+      const r=await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${yr}.json`);
+      if(r.ok) _holCache[yr]=await r.json();
+      else _holCache[yr]=[];
+    }catch(e){_holCache[yr]=[];}
+  }
+  const key=ds.replace(/-/g,'');
+  const entry=_holCache[yr].find(x=>x.date===key);
+  if(entry&&entry.isHoliday) return 'holiday';
+  return 'weekday';
+}
+
+function calcRoomPrice(roomId,dateType,pax,plan){
+  const info=ROOM_INFO[roomId];
+  if(!info) return{price:0,note:'未知房型'};
+  if(plan==='hiking'){
+    const pp=info.type==='suite'?700:500;
+    return{price:pp*pax,note:`登山 ${pp}元×${pax}人`};
+  }
+  const ht=dateType==='holiday'||dateType==='special';
+  const dtLabel=dateType==='special'?'定價':ht?'假日':'平日';
+  if(info.type==='suite'){
+    const p=SUITE_PRICE[roomId];
+    const price=p[dateType==='special'?'special':ht?'holiday':'weekday'];
+    return{price,note:`${dtLabel} 按間 NT$${price.toLocaleString()}`};
+  }
+  if(info.fixed){
+    const p=DORM_FIXED[roomId];
+    const price=p[ht?'holiday':'weekday'];
+    return{price,note:`${dtLabel} 固定 NT$${price.toLocaleString()}`};
+  }
+  const p=DORM_PER[roomId];
+  const pp=p[ht?'holiday':'weekday'];
+  return{price:pp*pax,note:`${dtLabel} ${pp}元×${pax}人`};
+}
+
+window.autoCalc=async function(){
+  const checkin=document.getElementById('f-checkin').value;
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  const pax=parseInt(document.getElementById('f-pax').value)||1;
+  const plan=document.getElementById('f-plan').value;
+  const dtOvr=document.getElementById('f-daytype').value;
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const bdEl=document.getElementById('price-breakdown');
+  if(!checkin||rooms.length===0){bdEl.style.display='none';return;}
+  bdEl.style.display='block';
+  bdEl.innerHTML='<span style="color:#aaa;font-size:12px;">計算中...</span>';
+  let total=0,lines=[];
+  for(let n=0;n<nights;n++){
+    const d=new Date(checkin+'T00:00');
+    d.setDate(d.getDate()+n);
+    const ds=d.toISOString().slice(0,10);
+    const dt=dtOvr==='auto'?await getDateType(ds):dtOvr;
+    const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
+    let nightTotal=0,rLines=[];
+    for(const rid of rooms){const{price,note}=calcRoomPrice(rid,dt,pax,plan);nightTotal+=price;rLines.push(`<span style="color:#555;">${rid}</span>：${note}`);}
+    total+=nightTotal;
+    const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
+    lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
+  }
+  const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
+  bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間 合計</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
+  document.getElementById('f-quote').value=total;
+  calcDue();
+};
+
+function getSortKey(){return document.getElementById('sortKey').value;}
+function getSortDir(){return document.getElementById('sortDir').value;}
+function sortVal(b,key){if(key==='checkin')return b.checkin||'9999';if(key==='created')return b.createdAt?.seconds||0;if(key==='confirm')return b.confirm||'\uFFFF';return 0;}
+function sorted(list){const k=getSortKey(),d=getSortDir();return[...list].sort((a,b)=>{const va=sortVal(a,k),vb=sortVal(b,k);return va<vb?(d==='asc'?-1:1):va>vb?(d==='asc'?1:-1):0;});}
+function sortKeyLabel(b){const k=getSortKey();if(k==='checkin')return b.checkin||'—';if(k==='created')return b.createdAt?new Date(b.createdAt.seconds*1000).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'}):'—';if(k==='confirm')return b.confirm||'無編號';return'';}
+function fmtDate(d){if(!d)return'';return new Date(d+'T00:00').toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});}
+function coDate(ci,n){if(!ci||!n)return'';const d=new Date(ci+'T00:00');d.setDate(d.getDate()+parseInt(n));return fmtDate(d.toISOString().slice(0,10));}
+function matchSearch(b){if(!searchQ)return true;return(b.name+b.hotel+b.confirm+b.phone+b.roomtype+b.guesttype).toLowerCase().includes(searchQ.toLowerCase());}
+
+function cardHTML(b){const col=COLS.find(c=>c.id===b.status),ts=TAG[b.status]||'',cout=coDate(b.checkin,b.nights),skl=sortKeyLabel(b);
+const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'');
+return`<div class="card" id="card-${b.firestoreId}" draggable="true"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="tag" style="${ts}">${col?col.label:b.status}</span><span class="sort-key">${skl}</span></div><div class="card-name">${b.name||''}${b.pax>1?' ('+b.pax+'位)':''}</div><div class="card-hotel">${b.hotel||''}${rooms?' · '+rooms:''}</div>${b.checkin?`<div class="card-row"><span class="card-row-label">日期</span>${fmtDate(b.checkin)}${cout?' → '+cout:''} · ${b.nights||1}晚</div>`:''}${b.guesttype?`<div class="card-row"><span class="card-row-label">類型</span>${b.guesttype}</div>`:''}${b.platform?`<div class="card-row"><span class="card-row-label">平台</span>${b.platform}</div>`:''}${b.confirm?`<div class="card-row"><span class="card-row-label">編號</span>${b.confirm}</div>`:''}${b.meal?`<div class="card-row"><span class="card-row-label">用餐</span>${b.meal}${b.mealpax?' · '+b.mealpax+'人':''}</div>`:''}${b.activity?`<div class="card-row"><span class="card-row-label">活動</span>${b.activity}${b.actpax?' · '+b.actpax+'人':''}</div>`:''}${b.special||b.extra?`<div class="card-row"><span class="card-row-label">備註</span>${[b.special,b.extra].filter(Boolean).join('、')}</div>`:''}${b.quote?`<div class="card-money"><div class="money-item"><div class="money-label">報價</div><div class="money-val total">NT$${Number(b.quote).toLocaleString()}</div></div><div class="money-item"><div class="money-label">已付</div><div class="money-val paid">NT$${Number(b.deposit||0).toLocaleString()}</div></div><div class="money-item"><div class="money-label">尾款</div><div class="money-val due">NT$${Number(b.due||0).toLocaleString()}</div></div></div>`:''}<div class="card-actions"><button class="icon-btn" onclick="editBooking('${b.firestoreId}')">✏ 編輯</button><button class="icon-btn del" onclick="deleteBooking('${b.firestoreId}','${(b.name||'').replace(/'/g,'')}')">✕ 刪除</button></div></div>`;}
+
+
+let touchClone=null, touchDragId=null, touchMoved=false;
+
+function addTouchDrag(card, fid){
+  let longPressTimer=null;
+
+  card.addEventListener('touchstart', e=>{
+    touchMoved=false;
+    longPressTimer=setTimeout(()=>{
+      touchDragId=fid;
+      const rect=card.getBoundingClientRect();
+      touchClone=card.cloneNode(true);
+      touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.75;z-index:9999;pointer-events:none;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);`;
+      document.body.appendChild(touchClone);
+      card.style.opacity='0.3';
+      COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});
+      navigator.vibrate&&navigator.vibrate(40);
+    }, 350);
+  },{passive:true});
+
+  card.addEventListener('touchmove', e=>{
+    touchMoved=true;
+    clearTimeout(longPressTimer);
+    if(!touchClone||!touchDragId) return;
+    e.preventDefault();
+    const t=e.touches[0];
+    touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
+    touchClone.style.top=(t.clientY-30)+'px';
+    const els=document.elementsFromPoint(t.clientX,t.clientY);
+    document.querySelectorAll('.column').forEach(c=>c.style.background='');
+    const col=els.find(el=>el.classList.contains('column')||el.closest('.column'));
+    const colEl=col?.classList.contains('column')?col:col?.closest('.column');
+    if(colEl) colEl.style.background='#dce8f8';
+  },{passive:false});
+
+  card.addEventListener('touchend', async e=>{
+    clearTimeout(longPressTimer);
+    if(touchClone){ touchClone.remove(); touchClone=null; }
+    card.style.opacity='';
+    COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});
+    document.querySelectorAll('.column').forEach(c=>c.style.background='');
+    if(!touchDragId){ return; }
+    const t=e.changedTouches[0];
+    const els=document.elementsFromPoint(t.clientX,t.clientY);
+    const colEl=els.find(el=>el.classList.contains('column'))||els.map(el=>el.closest('.column')).find(Boolean);
+    if(colEl){
+      const targetColId=colEl.id.replace('col-','');
+      const bk=bookings.find(x=>x.firestoreId===touchDragId);
+      if(bk&&bk.status!==targetColId){
+        await updateDoc(doc(db,'bookings',touchDragId),{status:targetColId});
+        const colObj=COLS.find(c=>c.id===targetColId);
+        showToast('已移至「'+(colObj?.label||targetColId)+'」');
+      }
+    }
+    touchDragId=null;
+  });
+
+  card.addEventListener('touchcancel',()=>{
+    clearTimeout(longPressTimer);
+    if(touchClone){touchClone.remove();touchClone=null;}
+    card.style.opacity='';
+    touchDragId=null;
+    COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});
+    document.querySelectorAll('.column').forEach(c=>c.style.background='');
+  });
+}
+
+window.renderAll=function(){const board=document.getElementById('board');board.innerHTML='';COLS.forEach(col=>{const raw=bookings.filter(b=>b.status===col.id&&matchSearch(b)),list=sorted(raw),colEl=document.createElement('div');colEl.className='column';colEl.id='col-'+col.id;colEl.innerHTML=`<div class="col-header"><div class="col-label"><div class="col-dot" style="background:${col.dot}"></div><span>${col.label}</span></div><span class="col-count">${list.length}</span></div><div class="drop-hint" id="hint-${col.id}">拖到這裡</div><div class="cards-area" id="area-${col.id}"></div>`;board.appendChild(colEl);const area=document.getElementById('area-'+col.id);list.forEach(b=>{const tmp=document.createElement('div');tmp.innerHTML=cardHTML(b);const card=tmp.firstChild;card.addEventListener('dragstart',()=>{dragId=b.firestoreId;setTimeout(()=>card.classList.add('dragging'),0);COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});});card.addEventListener('dragend',()=>{card.classList.remove('dragging');COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});dragId=null;});addTouchDrag(card,b.firestoreId);area.appendChild(card);});colEl.addEventListener('dragover',e=>e.preventDefault());colEl.addEventListener('drop',async e=>{e.preventDefault();if(!dragId)return;const bk=bookings.find(x=>x.firestoreId===dragId);if(bk&&bk.status!==col.id){await updateDoc(doc(db,'bookings',dragId),{status:col.id});showToast('已移至「'+col.label+'」');}});});};
+
+function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
+function setF(id,val){const el=document.getElementById(id);if(el)el.value=val===undefined||val===null?'':val;}
+
+window.openModal=function(pre){editId=pre?pre.firestoreId:null;document.getElementById('modalTitle').textContent=editId?'編輯訂房':'新增訂房';setF('f-name',pre?.name);setF('f-phone',pre?.phone);setF('f-line',pre?.line);setF('f-fb',pre?.fb);setF('f-hotel',pre?.hotel);setF('f-platform',pre?.platform);setF('f-confirm',pre?.confirm);setF('f-checkin',pre?.checkin);setF('f-nights',pre?.nights||1);setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.meal);setF('f-mealpax',pre?.mealpax||0);setF('f-special',pre?.special);setF('f-extra',pre?.extra);setF('f-activity',pre?.activity);setF('f-actpax',pre?.actpax||0);setF('f-quote',pre?.quote);setF('f-deposit',pre?.deposit);setF('f-due',pre?.due);setF('f-note',pre?.note);
+document.getElementById('f-plan').value=pre?.plan||'normal';
+document.getElementById('f-daytype').value='auto';
+populateStatus(pre?.status||'new-case');
+const selected=Array.isArray(pre?.roomtype)?pre.roomtype:(pre?.roomtype?[pre.roomtype]:[]);
+document.querySelectorAll('#f-roomtype input[type=checkbox]').forEach(cb=>{ cb.checked=selected.includes(cb.value); });
+document.getElementById('price-breakdown').style.display='none';
+document.getElementById('modalBg').classList.add('open');
+if(pre?.checkin) autoCalc();
+};
+window.closeModal=function(){document.getElementById('modalBg').classList.remove('open');};
+
+window.saveBooking=async function(){const name=document.getElementById('f-name').value.trim(),checkin=document.getElementById('f-checkin').value;if(!name||!checkin){alert('請填寫姓名和入住日期');return;}const q=parseFloat(document.getElementById('f-quote').value)||0,dep=parseFloat(document.getElementById('f-deposit').value)||0;
+const roomtype=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,nights:parseInt(document.getElementById('f-nights').value)||1,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};const saveBtn=document.getElementById('saveBtn');saveBtn.textContent='儲存中...';saveBtn.disabled=true;try{if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}closeModal();}catch(e){alert('儲存失敗：'+e.message);}saveBtn.textContent='儲存';saveBtn.disabled=false;};
+
+window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);if(b)openModal(b);};
+window.deleteBooking=async function(fid,name){if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;await deleteDoc(doc(db,'bookings',fid));showToast('已刪除');};
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+window.closeDeposit=function(){document.getElementById('depositBg').classList.remove('open');};
+
+window.showDepositCard=function(){
+  const name=document.getElementById('f-name').value.trim()||'（未填姓名）';
+  const checkin=document.getElementById('f-checkin').value;
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  const pax=parseInt(document.getElementById('f-pax').value)||1;
+  const plan=document.getElementById('f-plan').value;
+  const quote=parseFloat(document.getElementById('f-quote').value)||0;
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+
+  if(!checkin){alert('請先填寫入住日期');return;}
+
+  const coDate=new Date(checkin+'T00:00');
+  coDate.setDate(coDate.getDate()+nights);
+  const checkout=coDate.toISOString().slice(0,10);
+  const fmtD=d=>new Date(d+'T00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'/');
+  const dow=['日','一','二','三','四','五','六'];
+  const ciDow=dow[new Date(checkin+'T00:00').getDay()];
+  const coDow=dow[new Date(checkout+'T00:00').getDay()];
+
+  const deposit=quote>0?Math.ceil(quote*0.3/100)*100:0;
+  const deadlineDate=new Date(checkin+'T00:00');
+  deadlineDate.setDate(deadlineDate.getDate()-3);
+  const deadline=deadlineDate.toISOString().slice(0,10);
+
+  const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
+  const roomStr=rooms.length>0?rooms.join('、'):'（未選房型）';
+
+  const isDorm=rooms.some(r=>r.startsWith('A-2')||r.startsWith('B-'));
+  const dormNote=isDorm?`<div style="font-size:11px;color:#666;line-height:1.7;padding:10px 14px;background:#f9f5f0;border-top:1px solid #ede8e0;">・通鋪房型衛浴在外，需與其他莊友共用<br>・早餐時段 07:30－09:00，茹素者請事先告知</div>`:`<div style="font-size:11px;color:#666;line-height:1.7;padding:10px 14px;background:#f9f5f0;border-top:1px solid #ede8e0;">・早餐時段 07:30－09:00，茹素者請事先告知</div>`;
+
+  document.getElementById('depositCard').innerHTML=`
+  <div style="background:#fff;border-radius:14px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;user-select:text;-webkit-user-select:text;">
+    <div style="background:#2d5a27;padding:16px;text-align:center;">
+      <div style="font-size:26px;margin-bottom:4px;">🏡</div>
+      <div style="font-size:16px;font-weight:700;color:#fff;">兀瑪斯農莊</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:2px;">訂金通知單</div>
+    </div>
+    <div style="background:#f5faf2;padding:12px 14px;font-size:13px;color:#2d4a1e;line-height:1.7;border-bottom:1px solid #e0eed8;">
+      哈囉 <strong>${name}</strong> 您好！這裡是兀瑪斯農莊，已為您保留以下住宿，請於期限內完成訂金匯款以完成訂房程序。
+    </div>
+    <div style="padding:12px 14px;">
+      ${[
+        ['入住日期', `${fmtD(checkin)}（${ciDow}）`],
+        ['退房日期', `${fmtD(checkout)}（${coDow}）`],
+        ['住宿天數', `${nights} 晚`],
+        ['房型', roomStr],
+        ['人數', `${pax} 位`],
+        ['方案', planLabel],
+        ['報價金額', quote>0?`NT$ ${quote.toLocaleString()}`:'（待確認）'],
+      ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span style="color:#888;min-width:72px;">${l}</span><span style="color:#1a1a1a;font-weight:500;text-align:right;">${v}</span></div>`).join('')}
+    </div>
+    <div style="height:5px;background:#f5faf2;"></div>
+    <div style="padding:12px 14px;">
+      <div style="font-size:11px;font-weight:700;color:#2d5a27;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">訂金匯款資訊</div>
+      <div style="background:#f5faf2;border:1.5px solid #a8d08a;border-radius:8px;padding:11px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;color:#2d5a27;font-weight:600;">應付訂金（30%）</div>
+          <div style="font-size:11px;color:#7a9a5a;margin-top:1px;">以整數計算</div>
+        </div>
+        <div style="font-size:20px;font-weight:800;color:#1e3d1a;">NT$ ${deposit>0?deposit.toLocaleString():'（待確認）'}</div>
+      </div>
+      <div style="background:#fafafa;border-radius:8px;padding:11px 13px;font-size:12px;line-height:2.1;color:#444;">
+        <div><strong>戶名</strong>　伊比・伊斯卡卡夫特</div>
+        <div><strong>銀行</strong>　郵局 700</div>
+        <div><strong>帳號</strong>　0002371-0218204</div>
+        <div><strong>立帳</strong>　北投文林郵局</div>
+      </div>
+      <div style="background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;margin-top:10px;font-size:12px;color:#7a5c00;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:14px;">⏰</span>
+        <span>請於 <strong>${fmtD(deadline)}</strong> 前完成匯款，匯款後請告知後五碼</span>
+      </div>
+    </div>
+    ${dormNote}
+    <div style="background:#fafaf8;padding:10px 14px;border-top:1px solid #ede8e0;">
+      <div style="font-size:11px;color:#888;line-height:1.7;">
+        ・農莊無開放帶寵物入住<br>
+        ・訂房住宿需知：<span style="color:#2d5a27;">http://princessangel45.wixsite.com/umas/blank</span>
+      </div>
+    </div>
+    <div style="background:#2d5a27;padding:12px 14px;text-align:center;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.9);line-height:1.9;">
+        <div style="margin-bottom:4px;">
+          <a href="https://line.me/R/ti/p/%40mwl6914l" style="color:#a8d08a;font-weight:700;font-size:13px;text-decoration:none;">農莊小幫手 Line：@umas</a>
+        </div>
+        <div>0933-237-628 伊比 ／ 0988-344-297 阿關</div>
+        <div>0936-185-753 珊妮（10:00－20:00）</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('depositBg').classList.add('open');
+};
+
+window.copyDepositText=function(){
+  const name=document.getElementById('f-name').value.trim()||'';
+  const checkin=document.getElementById('f-checkin').value;
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  const pax=parseInt(document.getElementById('f-pax').value)||1;
+  const plan=document.getElementById('f-plan').value;
+  const quote=parseFloat(document.getElementById('f-quote').value)||0;
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const coDate=new Date(checkin+'T00:00');
+  coDate.setDate(coDate.getDate()+nights);
+  const checkout=coDate.toISOString().slice(0,10);
+  const fmtD=d=>new Date(d+'T00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'/');
+  const deposit=quote>0?Math.ceil(quote*0.3/100)*100:0;
+  const deadlineDate=new Date(checkin+'T00:00');
+  deadlineDate.setDate(deadlineDate.getDate()-3);
+  const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
+  const roomStr=rooms.length>0?rooms.join('、'):'（未選房型）';
+  const isDorm=rooms.some(r=>r.startsWith('A-2')||r.startsWith('B-'));
+
+  const text=`哈囉~這裡是兀瑪斯農莊，已為 ${name} 您保留以下住宿！
+
+入住日期：${fmtD(checkin)}
+退房日期：${fmtD(checkout)}（共 ${nights} 晚）
+房型：${roomStr}
+人數：${pax} 位
+方案：${planLabel}
+報價金額：NT$ ${quote>0?quote.toLocaleString():'（待確認）'}
+${isDorm?'\n提醒您通鋪房型衛浴在外面，需與其他入住通鋪房型莊友共用喔！\n':''}
+住宿均含早餐，早餐時段為 07:30－09:00，若有茹素者請事先告知。
+
+房間將為您保留至 ${fmtD(deadlineDate.toISOString().slice(0,10))}，請於期限內完成訂金匯款。
+訂金為房價的 30%，請轉 NT$ ${deposit>0?deposit.toLocaleString():'（待確認）'} 元整。
+匯款完成請轉知後五碼，確認後始完成訂房唷！
+
+匯款帳戶：
+戶名　伊比・伊斯卡卡夫特
+郵局　700
+帳號　0002371-0218204
+立帳　北投文林郵局
+
+農莊無開放帶寵物入住，完成訂房前請詳閱訂房住宿需知：
+http://princessangel45.wixsite.com/umas/blank
+
+歡迎加入農莊小幫手的 Line：
+https://line.me/R/ti/p/%40mwl6914l
+或搜尋 ID：@umas
+
+兀瑪斯農莊
+0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮
+（上午10點至晚上8點）`;
+
+  navigator.clipboard.writeText(text).then(()=>showToast('已複製全文！貼到 Line 即可傳送 ✓')).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('已複製全文！貼到 Line 即可傳送 ✓');
+  });
+};
+
+// 看板水平拖動（電腦版）
+(function(){
+  const wrap = document.querySelector('.board-wrap') || document.getElementById('app');
+  let isDown=false, startX=0, scrollLeft=0, isDraggingBoard=false;
+  document.addEventListener('DOMContentLoaded',()=>{
+    const bw=document.querySelector('.board-wrap');
+    if(!bw) return;
+    bw.addEventListener('mousedown',e=>{
+      if(e.button!==0) return;
+      if(e.target.closest('.card')||e.target.closest('.btn')||e.target.closest('.icon-btn')||e.target.closest('button')||e.target.closest('select')||e.target.closest('input')) return;
+      isDown=true; isDraggingBoard=false;
+      startX=e.pageX - bw.offsetLeft;
+      scrollLeft=bw.scrollLeft;
+    });
+    document.addEventListener('mousemove',e=>{
+      if(!isDown) return;
+      const x=e.pageX - bw.offsetLeft;
+      const walk=(x-startX)*1.2;
+      if(Math.abs(walk)>5){
+        isDraggingBoard=true;
+        bw.classList.add('dragging-board');
+        bw.scrollLeft=scrollLeft-walk;
+      }
+    });
+    document.addEventListener('mouseup',()=>{
+      isDown=false;
+      setTimeout(()=>{ isDraggingBoard=false; },0);
+      document.querySelector('.board-wrap')?.classList.remove('dragging-board');
+    });
+    bw.addEventListener('click',e=>{
+      if(isDraggingBoard) e.stopPropagation();
+    },true);
+  });
+})();
+function setSyncStatus(s){const el=document.getElementById('syncStatus');if(s==='online'){el.textContent='● 即時同步';el.className='sync-status online';}else if(s==='offline'){el.textContent='● 離線';el.className='sync-status offline';}else{el.textContent='◌ 連線中...';el.className='sync-status syncing';}}
+
+function startListening(){
+  if(unsubscribe) unsubscribe();
+  unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
+    bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    renderAll();setSyncStatus('online');
+  },()=>setSyncStatus('offline'));
+}
+
+document.getElementById('loginBtn').addEventListener('click',async()=>{
+  try{ await signInWithPopup(auth,provider); }
+  catch(e){ if(e.code!=='auth/popup-closed-by-user') alert('登入失敗：'+e.message); }
+});
+
+async function doLogout(){
+  if(unsubscribe){unsubscribe();unsubscribe=null;}
+  await signOut(auth);
+}
+document.getElementById('logoutBtn').addEventListener('click',doLogout);
+document.getElementById('logoutDeniedBtn').addEventListener('click',doLogout);
+
+onAuthStateChanged(auth, user=>{
+  document.getElementById('loading-screen').style.display='none';
+  if(!user){
+    document.getElementById('login-screen').classList.add('show');
+    document.getElementById('denied-screen').classList.remove('show');
+    document.getElementById('app').classList.remove('ready');
+    return;
+  }
+  if(!ALLOWED_EMAILS.includes(user.email)){
+    document.getElementById('login-screen').classList.remove('show');
+    document.getElementById('denied-screen').classList.add('show');
+    document.getElementById('app').classList.remove('ready');
+    return;
+  }
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('denied-screen').classList.remove('show');
+  document.getElementById('app').classList.add('ready');
+  document.getElementById('userAvatar').src=user.photoURL||'';
+  document.getElementById('userName').textContent=user.displayName||user.email;
+  startListening();
+});
+</script>
+</body>
+</html>
