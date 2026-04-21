@@ -6,32 +6,33 @@
 <title>訂房申請 — 兀瑪斯農莊</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f0eb;color:#1a1a1a;min-height:100vh;}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+body{font-family:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;background:#f7f5f2;color:#1a1a1a;min-height:100vh;}
 
-.hero{background:#2d5a27;padding:32px 20px 24px;text-align:center;color:#fff;}
+.hero{background:#1a1a1a;padding:32px 20px 24px;text-align:center;color:#fff;}
 .hero-logo{font-size:36px;margin-bottom:8px;}
 .hero h1{font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:0.02em;}
 .hero p{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;}
 
 .container{max-width:480px;margin:0 auto;padding:20px 16px 40px;}
 
-.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:16px;border:1px solid #e8e0d8;}
+.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:16px;border:0.5px solid #e8e4de;}
 
-.section-title{font-size:12px;font-weight:700;color:#8b6914;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.section-title{font-size:12px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
 .section-title::after{content:'';flex:1;height:1px;background:#f0e8dc;}
 
 .form-row{margin-bottom:14px;}
 .form-row label{font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;}
 .form-row label .req{color:#e53935;margin-left:2px;}
-.form-row input,.form-row select,.form-row textarea{width:100%;padding:11px 13px;border:1.5px solid #e0d8cf;border-radius:8px;font-size:14px;color:#1a1a1a;background:#fff;outline:none;transition:border-color 0.15s;}
-.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#2d5a27;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:11px 13px;border:0.5px solid #e8e4de;border-radius:8px;font-size:14px;color:#1a1a1a;background:#fff;outline:none;transition:border-color 0.15s;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#888;}
 .form-row textarea{resize:none;height:80px;line-height:1.5;}
 .form-row input::placeholder,.form-row textarea::placeholder{color:#bbb;}
 
 .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.plan-option{border:1.5px solid #e0d8cf;border-radius:10px;padding:14px 12px;cursor:pointer;transition:all 0.15s;text-align:center;}
-.plan-option:hover{border-color:#2d5a27;background:#f5faf4;}
-.plan-option.selected{border-color:#2d5a27;background:#f0f7ee;}
+.plan-option{border:0.5px solid #e8e4de;border-radius:10px;padding:14px 12px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.plan-option:hover{border-color:#888;background:#fafaf8;}
+.plan-option.selected{border-color:#1a1a1a;background:#f7f5f2;}
 .plan-option input{display:none;}
 .plan-icon{font-size:24px;margin-bottom:6px;}
 .plan-name{font-size:13px;font-weight:600;color:#333;margin-bottom:3px;}
@@ -41,31 +42,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 .nights-badge{display:inline-block;background:#f0f7ee;color:#2d5a27;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-top:6px;}
 
-.submit-btn{width:100%;padding:15px;background:#2d5a27;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background 0.15s;}
-.submit-btn:hover{background:#1e3d1a;}
+.submit-btn{width:100%;padding:15px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background 0.15s;}
+.submit-btn:hover{background:#333;}
 .submit-btn:disabled{background:#aaa;cursor:not-allowed;}
 
-.notice{background:#fef9ee;border:1px solid #f0d98a;border-radius:10px;padding:14px;margin-bottom:16px;}
-.notice p{font-size:12px;color:#7a5c00;line-height:1.7;}
+.notice{background:#fafaf8;border:0.5px solid #e8e4de;border-radius:10px;padding:14px;margin-bottom:16px;}
+.notice p{font-size:12px;color:#888;line-height:1.7;}
 .notice p::before{content:'📌 ';}
 
 .success-screen{display:none;text-align:center;padding:40px 20px;}
 .success-screen.show{display:block;}
 .success-icon{font-size:64px;margin-bottom:16px;}
-.success-title{font-size:20px;font-weight:700;color:#2d5a27;margin-bottom:8px;}
+.success-title{font-family:'Noto Serif TC',serif;font-size:20px;font-weight:400;letter-spacing:0.06em;color:#1a1a1a;margin-bottom:8px;}
 .success-sub{font-size:14px;color:#666;line-height:1.7;margin-bottom:24px;}
-.success-info{background:#f0f7ee;border-radius:10px;padding:16px;text-align:left;font-size:13px;color:#333;line-height:2;}
+.success-info{background:#f7f5f2;border-radius:10px;padding:16px;text-align:left;font-size:13px;color:#333;line-height:2;}
 .success-info strong{color:#2d5a27;}
 
 .footer{text-align:center;padding:16px;font-size:11px;color:#aaa;}
-.footer a{color:#2d5a27;text-decoration:none;}
+.footer a{color:#4a6741;text-decoration:none;}
 </style>
 </head>
 <body>
 
 <div class="hero">
   <div class="hero-logo">🏡</div>
-  <h1>兀瑪斯農莊</h1>
+  <h1 style="font-family:'Noto Serif TC',Georgia,serif;font-weight:300;letter-spacing:0.1em;">兀瑪斯農莊</h1>
   <p>南投縣信義鄉 · 山林木屋民宿<br>填寫基本資料，我們將盡快與您確認訂房！</p>
 </div>
 
