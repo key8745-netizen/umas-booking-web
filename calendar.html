@@ -142,7 +142,7 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
   <header>
     <h1>🏡 木屋民宿管理</h1>
     <div class="nav-tabs">
-      <a href="index.html" class="nav-tab">看板</a>
+      <a href="index.html" class="nav-tab">主控板</a>
       <div class="nav-tab active" onclick="switchView('gantt')">時間軸</div>
       <div class="nav-tab" onclick="switchView('month')" id="tab-month">月曆</div>
     </div>
@@ -512,16 +512,21 @@ function renderGantt(){
 
           // 滑鼠拖拉調整天數
           const handle=bar.querySelector('.bar-resize');
-          // 用實際顯示的天數（startDay 到 endDay），不用 b.nights
           const displayNights = endDay - startDay + 1;
           handle.addEventListener('mousedown', e=>{
             e.stopPropagation(); e.preventDefault();
-            const startX=e.clientX;
+            const tableRect=ganttTable.getBoundingClientRect();
+            const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
             let currentNights=displayNights;
 
             const onMove=ev=>{
-              const diff=Math.round((ev.clientX-startX)/cellW);
-              currentNights=Math.max(1,displayNights+diff);
+              // 算滑鼠在 table 內的 X 位置
+              const mouseX=ev.clientX-tableRect.left+scrollLeft;
+              const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
+              const labelW=labelCell?labelCell.offsetWidth:110;
+              // 算滑鼠對應哪一天（從1開始）
+              const targetDay=Math.round((mouseX-labelW)/cellW);
+              currentNights=Math.max(1, targetDay-startDay+1);
               bar.style.width=(currentNights*cellW-4)+'px';
               bar.style.opacity='0.8';
             };
@@ -542,11 +547,15 @@ function renderGantt(){
           // 觸控拖拉
           handle.addEventListener('touchstart', e=>{
             e.stopPropagation();
-            const startX=e.touches[0].clientX;
+            const tableRect=ganttTable.getBoundingClientRect();
+            const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
             let currentNights=displayNights;
             const onMove=ev=>{
-              const diff=Math.round((ev.touches[0].clientX-startX)/cellW);
-              currentNights=Math.max(1,displayNights+diff);
+              const mouseX=ev.touches[0].clientX-tableRect.left+scrollLeft;
+              const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
+              const labelW=labelCell?labelCell.offsetWidth:110;
+              const targetDay=Math.round((mouseX-labelW)/cellW);
+              currentNights=Math.max(1,targetDay-startDay+1);
               bar.style.width=(currentNights*cellW-4)+'px';
               bar.style.opacity='0.8';
             };

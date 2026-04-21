@@ -135,7 +135,7 @@ select:focus{border-color:#888;}
 <div class="app" id="app">
   <header>
     <h1>兀瑪斯農莊 <span>Umas</span></h1>
-    <div class="nav-pill"><span class="nav-item active">看板</span><a href="calendar.html" class="nav-item">日曆</a><a href="analytics.html" class="nav-item">統計</a></div>
+    <div class="nav-pill"><span class="nav-item active">主控板</span><a href="calendar.html" class="nav-item">日曆檢視</a><a href="analytics.html" class="nav-item">系統分析</a><a href="customers.html" class="nav-item">客戶資料</a></div>
     <div class="user-info">
       <img class="user-avatar" id="userAvatar" src="" alt="">
       <span id="userName"></span>
@@ -155,6 +155,8 @@ select:focus{border-color:#888;}
       <option value="asc">由小到大 ↑</option>
       <option value="desc">由大到小 ↓</option>
     </select>
+    <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
+    <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
     <button class="btn primary" onclick="openModal()">+ 新增訂房</button>
   </div>
   <div class="board-wrap">
@@ -246,11 +248,21 @@ select:focus{border-color:#888;}
       <div class="form-row"><label>已付訂金 (NT$)</label><input id="f-deposit" type="number" placeholder="30% 訂金" oninput="calcDue()"></div>
       <div class="form-row"><label>應收尾款 (NT$)</label><input id="f-due" type="number" readonly style="background:#f9f9f9;color:#888;"></div>
     </div>
+    <div class="section-label">AI 對話分析</div>
+    <div class="form-row">
+      <label>貼上 Line 對話內容</label>
+      <textarea id="f-chat" placeholder="將 Line 對話複製貼上到這裡，AI 會自動分析並填入表單..." style="min-height:80px;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn" style="font-size:11px;background:#f7f5f2;border-color:#e8e4de;" onclick="analyzeChat()" id="analyzeChatBtn">🤖 分析對話並填入表單</button>
+      <button class="btn" style="font-size:11px;background:#f7f5f2;border-color:#e8e4de;" onclick="checkOrder()" id="checkOrderBtn">✅ 核對訂單是否符合對話</button>
+    </div>
+    <div id="chat-result" style="display:none;background:#f7f5f2;border:0.5px solid #e8e4de;border-radius:8px;padding:12px;margin-bottom:8px;font-size:12px;line-height:1.8;color:#555;"></div>
     <div class="section-label">備註</div>
     <div class="form-row"><textarea id="f-note" placeholder="其他備註事項..."></textarea></div>
     <div class="form-actions">
       <button class="btn" onclick="closeModal()">取消</button>
-      <button class="btn" style="background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" onclick="showDepositCard()">📋 發布訂金通知</button>
+      <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="showDepositCard()">📋 發布訂金通知</button>
       <button class="btn primary" id="saveBtn" onclick="saveBooking()">儲存</button>
     </div>
   </div>
@@ -276,7 +288,7 @@ select:focus{border-color:#888;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -509,7 +521,7 @@ function addTouchDrag(card, fid){
   });
 }
 
-window.renderAll=function(){const board=document.getElementById('board');board.innerHTML='';COLS.forEach(col=>{const raw=bookings.filter(b=>b.status===col.id&&matchSearch(b)),list=sorted(raw),colEl=document.createElement('div');colEl.className='column';colEl.id='col-'+col.id;colEl.innerHTML=`<div class="col-header"><div class="col-label"><div class="col-dot" style="background:${col.dot}"></div><span>${col.label}</span></div><span class="col-count">${list.length}</span></div><div class="drop-hint" id="hint-${col.id}">拖到這裡</div><div class="cards-area" id="area-${col.id}"></div>`;board.appendChild(colEl);const area=document.getElementById('area-'+col.id);list.forEach(b=>{const tmp=document.createElement('div');tmp.innerHTML=cardHTML(b);const card=tmp.firstChild;card.addEventListener('dragstart',()=>{dragId=b.firestoreId;setTimeout(()=>card.classList.add('dragging'),0);COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});});card.addEventListener('dragend',()=>{card.classList.remove('dragging');COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});dragId=null;});addTouchDrag(card,b.firestoreId);area.appendChild(card);});colEl.addEventListener('dragover',e=>e.preventDefault());colEl.addEventListener('drop',async e=>{e.preventDefault();if(!dragId)return;const bk=bookings.find(x=>x.firestoreId===dragId);if(bk&&bk.status!==col.id){await updateDoc(doc(db,'bookings',dragId),{status:col.id});showToast('已移至「'+col.label+'」');}});});};
+window.renderAll=function(){const board=document.getElementById('board');board.innerHTML='';COLS.forEach(col=>{const raw=bookings.filter(b=>b.status===col.id&&matchSearch(b)),list=sorted(raw),colEl=document.createElement('div');colEl.className='column';colEl.id='col-'+col.id;colEl.innerHTML=`<div class="col-header"><div class="col-label"><div class="col-dot" style="background:${col.dot}"></div><span>${col.label}</span></div><span class="col-count">${list.length}</span></div><div class="drop-hint" id="hint-${col.id}">拖到這裡</div><div class="cards-area" id="area-${col.id}"></div>`;board.appendChild(colEl);const area=document.getElementById('area-'+col.id);list.forEach(b=>{const tmp=document.createElement('div');tmp.innerHTML=cardHTML(b);const card=tmp.firstChild;card.addEventListener('dragstart',()=>{dragId=b.firestoreId;setTimeout(()=>card.classList.add('dragging'),0);COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});});card.addEventListener('dragend',()=>{card.classList.remove('dragging');COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});dragId=null;});addTouchDrag(card,b.firestoreId);area.appendChild(card);});colEl.addEventListener('dragover',e=>e.preventDefault());colEl.addEventListener('drop',async e=>{e.preventDefault();if(!dragId)return;const bk=bookings.find(x=>x.firestoreId===dragId);if(bk&&bk.status!==col.id){const oldStatus=bk.status;pushUndo({type:'update',fid:dragId,before:{status:oldStatus},after:{status:col.id}});await updateDoc(doc(db,'bookings',dragId),{status:col.id});showToast('已移至「'+col.label+'」');}});});};
 
 function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
 function setF(id,val){const el=document.getElementById(id);if(el)el.value=val===undefined||val===null?'':val;}
@@ -547,19 +559,209 @@ window.saveBooking=async function(){
   const saveBtn=document.getElementById('saveBtn');
   if(saveBtn){saveBtn.textContent='儲存中...';saveBtn.disabled=true;}
   try{
-    if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}
-    else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}
+    if(editId){
+      const before=bookings.find(x=>x.firestoreId===editId);
+      const beforeData=before?{...before}:null;
+      await updateDoc(doc(db,'bookings',editId),data);
+      if(beforeData) pushUndo({type:'update',fid:editId,before:beforeData,after:data});
+      showToast('已更新');
+    } else {
+      const ref=await addDoc(collection(db,'bookings'),data);
+      pushUndo({type:'create',fid:ref.id,data:{...data}});
+      showToast('已新增並同步');
+    }
     closeModal();
   }catch(e){alert('儲存失敗：'+e.message);}
   if(saveBtn){saveBtn.textContent='儲存';saveBtn.disabled=false;}
 };
 
 window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);if(b)openModal(b);};
-window.deleteBooking=async function(fid,name){if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;await deleteDoc(doc(db,'bookings',fid));showToast('已刪除');};
+window.deleteBooking=async function(fid,name){
+  if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;
+  const b=bookings.find(x=>x.firestoreId===fid);
+  if(b) pushUndo({type:'delete',fid,data:{...b}});
+  await deleteDoc(doc(db,'bookings',fid));
+  showToast('已刪除');
+};
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
+// ── Undo / Redo ──
+const undoStack=[], redoStack=[];
+const MAX_HISTORY=30;
+
+function updateUndoRedoBtns(){
+  const uBtn=document.getElementById('undoBtn');
+  const rBtn=document.getElementById('redoBtn');
+  if(uBtn){uBtn.disabled=undoStack.length===0;uBtn.style.opacity=undoStack.length===0?'0.4':'1';uBtn.style.cursor=undoStack.length===0?'not-allowed':'pointer';}
+  if(rBtn){rBtn.disabled=redoStack.length===0;rBtn.style.opacity=redoStack.length===0?'0.4':'1';rBtn.style.cursor=redoStack.length===0?'not-allowed':'pointer';}
+}
+
+function pushUndo(action){
+  undoStack.push(action);
+  if(undoStack.length>MAX_HISTORY) undoStack.shift();
+  redoStack.length=0;
+  updateUndoRedoBtns();
+}
+
+window.undoAction=async function(){
+  if(!undoStack.length) return;
+  const action=undoStack.pop();
+  redoStack.push(action);
+  await applyAction(action,'undo');
+  updateUndoRedoBtns();
+  showToast('已復原');
+};
+window.redoAction=async function(){
+  if(!redoStack.length) return;
+  const action=redoStack.pop();
+  undoStack.push(action);
+  await applyAction(action,'redo');
+  updateUndoRedoBtns();
+  showToast('已重做');
+};
+
+async function applyAction(action, direction){
+  const isUndo = direction==='undo';
+  if(action.type==='create'){
+    if(isUndo) await deleteDoc(doc(db,'bookings',action.fid));
+    else{ await setDoc(doc(db,'bookings',action.fid), action.data); }
+  } else if(action.type==='delete'){
+    if(isUndo){ await setDoc(doc(db,'bookings',action.fid), action.data); }
+    else await deleteDoc(doc(db,'bookings',action.fid));
+  } else if(action.type==='update'){
+    await updateDoc(doc(db,'bookings',action.fid), isUndo?action.before:action.after);
+  }
+}
+
+// 鍵盤快捷鍵
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undoAction();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='z'))){e.preventDefault();redoAction();}
+});
+
 window.closeDeposit=function(){document.getElementById('depositBg').classList.remove('open');};
+
+window.analyzeChat=async function(){
+  const chat=document.getElementById('f-chat').value.trim();
+  if(!chat){alert('請先貼上 Line 對話內容');return;}
+  const btn=document.getElementById('analyzeChatBtn');
+  btn.textContent='分析中...';btn.disabled=true;
+  const resultEl=document.getElementById('chat-result');
+  resultEl.style.display='block';
+  resultEl.innerHTML='<span style="color:#aaa;">AI 分析中，請稍候...</span>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:`你是兀瑪斯農莊（南投山區民宿）的訂房助理。請從 Line 對話中萃取訂房資訊，並分析客人的態度和口氣。
+回覆格式必須是純 JSON，不要有其他文字：
+{
+  "name": "客人姓名（如有）",
+  "phone": "電話（如有）",
+  "line": "Line ID（如有）",
+  "checkin": "入住日期 YYYY-MM-DD（如有）",
+  "checkout": "退房日期 YYYY-MM-DD（如有）",
+  "nights": 住宿天數數字（如有）,
+  "pax": 人數數字（如有）,
+  "guesttype": "訪客類型（如有）",
+  "roomtype": "房型需求（如有）",
+  "plan": "normal 或 hiking（如有提到登山）",
+  "note": "對話重點摘要（特殊需求、注意事項等）",
+  "attitude": "客人態度分析（禮貌程度、是否殺價、溝通方式等）",
+  "strategy": "建議應對策略",
+  "risk": "風險提示（如有）",
+  "tag": "好客人 或 普通 或 需注意（根據態度判斷）"
+}`,
+        messages:[{role:'user',content:`請分析以下 Line 對話：\n\n${chat}`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'{}';
+    let parsed;
+    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }
+    catch(e){ parsed={}; }
+
+    // 自動填入表單
+    const setIfVal=(id,val)=>{ if(val&&document.getElementById(id)) document.getElementById(id).value=val; };
+    setIfVal('f-name',parsed.name);
+    setIfVal('f-phone',parsed.phone);
+    setIfVal('f-line',parsed.line);
+    setIfVal('f-checkin',parsed.checkin);
+    setIfVal('f-checkout',parsed.checkout);
+    if(parsed.nights) setIfVal('f-nights',parsed.nights);
+    if(parsed.pax) setIfVal('f-pax',parsed.pax);
+    setIfVal('f-guesttype',parsed.guesttype);
+    if(parsed.plan) document.getElementById('f-plan').value=parsed.plan;
+    if(parsed.checkin) onCheckinChange();
+
+    // 備註加入摘要
+    if(parsed.note){
+      const noteEl=document.getElementById('f-note');
+      noteEl.value=(noteEl.value?noteEl.value+'\n':'') + parsed.note;
+    }
+
+    // 顯示分析結果
+    const tagColor={'好客人':'#2d6a4f','普通':'#888','需注意':'#b94040'}[parsed.tag]||'#888';
+    const tagBg={'好客人':'#edf5f0','普通':'#f7f5f2','需注意':'#fdf0f0'}[parsed.tag]||'#f7f5f2';
+    resultEl.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:600;color:${tagColor};background:${tagBg};padding:3px 10px;border-radius:999px;">${parsed.tag||'未知'}</span>
+        <span style="font-size:11px;color:#888;">客戶評估</span>
+      </div>
+      ${parsed.attitude?`<div style="margin-bottom:6px;"><span style="color:#aaa;font-size:10px;letter-spacing:0.05em;">態度分析</span><div style="margin-top:2px;">${parsed.attitude}</div></div>`:''}
+      ${parsed.strategy?`<div style="margin-bottom:6px;"><span style="color:#aaa;font-size:10px;letter-spacing:0.05em;">應對策略</span><div style="margin-top:2px;color:#4a6741;">${parsed.strategy}</div></div>`:''}
+      ${parsed.risk?`<div><span style="color:#aaa;font-size:10px;letter-spacing:0.05em;">風險提示</span><div style="margin-top:2px;color:#b94040;">${parsed.risk}</div></div>`:''}
+    `;
+    showToast('分析完成，表單已自動填入 ✓');
+  }catch(e){
+    resultEl.innerHTML='<span style="color:#b94040;">分析失敗，請稍後再試</span>';
+  }
+  btn.textContent='🤖 分析對話並填入表單';btn.disabled=false;
+};
+
+window.checkOrder=async function(){
+  const chat=document.getElementById('f-chat').value.trim();
+  if(!chat){alert('請先貼上 Line 對話內容');return;}
+  const btn=document.getElementById('checkOrderBtn');
+  btn.textContent='核對中...';btn.disabled=true;
+  const resultEl=document.getElementById('chat-result');
+  resultEl.style.display='block';
+  resultEl.innerHTML='<span style="color:#aaa;">核對中...</span>';
+
+  const name=document.getElementById('f-name').value;
+  const checkin=document.getElementById('f-checkin').value;
+  const checkout=document.getElementById('f-checkout').value;
+  const pax=document.getElementById('f-pax').value;
+  const nights=document.getElementById('f-nights').value;
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value).join('、');
+  const plan=document.getElementById('f-plan').value==='hiking'?'登山方案':'一般住宿';
+  const note=document.getElementById('f-note').value;
+  const quote=document.getElementById('f-quote').value;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        system:'你是兀瑪斯農莊的訂房核對助理。請核對訂單資料是否符合 Line 對話內容，用繁體中文回覆，條列說明符合和不符合的地方，並標示是否有遺漏的需求。回覆要簡潔有重點。',
+        messages:[{role:'user',content:`Line 對話：\n${chat}\n\n目前訂單資料：\n姓名：${name}\n入住：${checkin}\n退房：${checkout}\n天數：${nights}晚\n人數：${pax}人\n房型：${rooms}\n方案：${plan}\n報價：NT$${quote}\n備註：${note}\n\n請核對是否符合對話需求，有無遺漏或錯誤。`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'無法取得回應';
+    resultEl.innerHTML=`<div style="white-space:pre-wrap;">${text.replace(/\n/g,'<br>')}</div>`;
+    showToast('核對完成');
+  }catch(e){
+    resultEl.innerHTML='<span style="color:#b94040;">核對失敗，請稍後再試</span>';
+  }
+  btn.textContent='✅ 核對訂單是否符合對話';btn.disabled=false;
+};
 
 window.downloadDepositImage=async function(){
   const btn=document.getElementById('downloadImgBtn');
