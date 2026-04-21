@@ -178,8 +178,9 @@ select:focus{border-color:#888;}
       <div class="form-row"><label>狀態</label><select id="f-status"></select></div>
       <div class="form-row"><label>訂房平台</label><input id="f-platform" placeholder="Booking、Agoda..."></div>
       <div class="form-row"><label>Booking 訂單編號</label><input id="f-confirm" placeholder="BK-001"></div>
-      <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date" onchange="autoCalc()"></div>
-      <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" placeholder="1" onchange="autoCalc()"></div>
+      <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date" onchange="onCheckinChange()"></div>
+      <div class="form-row"><label>退房日期 *</label><input id="f-checkout" type="date" onchange="onCheckoutChange()"></div>
+      <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" placeholder="自動計算" onchange="onNightsChange()"></div>
       <div class="form-row"><label>人數</label><input id="f-pax" type="number" min="1" placeholder="3" onchange="autoCalc()"></div>
       <div class="form-row"><label>訪客類型</label><input id="f-guesttype" placeholder="登山、觀光..."></div>
       <div class="form-row full">
@@ -303,7 +304,28 @@ let bookings=[],editId=null,dragId=null,searchQ='',unsubscribe=null;
 window.filterCards=()=>{searchQ=document.getElementById('searchInput').value;renderAll();};
 window.calcDue=()=>{const q=parseFloat(document.getElementById('f-quote').value)||0,d=parseFloat(document.getElementById('f-deposit').value)||0;document.getElementById('f-due').value=Math.round(q-d)||'';};
 
-// ── 定價規則 ──
+function dateAddDays(ds,n){const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function dateDiffDays(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/86400000);}
+
+window.onCheckinChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const n=parseInt(document.getElementById('f-nights').value);
+  document.getElementById('f-checkout').min=ci||'';
+  if(ci&&n>0){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
+  autoCalc();
+};
+window.onCheckoutChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const co=document.getElementById('f-checkout').value;
+  if(ci&&co&&co>ci){document.getElementById('f-nights').value=dateDiffDays(ci,co);}
+  autoCalc();
+};
+window.onNightsChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const n=parseInt(document.getElementById('f-nights').value);
+  if(ci&&n>0){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
+  autoCalc();
+};
 const ROOM_INFO={'A-101':{type:'suite',maxPax:4},'A-102':{type:'suite',maxPax:4},'A-103':{type:'suite',maxPax:4},'A-201':{type:'dorm',maxPax:6,fixed:true},'A-202':{type:'dorm',maxPax:3,fixed:true},'A-203':{type:'dorm',maxPax:7,fixed:true},'B-201':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-202':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-203':{type:'dorm',maxPax:6,fixed:false,minPax:2},'B-204':{type:'dorm',maxPax:3,fixed:false,minPax:0},'C-201':{type:'suite',maxPax:3},'C-202':{type:'suite',maxPax:3},'C-203':{type:'suite',maxPax:3}};
 const SUITE_PRICE={'A-101':{weekday:3000,holiday:3600,special:3960},'A-102':{weekday:3000,holiday:3600,special:3960},'A-103':{weekday:3000,holiday:3600,special:3960},'C-201':{weekday:2200,holiday:2700,special:2970},'C-202':{weekday:2200,holiday:2700,special:2970},'C-203':{weekday:2200,holiday:2700,special:2970}};
 const DORM_FIXED={'A-201':{weekday:3168,holiday:3960},'A-202':{weekday:3168,holiday:3960},'A-203':{weekday:3168,holiday:3960},'B-201':{weekday:2112,holiday:2640},'B-202':{weekday:2112,holiday:2640}};
@@ -470,7 +492,7 @@ window.renderAll=function(){const board=document.getElementById('board');board.i
 function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
 function setF(id,val){const el=document.getElementById(id);if(el)el.value=val===undefined||val===null?'':val;}
 
-window.openModal=function(pre){editId=pre?pre.firestoreId:null;document.getElementById('modalTitle').textContent=editId?'編輯訂房':'新增訂房';setF('f-name',pre?.name);setF('f-phone',pre?.phone);setF('f-line',pre?.line);setF('f-fb',pre?.fb);setF('f-hotel',pre?.hotel);setF('f-platform',pre?.platform);setF('f-confirm',pre?.confirm);setF('f-checkin',pre?.checkin);setF('f-nights',pre?.nights||1);setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.meal);setF('f-mealpax',pre?.mealpax||0);setF('f-special',pre?.special);setF('f-extra',pre?.extra);setF('f-activity',pre?.activity);setF('f-actpax',pre?.actpax||0);setF('f-quote',pre?.quote);setF('f-deposit',pre?.deposit);setF('f-due',pre?.due);setF('f-note',pre?.note);
+window.openModal=function(pre){editId=pre?pre.firestoreId:null;document.getElementById('modalTitle').textContent=editId?'編輯訂房':'新增訂房';setF('f-name',pre?.name);setF('f-phone',pre?.phone);setF('f-line',pre?.line);setF('f-fb',pre?.fb);setF('f-hotel',pre?.hotel);setF('f-platform',pre?.platform);setF('f-confirm',pre?.confirm);setF('f-checkin',pre?.checkin);setF('f-nights',pre?.nights||1);const co=pre?.checkout||(pre?.checkin&&pre?.nights?dateAddDays(pre.checkin,parseInt(pre.nights)||1):'');setF('f-checkout',co);setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.meal);setF('f-mealpax',pre?.mealpax||0);setF('f-special',pre?.special);setF('f-extra',pre?.extra);setF('f-activity',pre?.activity);setF('f-actpax',pre?.actpax||0);setF('f-quote',pre?.quote);setF('f-deposit',pre?.deposit);setF('f-due',pre?.due);setF('f-note',pre?.note);
 document.getElementById('f-plan').value=pre?.plan||'normal';
 document.getElementById('f-daytype').value='auto';
 populateStatus(pre?.status||'new-case');
@@ -484,7 +506,9 @@ window.closeModal=function(){document.getElementById('modalBg').classList.remove
 
 window.saveBooking=async function(){const name=document.getElementById('f-name').value.trim(),checkin=document.getElementById('f-checkin').value;if(!name||!checkin){alert('請填寫姓名和入住日期');return;}const q=parseFloat(document.getElementById('f-quote').value)||0,dep=parseFloat(document.getElementById('f-deposit').value)||0;
 const roomtype=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
-const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,nights:parseInt(document.getElementById('f-nights').value)||1,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};const saveBtn=document.getElementById('saveBtn');saveBtn.textContent='儲存中...';saveBtn.disabled=true;try{if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}closeModal();}catch(e){alert('儲存失敗：'+e.message);}saveBtn.textContent='儲存';saveBtn.disabled=false;};
+const nights=parseInt(document.getElementById('f-nights').value)||1;
+const checkout=document.getElementById('f-checkout').value||dateAddDays(checkin,nights);
+const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,checkout,nights,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};const saveBtn=document.getElementById('saveBtn');saveBtn.textContent='儲存中...';saveBtn.disabled=true;try{if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}closeModal();}catch(e){alert('儲存失敗：'+e.message);}saveBtn.textContent='儲存';saveBtn.disabled=false;};
 
 window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);if(b)openModal(b);};
 window.deleteBooking=async function(fid,name){if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;await deleteDoc(doc(db,'bookings',fid));showToast('已刪除');};
