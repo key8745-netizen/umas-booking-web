@@ -499,7 +499,14 @@ window.renderAll=function(){const board=document.getElementById('board');board.i
 function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
 function setF(id,val){const el=document.getElementById(id);if(el)el.value=val===undefined||val===null?'':val;}
 
-window.openModal=function(pre){editId=pre?pre.firestoreId:null;document.getElementById('modalTitle').textContent=editId?'編輯訂房':'新增訂房';setF('f-name',pre?.name);setF('f-phone',pre?.phone);setF('f-line',pre?.line);setF('f-fb',pre?.fb);setF('f-hotel',pre?.hotel);setF('f-platform',pre?.platform);setF('f-confirm',pre?.confirm);setF('f-checkin',pre?.checkin);setF('f-nights',pre?.nights||1);const co=pre?.checkout||(pre?.checkin&&pre?.nights?dateAddDays(pre.checkin,parseInt(pre.nights)||1):'');setF('f-checkout',co);setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.meal);setF('f-mealpax',pre?.mealpax||0);setF('f-special',pre?.special);setF('f-extra',pre?.extra);setF('f-activity',pre?.activity);setF('f-actpax',pre?.actpax||0);setF('f-quote',pre?.quote);setF('f-deposit',pre?.deposit);setF('f-due',pre?.due);setF('f-note',pre?.note);
+window.openModal=function(pre){editId=pre?pre.firestoreId:null;document.getElementById('modalTitle').textContent=editId?'編輯訂房':'新增訂房';setF('f-name',pre?.name);setF('f-phone',pre?.phone);setF('f-line',pre?.line);setF('f-fb',pre?.fb);setF('f-hotel',pre?.hotel);setF('f-platform',pre?.platform);setF('f-confirm',pre?.confirm);
+const ci=pre?.checkin||'';
+const n=Math.max(1,parseInt(pre?.nights)||1);
+const co=pre?.checkout||(ci?dateAddDays(ci,n):'');
+setF('f-checkin',ci);setF('f-nights',n);setF('f-checkout',co);
+const coEl=document.getElementById('f-checkout');
+if(ci&&coEl) coEl.min=dateAddDays(ci,1);
+setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.meal);setF('f-mealpax',pre?.mealpax||0);setF('f-special',pre?.special);setF('f-extra',pre?.extra);setF('f-activity',pre?.activity);setF('f-actpax',pre?.actpax||0);setF('f-quote',pre?.quote);setF('f-deposit',pre?.deposit);setF('f-due',pre?.due);setF('f-note',pre?.note);
 document.getElementById('f-plan').value=pre?.plan||'normal';
 document.getElementById('f-daytype').value='auto';
 populateStatus(pre?.status||'new-case');
