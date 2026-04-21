@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>訂房日曆 — 木屋民宿</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+:root{--serif:'Noto Serif TC','Georgia',serif;--sans:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;--bg:#f7f5f2;--border:#e8e4de;--text:#1a1a1a;--text2:#888;--text3:#bbb;}
+
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:13px;}
+body{font-family:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;background:#f7f5f2;color:#1a1a1a;font-size:13px;}
 #loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
-#loading-screen .spinner{width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#378ADD;border-radius:50%;animation:spin 0.8s linear infinite;}
+#loading-screen .spinner{width:32px;height:32px;border:2px solid #e8e4de;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #login-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
 #login-screen.show{display:flex;}
-.login-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
+.login-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:0.5px solid #e8e4de;}
 .login-title{font-size:18px;font-weight:600;margin-bottom:6px;}
 .login-sub{font-size:13px;color:#888;margin-bottom:24px;}
 .login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:#333;}
@@ -20,16 +23,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .login-btn img{width:20px;height:20px;}
 #denied-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
 #denied-screen.show{display:flex;}
-.denied-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
+.denied-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:0.5px solid #e8e4de;}
 
 .app{display:none;flex-direction:column;height:100vh;}
 .app.ready{display:flex;}
 
-header{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 16px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
-header h1{font-size:14px;font-weight:600;flex:1;}
+header{background:#fff;border-bottom:0.5px solid #e8e4de;padding:0 16px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
+header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;letter-spacing:0.06em;flex:1;}
 .nav-tabs{display:flex;gap:4px;}
 .nav-tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#666;border:1px solid transparent;}
-.nav-tab.active{background:#378ADD;color:#fff;}
+.nav-tab.active{background:#1a1a1a;color:#fff;}
 .nav-tab:hover:not(.active){background:#f0f2f5;}
 .user-info{display:flex;align-items:center;gap:6px;font-size:11px;color:#888;}
 .user-avatar{width:24px;height:24px;border-radius:50%;}
@@ -41,7 +44,7 @@ header h1{font-size:14px;font-weight:600;flex:1;}
 /* ── GANTT ── */
 .gantt-wrap{flex:1;overflow:auto;display:none;flex-direction:column;}
 .gantt-wrap.active{display:flex;}
-.gantt-toolbar{background:#fff;border-bottom:1px solid #e0e0e0;padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.gantt-toolbar{background:#fff;border-bottom:0.5px solid #e8e4de;padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .gantt-toolbar select{padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;}
 .gantt-toolbar button{padding:4px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;}
 .gantt-toolbar button:hover{background:#f0f2f5;}
@@ -72,9 +75,9 @@ header h1{font-size:14px;font-weight:600;flex:1;}
 .month-wrap.active{display:block;}
 .month-grid-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .month-grid-header h2{font-size:15px;font-weight:600;flex:1;}
-.month-cal{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;}
+.month-cal{background:#fff;border-radius:12px;border:0.5px solid #e8e4de;overflow:hidden;}
 .month-cal-header{display:grid;grid-template-columns:repeat(7,1fr);}
-.month-cal-header div{padding:8px;text-align:center;font-size:11px;font-weight:600;color:#888;background:#f8f9fa;border-bottom:1px solid #e0e0e0;}
+.month-cal-header div{padding:8px;text-align:center;font-size:11px;font-weight:600;color:#888;background:#f8f9fa;border-bottom:0.5px solid #e8e4de;}
 .month-cal-header div:first-child{color:#e53935;}
 .month-cal-header div:last-child{color:#1a73e8;}
 .month-days{display:grid;grid-template-columns:repeat(7,1fr);}
@@ -102,8 +105,8 @@ header h1{font-size:14px;font-weight:600;flex:1;}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
 .btn{padding:6px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#333;font-size:12px;cursor:pointer;font-weight:500;}
 .btn:hover{background:#f5f5f5;}
-.btn.primary{background:#378ADD;color:#fff;border-color:#378ADD;}
-.btn.primary:hover{background:#185FA5;}
+.btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.btn.primary:hover{background:#333;}
 .btn.danger{background:#fff;color:#c62828;border-color:#f5c6c6;}
 .btn.danger:hover{background:#fce8e6;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:7px 18px;border-radius:999px;font-size:12px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
@@ -148,7 +151,7 @@ header h1{font-size:14px;font-weight:600;flex:1;}
       <div class="sync-dot online" id="syncDot"></div>
     </div>
     <button class="btn-sm" id="logoutBtn">登出</button>
-    <button class="btn-sm" style="background:#378ADD;color:#fff;border-color:#378ADD;" onclick="openModal()">+ 新增訂房</button>
+    <button class="btn-sm" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="openModal()">+ 新增訂房</button>
   </header>
 
   <!-- GANTT VIEW -->

@@ -3,97 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>訂房管理看板</title>
+<title>訂房管理 — 兀瑪斯農莊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:14px;}
+:root{--serif:'Noto Serif TC','Georgia',serif;--sans:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;--bg:#f7f5f2;--bg2:#fff;--border:#e8e4de;--border2:#f0ece6;--text:#1a1a1a;--text2:#888;--text3:#bbb;--green:#4a6741;--green-bg:#f2f6ee;--green-border:#c8d4b8;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;}
 #loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
-#loading-screen .spinner{width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#378ADD;border-radius:50%;animation:spin 0.8s linear infinite;}
+#loading-screen .spinner{width:28px;height:28px;border:2px solid #e8e4de;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-#loading-screen p{font-size:13px;color:#888;}
-#login-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:20px;}
+#loading-screen p{font-size:12px;color:var(--text3);letter-spacing:0.04em;}
+#login-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
 #login-screen.show{display:flex;}
-.login-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
-.login-logo{font-size:32px;margin-bottom:8px;}
-.login-title{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:6px;}
-.login-sub{font-size:13px;color:#888;margin-bottom:28px;}
-.login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:14px;font-weight:500;cursor:pointer;color:#333;}
-.login-btn:hover{background:#f5f5f5;}
-.login-btn img{width:20px;height:20px;}
-#denied-screen{position:fixed;inset:0;background:#f0f2f5;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:20px;}
+.login-card{background:#fff;border-radius:18px;padding:44px 40px;width:360px;text-align:center;border:0.5px solid var(--border);}
+.login-logo{font-family:var(--serif);font-size:22px;font-weight:300;letter-spacing:0.1em;margin-bottom:4px;color:var(--text);}
+.login-title{font-size:12px;color:var(--text3);letter-spacing:0.08em;margin-bottom:28px;}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:0.5px solid var(--border);border-radius:10px;background:#fff;font-size:13px;font-weight:400;cursor:pointer;color:var(--text);}
+.login-btn:hover{background:var(--bg);}
+.login-btn img{width:18px;height:18px;}
+#denied-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
 #denied-screen.show{display:flex;}
-.denied-card{background:#fff;border-radius:16px;padding:40px;width:360px;text-align:center;border:1px solid #e0e0e0;}
-.denied-icon{font-size:40px;margin-bottom:12px;}
-.denied-title{font-size:16px;font-weight:600;color:#c62828;margin-bottom:8px;}
-.denied-sub{font-size:13px;color:#888;margin-bottom:20px;line-height:1.6;}
+.denied-card{background:#fff;border-radius:18px;padding:44px 40px;width:360px;text-align:center;border:0.5px solid var(--border);}
+.denied-icon{font-size:36px;margin-bottom:14px;}
+.denied-title{font-family:var(--serif);font-size:16px;font-weight:400;color:#b94040;margin-bottom:8px;}
+.denied-sub{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.7;}
 .app{display:none;flex-direction:column;height:100vh;}
 .app.ready{display:flex;}
-header{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;display:flex;align-items:center;gap:12px;height:52px;flex-shrink:0;}
-header h1{font-size:15px;font-weight:600;color:#1a1a1a;flex:1;}
-.user-info{display:flex;align-items:center;gap:8px;font-size:12px;color:#666;}
-.user-avatar{width:28px;height:28px;border-radius:50%;border:1px solid #e0e0e0;}
-.sync-status{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:500;}
-.sync-status.online{background:#e6f4ea;color:#1e7e34;}
-.sync-status.offline{background:#fce8e6;color:#c62828;}
-.sync-status.syncing{background:#e8f0fe;color:#1a73e8;}
-.btn-logout{padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#666;font-size:11px;cursor:pointer;}
-.btn-logout:hover{background:#fce8e6;color:#c62828;border-color:#f5c6c6;}
-.toolbar{background:#fff;border-bottom:1px solid #e0e0e0;padding:8px 20px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
-.search-box{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:180px;outline:none;}
-.search-box:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD22;}
-select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;background:#fff;}
-.sort-label{font-size:12px;color:#666;}
-.btn{padding:6px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#333;font-size:12px;cursor:pointer;font-weight:500;}
-.btn:hover{background:#f5f5f5;}
-.btn.primary{background:#378ADD;color:#fff;border-color:#378ADD;}
-.btn.primary:hover{background:#185FA5;}
+header{background:#fff;border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
+header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:0.06em;color:var(--text);flex:1;}
+.nav-pill{display:flex;gap:1px;background:var(--bg);border-radius:8px;padding:3px;border:0.5px solid var(--border);}
+.nav-item{padding:4px 12px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;font-weight:400;text-decoration:none;letter-spacing:0.02em;}
+.nav-item.active{background:#fff;color:var(--text);font-weight:500;}
+.nav-item:hover:not(.active){color:var(--text);}
+.user-info{display:flex;align-items:center;gap:6px;}
+.user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
+.sync-status{font-size:10px;padding:2px 8px;border-radius:999px;letter-spacing:0.03em;}
+.sync-status.online{background:#edf5f0;color:#2d6a4f;}
+.sync-status.offline{background:#fdf0f0;color:#b94040;}
+.sync-status.syncing{background:#f5f5f5;color:var(--text3);}
+.btn-logout{padding:4px 10px;border:0.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text2);font-size:11px;cursor:pointer;}
+.btn-logout:hover{background:#fdf0f0;color:#b94040;border-color:#e8c8c8;}
+.toolbar{background:#fff;border-bottom:0.5px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+.search-box{padding:6px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;width:180px;outline:none;background:#fff;color:var(--text);font-family:var(--sans);}
+.search-box:focus{border-color:#888;}
+select{padding:5px 8px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fff;color:var(--text);font-family:var(--sans);}
+select:focus{border-color:#888;}
+.sort-label{font-size:11px;color:var(--text2);letter-spacing:0.02em;}
+.btn{padding:6px 14px;border:0.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:12px;cursor:pointer;font-weight:400;}
+.btn:hover{background:var(--bg);}
+.btn.primary{background:var(--text);color:#fff;border-color:var(--text);}
+.btn.primary:hover{background:#333;}
 .board-wrap{flex:1;overflow-x:auto;overflow-y:hidden;padding:16px 20px;cursor:grab;user-select:none;}
 .board-wrap.dragging-board{cursor:grabbing;}
-.board{display:flex;gap:12px;align-items:flex-start;min-width:max-content;height:100%;}
-.column{background:#ebecf0;border-radius:10px;padding:10px;width:220px;flex-shrink:0;max-height:calc(100vh - 140px);display:flex;flex-direction:column;}
-.col-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
-.col-label{display:flex;align-items:center;gap:6px;color:#5e6c84;}
-.col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.col-count{background:#fff;border-radius:999px;padding:1px 7px;font-size:10px;color:#5e6c84;}
+.board{display:flex;gap:10px;align-items:flex-start;min-width:max-content;height:100%;}
+.column{background:#fff;border-radius:12px;border:0.5px solid var(--border);padding:10px;width:215px;flex-shrink:0;max-height:calc(100vh - 140px);display:flex;flex-direction:column;}
+.col-header{font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.col-label{display:flex;align-items:center;gap:5px;color:var(--text2);}
+.col-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.col-count{background:var(--bg);border-radius:999px;padding:1px 7px;font-size:10px;color:var(--text3);}
 .cards-area{overflow-y:auto;flex:1;}
-.cards-area::-webkit-scrollbar{width:4px;}
-.cards-area::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px;}
-.card{background:#fff;border-radius:8px;padding:10px;margin-bottom:6px;cursor:grab;border:1px solid #e0e0e0;transition:box-shadow 0.15s;}
-.card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.cards-area::-webkit-scrollbar{width:3px;}
+.cards-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.card{background:#fafaf8;border-radius:9px;padding:10px;margin-bottom:6px;cursor:grab;border:0.5px solid var(--border2);}
+.card:hover{border-color:var(--border);}
 .card.dragging{opacity:0.4;cursor:grabbing;}
-.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;margin-bottom:5px;font-weight:600;}
-.sort-key{font-size:10px;color:#999;background:#f5f5f5;border-radius:4px;padding:1px 5px;display:inline-block;float:right;}
-.card-name{font-size:13px;font-weight:600;color:#172b4d;margin-bottom:2px;clear:both;}
-.card-hotel{font-size:11px;color:#5e6c84;margin-bottom:4px;}
-.card-row{font-size:11px;color:#5e6c84;margin-bottom:2px;display:flex;gap:4px;}
-.card-row-label{color:#aaa;flex-shrink:0;}
-.card-money{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;}
+.tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:5px;font-weight:500;letter-spacing:0.03em;}
+.sort-key{font-size:9px;color:var(--text3);background:var(--bg);border-radius:4px;padding:1px 5px;display:inline-block;float:right;}
+.card-name{font-family:var(--serif);font-size:13px;font-weight:400;color:var(--text);margin-bottom:2px;clear:both;letter-spacing:0.02em;}
+.card-hotel{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.card-row{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;gap:4px;}
+.card-row-label{color:var(--text3);flex-shrink:0;}
+.card-money{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border2);}
 .money-item{flex:1;text-align:center;}
-.money-label{font-size:9px;color:#aaa;margin-bottom:1px;}
-.money-val{font-size:11px;font-weight:600;}
-.money-val.total{color:#1a73e8;}
-.money-val.paid{color:#1e7e34;}
-.money-val.due{color:#c62828;}
-.card-actions{display:flex;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;}
-.icon-btn{font-size:11px;color:#888;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;}
-.icon-btn:hover{background:#f0f0f0;color:#333;}
-.icon-btn.del:hover{color:#c62828;}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+.money-label{font-size:9px;color:var(--text3);margin-bottom:1px;letter-spacing:0.03em;}
+.money-val{font-size:11px;font-weight:500;}
+.money-val.total{color:#3a6ab0;}
+.money-val.paid{color:#2d6a4f;}
+.money-val.due{color:#b94040;}
+.card-actions{display:flex;gap:4px;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border2);}
+.icon-btn{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:5px;}
+.icon-btn:hover{background:var(--bg);color:var(--text);}
+.icon-btn.del:hover{color:#b94040;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;backdrop-filter:blur(2px);}
 .modal-bg.open{display:flex;}
-.modal{background:#fff;border-radius:12px;padding:24px;width:460px;max-width:100%;}
-.modal h3{font-size:15px;font-weight:600;margin-bottom:16px;}
-.section-label{font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #f0f0f0;}
+.modal{background:#fff;border-radius:16px;padding:24px;width:460px;max-width:100%;border:0.5px solid var(--border);}
+.modal h3{font-family:var(--serif);font-size:15px;font-weight:400;margin-bottom:16px;letter-spacing:0.04em;color:var(--text);}
+.section-label{font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin:14px 0 6px;padding-bottom:5px;border-bottom:0.5px solid var(--border2);}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .form-grid.col3{grid-template-columns:1fr 1fr 1fr;}
-.form-row label{font-size:11px;color:#666;display:block;margin-bottom:3px;}
-.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;outline:none;}
-.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD22;}
+.form-row label{font-size:10px;color:var(--text2);display:block;margin-bottom:3px;letter-spacing:0.03em;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;color:var(--text);font-family:var(--sans);}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#888;background:#fff;}
 .form-row textarea{resize:vertical;min-height:52px;}
 .form-row.full{grid-column:1/-1;}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 20px;border-radius:999px;font-size:12px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;letter-spacing:0.03em;}
 .toast.show{opacity:1;}
-.drop-hint{border:2px dashed #aaa;border-radius:8px;padding:12px;text-align:center;font-size:11px;color:#aaa;margin-bottom:6px;display:none;}
+.drop-hint{border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;font-size:11px;color:var(--text3);margin-bottom:6px;display:none;}
 .drop-hint.active{display:block;}
 </style>
 </head>
@@ -127,12 +134,8 @@ select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;ou
 
 <div class="app" id="app">
   <header>
-    <h1 style="font-size:14px;">🏡 木屋民宿管理</h1>
-    <div style="display:flex;gap:4px;">
-      <span style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;background:#378ADD;color:#fff;">看板</span>
-      <a href="calendar.html" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#666;border:1px solid #ddd;text-decoration:none;background:#fff;">📅 日曆</a>
-      <a href="analytics.html" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#666;border:1px solid #ddd;text-decoration:none;background:#fff;">📊 統計</a>
-    </div>
+    <h1>兀瑪斯農莊 <span>Umas</span></h1>
+    <div class="nav-pill"><span class="nav-item active">看板</span><a href="calendar.html" class="nav-item">日曆</a><a href="analytics.html" class="nav-item">統計</a></div>
     <div class="user-info">
       <img class="user-avatar" id="userAvatar" src="" alt="">
       <span id="userName"></span>
@@ -543,62 +546,59 @@ window.showDepositCard=function(){
   const roomStr=rooms.length>0?rooms.join('、'):'（未選房型）';
 
   const isDorm=rooms.some(r=>r.startsWith('A-2')||r.startsWith('B-'));
-  const dormNote=isDorm?`<div style="font-size:11px;color:#666;line-height:1.7;padding:10px 14px;background:#f9f5f0;border-top:1px solid #ede8e0;">・通鋪房型衛浴在外，需與其他莊友共用<br>・早餐時段 07:30－09:00，茹素者請事先告知</div>`:`<div style="font-size:11px;color:#666;line-height:1.7;padding:10px 14px;background:#f9f5f0;border-top:1px solid #ede8e0;">・早餐時段 07:30－09:00，茹素者請事先告知</div>`;
+  const dormNote=isDorm?`<div style="font-size:11px;color:#888;line-height:1.8;padding:10px 16px;background:#f7f5f2;border-top:0.5px solid #e8e4de;">・通鋪房型衛浴在外，需與其他莊友共用<br>・早餐時段 07:30－09:00，茹素者請事先告知</div>`:`<div style="font-size:11px;color:#888;line-height:1.8;padding:10px 16px;background:#f7f5f2;border-top:0.5px solid #e8e4de;">・早餐時段 07:30－09:00，茹素者請事先告知</div>`;
 
   document.getElementById('depositCard').innerHTML=`
-  <div style="background:#fff;border-radius:14px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;user-select:text;-webkit-user-select:text;">
-    <div style="background:#2d5a27;padding:16px;text-align:center;">
-      <div style="font-size:26px;margin-bottom:4px;">🏡</div>
-      <div style="font-size:16px;font-weight:700;color:#fff;">兀瑪斯農莊</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:2px;">訂金通知單</div>
+  <div style="background:#fff;border-radius:14px;overflow:hidden;font-family:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;user-select:text;-webkit-user-select:text;border:0.5px solid #e8e4de;">
+    <div style="background:#1a1a1a;padding:20px 16px;text-align:center;">
+      <div style="font-family:'Noto Serif TC','Georgia',serif;font-size:20px;font-weight:300;color:#fff;letter-spacing:0.14em;margin-bottom:3px;">兀瑪斯農莊</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;">UMAS FARM · 訂金通知</div>
     </div>
-    <div style="background:#f5faf2;padding:12px 14px;font-size:13px;color:#2d4a1e;line-height:1.7;border-bottom:1px solid #e0eed8;">
-      哈囉 <strong>${name}</strong> 您好！這裡是兀瑪斯農莊，已為您保留以下住宿，請於期限內完成訂金匯款以完成訂房程序。
+    <div style="padding:14px 16px;border-bottom:0.5px solid #f0ece6;">
+      <div style="font-size:13px;color:#555;line-height:1.7;">
+        哈囉 <span style="font-family:'Noto Serif TC','Georgia',serif;color:#1a1a1a;font-weight:400;">${name}</span> 您好，已為您保留以下住宿。
+      </div>
     </div>
-    <div style="padding:12px 14px;">
+    <div style="padding:12px 16px;">
       ${[
-        ['入住日期', `${fmtD(checkin)}（${ciDow}）`],
-        ['退房日期', `${fmtD(checkout)}（${coDow}）`],
-        ['住宿天數', `${nights} 晚`],
+        ['入住', `${fmtD(checkin)}（${ciDow}）`],
+        ['退房', `${fmtD(checkout)}（${coDow}）`],
+        ['天數', `${nights} 晚`],
         ['房型', roomStr],
         ['人數', `${pax} 位`],
         ['方案', planLabel],
-        ['報價金額', quote>0?`NT$ ${quote.toLocaleString()}`:'（待確認）'],
-      ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span style="color:#888;min-width:72px;">${l}</span><span style="color:#1a1a1a;font-weight:500;text-align:right;">${v}</span></div>`).join('')}
+        ['報價', quote>0?`NT$ ${quote.toLocaleString()}`:'（待確認）'],
+      ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid #f7f5f2;font-size:12px;"><span style="color:#bbb;min-width:40px;letter-spacing:0.04em;">${l}</span><span style="color:#1a1a1a;font-weight:500;text-align:right;">${v}</span></div>`).join('')}
     </div>
-    <div style="height:5px;background:#f5faf2;"></div>
-    <div style="padding:12px 14px;">
-      <div style="font-size:11px;font-weight:700;color:#2d5a27;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">訂金匯款資訊</div>
-      <div style="background:#f5faf2;border:1.5px solid #a8d08a;border-radius:8px;padding:11px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:12px;color:#2d5a27;font-weight:600;">應付訂金（30%）</div>
-          <div style="font-size:11px;color:#7a9a5a;margin-top:1px;">以整數計算</div>
-        </div>
-        <div style="font-size:20px;font-weight:800;color:#1e3d1a;">NT$ ${deposit>0?deposit.toLocaleString():'（待確認）'}</div>
+    <div style="height:0.5px;background:#e8e4de;margin:0 16px;"></div>
+    <div style="padding:14px 16px;">
+      <div style="font-size:9px;font-weight:500;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">訂金匯款</div>
+      <div style="background:#f7f5f2;border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:11px;color:#888;">應付訂金（30%）</div>
+        <div style="font-family:'Noto Serif TC','Georgia',serif;font-size:22px;font-weight:400;color:#1a1a1a;letter-spacing:0.02em;">NT$ ${deposit>0?deposit.toLocaleString():'—'}</div>
       </div>
-      <div style="background:#fafafa;border-radius:8px;padding:11px 13px;font-size:12px;line-height:2.1;color:#444;">
-        <div><strong>戶名</strong>　伊比・伊斯卡卡夫特</div>
-        <div><strong>銀行</strong>　郵局 700</div>
-        <div><strong>帳號</strong>　0002371-0218204</div>
-        <div><strong>立帳</strong>　北投文林郵局</div>
+      <div style="font-size:12px;color:#666;line-height:2.1;padding:10px 0;">
+        <div>戶名　<span style="color:#1a1a1a;">伊比・伊斯卡卡夫特</span></div>
+        <div>郵局　<span style="color:#1a1a1a;">700 ／ 帳號 0002371-0218204</span></div>
+        <div>立帳　<span style="color:#1a1a1a;">北投文林郵局</span></div>
       </div>
-      <div style="background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;margin-top:10px;font-size:12px;color:#7a5c00;display:flex;align-items:center;gap:6px;">
-        <span style="font-size:14px;">⏰</span>
-        <span>請於 <strong>${fmtD(deadline)}</strong> 前完成匯款，匯款後請告知後五碼</span>
+      <div style="border:0.5px solid #e8e4de;border-radius:7px;padding:9px 12px;font-size:12px;color:#888;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;">⏰</span>
+        <span>請於 <span style="color:#1a1a1a;font-weight:500;">${fmtD(deadline)}</span> 前匯款，完成後告知後五碼</span>
       </div>
     </div>
     ${dormNote}
-    <div style="background:#fafaf8;padding:10px 14px;border-top:1px solid #ede8e0;">
-      <div style="font-size:11px;color:#888;line-height:1.7;">
+    <div style="padding:10px 16px;border-top:0.5px solid #e8e4de;">
+      <div style="font-size:11px;color:#aaa;line-height:1.8;">
         ・農莊無開放帶寵物入住<br>
-        ・訂房住宿需知：<span style="color:#2d5a27;">http://princessangel45.wixsite.com/umas/blank</span>
+        ・訂房住宿需知：<span style="color:#4a6741;">http://princessangel45.wixsite.com/umas/blank</span>
       </div>
     </div>
-    <div style="background:#2d5a27;padding:12px 14px;text-align:center;">
-      <div style="font-size:11px;color:rgba(255,255,255,0.9);line-height:1.9;">
-        <div style="margin-bottom:4px;">
-          <a href="https://line.me/R/ti/p/%40mwl6914l" style="color:#a8d08a;font-weight:700;font-size:13px;text-decoration:none;">農莊小幫手 Line：@umas</a>
-        </div>
+    <div style="background:#1a1a1a;padding:14px 16px;text-align:center;">
+      <div style="margin-bottom:6px;">
+        <a href="https://line.me/R/ti/p/%40mwl6914l" style="font-family:'Noto Serif TC','Georgia',serif;font-size:13px;font-weight:400;color:#c8d4b8;text-decoration:none;letter-spacing:0.06em;">農莊小幫手 Line：@umas</a>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.9;letter-spacing:0.02em;">
         <div>0933-237-628 伊比 ／ 0988-344-297 阿關</div>
         <div>0936-185-753 珊妮（10:00－20:00）</div>
       </div>
