@@ -504,11 +504,26 @@ if(pre?.checkin) autoCalc();
 };
 window.closeModal=function(){document.getElementById('modalBg').classList.remove('open');};
 
-window.saveBooking=async function(){const name=document.getElementById('f-name').value.trim(),checkin=document.getElementById('f-checkin').value;if(!name||!checkin){alert('請填寫姓名和入住日期');return;}const q=parseFloat(document.getElementById('f-quote').value)||0,dep=parseFloat(document.getElementById('f-deposit').value)||0;
-const roomtype=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
-const nights=parseInt(document.getElementById('f-nights').value)||1;
-const checkout=document.getElementById('f-checkout').value||dateAddDays(checkin,nights);
-const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,checkout,nights,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};const saveBtn=document.getElementById('saveBtn');saveBtn.textContent='儲存中...';saveBtn.disabled=true;try{if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}closeModal();}catch(e){alert('儲存失敗：'+e.message);}saveBtn.textContent='儲存';saveBtn.disabled=false;};
+window.saveBooking=async function(){
+  const name=document.getElementById('f-name').value.trim();
+  const checkin=document.getElementById('f-checkin').value;
+  if(!name||!checkin){alert('請填寫姓名和入住日期');return;}
+  const q=parseFloat(document.getElementById('f-quote').value)||0;
+  const dep=parseFloat(document.getElementById('f-deposit').value)||0;
+  const roomtype=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  const coEl=document.getElementById('f-checkout');
+  const checkout=(coEl&&coEl.value)?coEl.value:dateAddDays(checkin,nights);
+  const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,checkout,nights,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};
+  const saveBtn=document.getElementById('saveBtn');
+  if(saveBtn){saveBtn.textContent='儲存中...';saveBtn.disabled=true;}
+  try{
+    if(editId){await updateDoc(doc(db,'bookings',editId),data);showToast('已更新');}
+    else{data.createdAt=serverTimestamp();await addDoc(collection(db,'bookings'),data);showToast('已新增並同步');}
+    closeModal();
+  }catch(e){alert('儲存失敗：'+e.message);}
+  if(saveBtn){saveBtn.textContent='儲存';saveBtn.disabled=false;}
+};
 
 window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);if(b)openModal(b);};
 window.deleteBooking=async function(fid,name){if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;await deleteDoc(doc(db,'bookings',fid));showToast('已刪除');};
