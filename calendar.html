@@ -512,25 +512,24 @@ function renderGantt(){
 
           // 滑鼠拖拉調整天數
           const handle=bar.querySelector('.bar-resize');
+          // 用實際顯示的天數（startDay 到 endDay），不用 b.nights
+          const displayNights = endDay - startDay + 1;
           handle.addEventListener('mousedown', e=>{
             e.stopPropagation(); e.preventDefault();
             const startX=e.clientX;
-            const origNights=parseInt(b.nights)||1;
-            let ghostW=width;
-            let currentNights=origNights;
+            let currentNights=displayNights;
 
             const onMove=ev=>{
               const diff=Math.round((ev.clientX-startX)/cellW);
-              currentNights=Math.max(1,origNights+diff);
-              ghostW=(currentNights)*cellW-4;
-              bar.style.width=ghostW+'px';
+              currentNights=Math.max(1,displayNights+diff);
+              bar.style.width=(currentNights*cellW-4)+'px';
               bar.style.opacity='0.8';
             };
             const onUp=async()=>{
               document.removeEventListener('mousemove',onMove);
               document.removeEventListener('mouseup',onUp);
               bar.style.opacity='1';
-              if(currentNights!==origNights){
+              if(currentNights!==displayNights){
                 const newCheckout=addDays(b.checkin,currentNights);
                 await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
                 showToast(`已更新為 ${currentNights} 晚`);
@@ -544,11 +543,10 @@ function renderGantt(){
           handle.addEventListener('touchstart', e=>{
             e.stopPropagation();
             const startX=e.touches[0].clientX;
-            const origNights=parseInt(b.nights)||1;
-            let currentNights=origNights;
+            let currentNights=displayNights;
             const onMove=ev=>{
               const diff=Math.round((ev.touches[0].clientX-startX)/cellW);
-              currentNights=Math.max(1,origNights+diff);
+              currentNights=Math.max(1,displayNights+diff);
               bar.style.width=(currentNights*cellW-4)+'px';
               bar.style.opacity='0.8';
             };
@@ -556,7 +554,7 @@ function renderGantt(){
               handle.removeEventListener('touchmove',onMove);
               handle.removeEventListener('touchend',onUp);
               bar.style.opacity='1';
-              if(currentNights!==origNights){
+              if(currentNights!==displayNights){
                 const newCheckout=addDays(b.checkin,currentNights);
                 await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
                 showToast(`已更新為 ${currentNights} 晚`);
