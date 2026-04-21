@@ -201,8 +201,9 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
       <div class="form-row"><label>狀態</label><select id="f-status"></select></div>
       <div class="form-row"><label>訂房平台</label><input id="f-platform"></div>
       <div class="form-row"><label>訂單編號</label><input id="f-confirm"></div>
-      <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date"></div>
-      <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" value="1"></div>
+      <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date" onchange="calOnCheckinChange()"></div>
+      <div class="form-row"><label>退房日期 *</label><input id="f-checkout" type="date" onchange="calOnCheckoutChange()"></div>
+      <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" value="1" onchange="calOnNightsChange()"></div>
       <div class="form-row"><label>人數</label><input id="f-pax" type="number" min="1" value="1"></div>
       <div class="form-row"><label>訪客類型</label><input id="f-guesttype"></div>
       <div class="form-row full"><label>預定房型</label><select id="f-roomtype"></select></div>
@@ -292,7 +293,8 @@ function addDays(s,n){ const d=parseDate(s); d.setDate(d.getDate()+n); return d.
 
 function bookingOverlapsDay(b, ds){
   if(!b.checkin) return false;
-  const ci=b.checkin, co=addDays(b.checkin, parseInt(b.nights)||1);
+  const ci=b.checkin;
+  const co=b.checkout||addDays(b.checkin, parseInt(b.nights)||1);
   return ci<=ds && ds<co;
 }
 
@@ -300,6 +302,30 @@ window.calcDue = function(){
   const q=parseFloat(document.getElementById('f-quote').value)||0;
   const d=parseFloat(document.getElementById('f-deposit').value)||0;
   document.getElementById('f-due').value=Math.round(q-d)||'';
+};
+
+function calDateAddDays(ds,n){const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function calDateDiff(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/86400000);}
+
+window.calOnCheckinChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const coEl=document.getElementById('f-checkout');
+  if(!ci) return;
+  const minCo=calDateAddDays(ci,1);
+  coEl.min=minCo;
+  if(coEl.value&&coEl.value<=ci) coEl.value=minCo;
+  const n=parseInt(document.getElementById('f-nights').value)||1;
+  coEl.value=calDateAddDays(ci,n);
+};
+window.calOnCheckoutChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const co=document.getElementById('f-checkout').value;
+  if(ci&&co&&co>ci) document.getElementById('f-nights').value=calDateDiff(ci,co);
+};
+window.calOnNightsChange=function(){
+  const ci=document.getElementById('f-checkin').value;
+  const n=parseInt(document.getElementById('f-nights').value)||1;
+  if(ci) document.getElementById('f-checkout').value=calDateAddDays(ci,n);
 };
 
 function populateRoomSelect(cur){
@@ -317,11 +343,17 @@ window.openModal = function(pre, prefillDate, prefillRoom){
   document.getElementById('deleteBtn').style.display = editId?'block':'none';
   setF('f-name',pre?.name); setF('f-phone',pre?.phone); setF('f-line',pre?.line); setF('f-fb',pre?.fb);
   setF('f-hotel',pre?.hotel||'木屋民宿'); setF('f-platform',pre?.platform); setF('f-confirm',pre?.confirm);
-  setF('f-checkin',pre?.checkin||prefillDate||''); setF('f-nights',pre?.nights||1); setF('f-pax',pre?.pax||1);
+  setF('f-checkin',pre?.checkin||prefillDate||'');
+  setF('f-nights',pre?.nights||1);
+  const co=pre?.checkout||(pre?.checkin&&pre?.nights?calDateAddDays(pre.checkin,parseInt(pre.nights)||1):'');
+  setF('f-checkout',co);
+  if(pre?.checkin){const coEl=document.getElementById('f-checkout');if(coEl)coEl.min=calDateAddDays(pre.checkin,1);}
+  setF('f-pax',pre?.pax||1);
   setF('f-guesttype',pre?.guesttype);
   setF('f-quote',pre?.quote); setF('f-deposit',pre?.deposit); setF('f-due',pre?.due); setF('f-note',pre?.note);
   populateStatus(pre?.status||'new-case');
-  populateRoomSelect(pre?.roomtype||prefillRoom||'');
+  const firstRoom=Array.isArray(pre?.roomtype)?pre.roomtype[0]:(pre?.roomtype||prefillRoom||'');
+  populateRoomSelect(firstRoom);
   document.getElementById('modalBg').classList.add('open');
 };
 window.closeModal = function(){ document.getElementById('modalBg').classList.remove('open'); };
@@ -332,11 +364,14 @@ window.saveBooking = async function(){
   if(!name||!checkin){alert('請填寫姓名和入住日期');return;}
   const q=parseFloat(document.getElementById('f-quote').value)||0;
   const dep=parseFloat(document.getElementById('f-deposit').value)||0;
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  const coEl=document.getElementById('f-checkout');
+  const checkout=(coEl&&coEl.value)?coEl.value:calDateAddDays(checkin,nights);
   const data={
     name, phone:document.getElementById('f-phone').value, line:document.getElementById('f-line').value, fb:document.getElementById('f-fb').value,
     hotel:document.getElementById('f-hotel').value, platform:document.getElementById('f-platform').value, confirm:document.getElementById('f-confirm').value,
-    checkin, nights:parseInt(document.getElementById('f-nights').value)||1, pax:parseInt(document.getElementById('f-pax').value)||1,
-    guesttype:document.getElementById('f-guesttype').value, roomtype:document.getElementById('f-roomtype').value,
+    checkin, checkout, nights, pax:parseInt(document.getElementById('f-pax').value)||1,
+    guesttype:document.getElementById('f-guesttype').value, roomtype:[document.getElementById('f-roomtype').value].filter(Boolean),
     quote:q, deposit:dep, due:Math.round(q-dep), note:document.getElementById('f-note').value,
     status:document.getElementById('f-status').value
   };
@@ -412,7 +447,7 @@ function renderGantt(){
       if(!b.checkin) return;
       const nights = parseInt(b.nights)||1;
       const ciDate = parseDate(b.checkin);
-      const coDate = parseDate(addDays(b.checkin, nights));
+      const coDate = parseDate(b.checkout||addDays(b.checkin, nights));
       const monthStart = new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
       const monthEnd = new Date(dateStr(viewYear,viewMonth,daysInMonth(viewYear,viewMonth))+'T00:00');
 
@@ -503,8 +538,11 @@ function renderMonth(){
     const dayBookings = bookings.filter(b=>bookingOverlapsDay(b,ds));
     let barsHtml = '';
     dayBookings.slice(0,3).forEach(b=>{
-      const color = roomColor[b.roomtype]||'#888';
-      barsHtml+=`<div class="day-booking" style="background:${color}22;color:${color};border-left:3px solid ${color};" onclick="event.stopPropagation();openModal(window.__bmap['${b.firestoreId}'])">${b.roomtype||''} ${b.name||''}</div>`;
+      const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+      const firstRoom=rooms[0]||'';
+      const color = roomColor[firstRoom]||'#888';
+      const roomLabel=rooms.join('、');
+      barsHtml+=`<div class="day-booking" style="background:${color}22;color:${color};border-left:3px solid ${color};" onclick="event.stopPropagation();openModal(window.__bmap['${b.firestoreId}'])">${roomLabel} ${b.name||''}</div>`;
     });
     if(dayBookings.length>3) barsHtml+=`<div class="day-more">+${dayBookings.length-3} 筆</div>`;
     html+=`<div class="month-day${isToday?' today':''}" onclick="openModal(null,'${ds}')">
