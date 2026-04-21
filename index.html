@@ -311,9 +311,14 @@ function dateDiffDays(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T
 
 window.onCheckinChange=function(){
   const ci=document.getElementById('f-checkin').value;
-  const n=parseInt(document.getElementById('f-nights').value);
-  document.getElementById('f-checkout').min=ci||'';
-  if(ci&&n>0){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
+  const coEl=document.getElementById('f-checkout');
+  const nightsEl=document.getElementById('f-nights');
+  if(!ci) return;
+  const minCo=dateAddDays(ci,1);
+  coEl.min=minCo;
+  const n=Math.max(1,parseInt(nightsEl.value)||1);
+  coEl.value=dateAddDays(ci,n);
+  nightsEl.value=n;
   autoCalc();
 };
 window.onCheckoutChange=function(){

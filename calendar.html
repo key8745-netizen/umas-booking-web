@@ -310,12 +310,14 @@ function calDateDiff(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T0
 window.calOnCheckinChange=function(){
   const ci=document.getElementById('f-checkin').value;
   const coEl=document.getElementById('f-checkout');
+  const nightsEl=document.getElementById('f-nights');
   if(!ci) return;
   const minCo=calDateAddDays(ci,1);
   coEl.min=minCo;
-  if(coEl.value&&coEl.value<=ci) coEl.value=minCo;
-  const n=parseInt(document.getElementById('f-nights').value)||1;
-  coEl.value=calDateAddDays(ci,n);
+  const n=Math.max(1,parseInt(nightsEl.value)||1);
+  const newCo=calDateAddDays(ci,n);
+  coEl.value=newCo;
+  nightsEl.value=n;
 };
 window.calOnCheckoutChange=function(){
   const ci=document.getElementById('f-checkin').value;
