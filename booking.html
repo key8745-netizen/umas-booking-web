@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訂房申請 — 兀瑪斯農莊</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f0eb;color:#1a1a1a;min-height:100vh;}
+
+.hero{background:#2d5a27;padding:32px 20px 24px;text-align:center;color:#fff;}
+.hero-logo{font-size:36px;margin-bottom:8px;}
+.hero h1{font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:0.02em;}
+.hero p{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;}
+
+.container{max-width:480px;margin:0 auto;padding:20px 16px 40px;}
+
+.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:16px;border:1px solid #e8e0d8;}
+
+.section-title{font-size:12px;font-weight:700;color:#8b6914;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.section-title::after{content:'';flex:1;height:1px;background:#f0e8dc;}
+
+.form-row{margin-bottom:14px;}
+.form-row label{font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;}
+.form-row label .req{color:#e53935;margin-left:2px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:11px 13px;border:1.5px solid #e0d8cf;border-radius:8px;font-size:14px;color:#1a1a1a;background:#fff;outline:none;transition:border-color 0.15s;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#2d5a27;}
+.form-row textarea{resize:none;height:80px;line-height:1.5;}
+.form-row input::placeholder,.form-row textarea::placeholder{color:#bbb;}
+
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.plan-option{border:1.5px solid #e0d8cf;border-radius:10px;padding:14px 12px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.plan-option:hover{border-color:#2d5a27;background:#f5faf4;}
+.plan-option.selected{border-color:#2d5a27;background:#f0f7ee;}
+.plan-option input{display:none;}
+.plan-icon{font-size:24px;margin-bottom:6px;}
+.plan-name{font-size:13px;font-weight:600;color:#333;margin-bottom:3px;}
+.plan-desc{font-size:11px;color:#888;line-height:1.4;}
+
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.nights-badge{display:inline-block;background:#f0f7ee;color:#2d5a27;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-top:6px;}
+
+.submit-btn{width:100%;padding:15px;background:#2d5a27;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background 0.15s;}
+.submit-btn:hover{background:#1e3d1a;}
+.submit-btn:disabled{background:#aaa;cursor:not-allowed;}
+
+.notice{background:#fef9ee;border:1px solid #f0d98a;border-radius:10px;padding:14px;margin-bottom:16px;}
+.notice p{font-size:12px;color:#7a5c00;line-height:1.7;}
+.notice p::before{content:'📌 ';}
+
+.success-screen{display:none;text-align:center;padding:40px 20px;}
+.success-screen.show{display:block;}
+.success-icon{font-size:64px;margin-bottom:16px;}
+.success-title{font-size:20px;font-weight:700;color:#2d5a27;margin-bottom:8px;}
+.success-sub{font-size:14px;color:#666;line-height:1.7;margin-bottom:24px;}
+.success-info{background:#f0f7ee;border-radius:10px;padding:16px;text-align:left;font-size:13px;color:#333;line-height:2;}
+.success-info strong{color:#2d5a27;}
+
+.footer{text-align:center;padding:16px;font-size:11px;color:#aaa;}
+.footer a{color:#2d5a27;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-logo">🏡</div>
+  <h1>兀瑪斯農莊</h1>
+  <p>南投縣信義鄉 · 山林木屋民宿<br>填寫基本資料，我們將盡快與您確認訂房！</p>
+</div>
+
+<div class="container">
+  <div id="formWrap">
+    <div class="notice">
+      <p>送出後農莊人員會透過 Line 或電話與您確認細節及報價，訂房確認後請於三日內完成訂金匯款。</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">聯絡資訊</div>
+      <div class="form-row">
+        <label>姓名<span class="req">*</span></label>
+        <input id="f-name" type="text" placeholder="請輸入姓名">
+      </div>
+      <div class="form-row">
+        <label>電話<span class="req">*</span></label>
+        <input id="f-phone" type="tel" placeholder="例：0933-000-000">
+      </div>
+      <div class="form-row">
+        <label>Line ID</label>
+        <input id="f-line" type="text" placeholder="方便農莊聯繫您">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">住宿資訊</div>
+      <div class="form-row">
+        <label>住宿方案<span class="req">*</span></label>
+        <div class="plan-grid">
+          <div class="plan-option selected" id="plan-normal" onclick="selectPlan('normal')">
+            <input type="radio" name="plan" value="normal" checked>
+            <div class="plan-icon">🏠</div>
+            <div class="plan-name">一般住宿</div>
+            <div class="plan-desc">含早餐<br>套房 / 通鋪</div>
+          </div>
+          <div class="plan-option" id="plan-hiking" onclick="selectPlan('hiking')">
+            <input type="radio" name="plan" value="hiking">
+            <div class="plan-icon">⛰️</div>
+            <div class="plan-name">登山方案</div>
+            <div class="plan-desc">不含早餐<br>每人 NT$500 起</div>
+          </div>
+        </div>
+      </div>
+      <div class="date-row">
+        <div class="form-row">
+          <label>入住日期<span class="req">*</span></label>
+          <input id="f-checkin" type="date" onchange="calcNights()">
+        </div>
+        <div class="form-row">
+          <label>退房日期<span class="req">*</span></label>
+          <input id="f-checkout" type="date" onchange="calcNights()">
+        </div>
+      </div>
+      <div id="nights-display" style="display:none;margin-bottom:14px;">
+        <span class="nights-badge" id="nights-text"></span>
+      </div>
+      <div class="form-row">
+        <label>入住人數<span class="req">*</span></label>
+        <input id="f-pax" type="number" min="1" max="50" placeholder="請輸入人數">
+      </div>
+      <div class="form-row">
+        <label>備註（選填）</label>
+        <textarea id="f-note" placeholder="例：需要接駁、素食者人數、特殊需求..."></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出訂房申請</button>
+  </div>
+
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">申請已送出！</div>
+    <div class="success-sub">感謝您的訂房申請<br>農莊人員會盡快透過 Line 或電話與您聯繫確認</div>
+    <div class="success-info" id="successInfo"></div>
+    <div style="margin-top:20px;font-size:12px;color:#888;">如有急事請直接致電<br>
+      <strong style="color:#2d5a27;">0933-237-628 伊比</strong><br>
+      <strong style="color:#2d5a27;">0988-344-297 阿關</strong><br>
+      <strong style="color:#2d5a27;">0936-185-753 珊妮</strong><br>
+      （上午10點至晚上8點）
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  兀瑪斯農莊 · 556 南投縣信義鄉卡里布安村望和巷105號<br>
+  <a href="https://princessangel45.wixsite.com/umas">查看官網</a>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",
+  authDomain: "umas-booking-manager.firebaseapp.com",
+  projectId: "umas-booking-manager",
+  storageBucket: "umas-booking-manager.firebasestorage.app",
+  messagingSenderId: "7381346891",
+  appId: "1:7381346891:web:2affb529e6b8614f6b7bce"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+// 設定最早可選日期為今天
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('f-checkin').min = today;
+document.getElementById('f-checkout').min = today;
+
+window.selectPlan = function(plan){
+  document.getElementById('plan-normal').classList.toggle('selected', plan==='normal');
+  document.getElementById('plan-hiking').classList.toggle('selected', plan==='hiking');
+};
+
+window.calcNights = function(){
+  const ci = document.getElementById('f-checkin').value;
+  const co = document.getElementById('f-checkout').value;
+  const coInput = document.getElementById('f-checkout');
+  if(ci) coInput.min = ci;
+  if(!ci||!co) { document.getElementById('nights-display').style.display='none'; return; }
+  const nights = Math.round((new Date(co+'T00:00')-new Date(ci+'T00:00'))/86400000);
+  if(nights<=0){ document.getElementById('nights-display').style.display='none'; return; }
+  document.getElementById('nights-display').style.display='block';
+  document.getElementById('nights-text').textContent = `共 ${nights} 晚`;
+};
+
+window.submitForm = async function(){
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const checkin = document.getElementById('f-checkin').value;
+  const checkout = document.getElementById('f-checkout').value;
+  const pax = document.getElementById('f-pax').value;
+
+  if(!name){ alert('請填寫姓名'); document.getElementById('f-name').focus(); return; }
+  if(!phone){ alert('請填寫電話'); document.getElementById('f-phone').focus(); return; }
+  if(!checkin){ alert('請選擇入住日期'); document.getElementById('f-checkin').focus(); return; }
+  if(!checkout){ alert('請選擇退房日期'); document.getElementById('f-checkout').focus(); return; }
+  if(!pax||parseInt(pax)<1){ alert('請填寫入住人數'); document.getElementById('f-pax').focus(); return; }
+  const nights = Math.round((new Date(checkout+'T00:00')-new Date(checkin+'T00:00'))/86400000);
+  if(nights<=0){ alert('退房日期必須晚於入住日期'); return; }
+
+  const plan = document.getElementById('plan-hiking').classList.contains('selected') ? 'hiking' : 'normal';
+  const data = {
+    name,
+    phone,
+    line: document.getElementById('f-line').value.trim(),
+    checkin,
+    checkout,
+    nights,
+    pax: parseInt(pax),
+    plan,
+    note: document.getElementById('f-note').value.trim(),
+    status: 'new-case',
+    hotel: '兀瑪斯農莊',
+    source: 'online-form',
+    createdAt: serverTimestamp()
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  try{
+    await addDoc(collection(db,'bookings'), data);
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+    const planLabel = plan==='hiking' ? '⛰️ 登山方案' : '🏠 一般住宿';
+    document.getElementById('successInfo').innerHTML = `
+      <strong>姓名：</strong>${name}<br>
+      <strong>電話：</strong>${phone}<br>
+      <strong>方案：</strong>${planLabel}<br>
+      <strong>入住：</strong>${checkin}<br>
+      <strong>退房：</strong>${checkout}（共 ${nights} 晚）<br>
+      <strong>人數：</strong>${pax} 人<br>
+      ${data.note?`<strong>備註：</strong>${data.note}`:''}
+    `;
+  } catch(e){
+    alert('送出失敗，請稍後再試或直接致電農莊。');
+    btn.disabled = false;
+    btn.textContent = '送出訂房申請';
+  }
+};
+</script>
+</body>
+</html>
