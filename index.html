@@ -47,7 +47,8 @@ select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;ou
 .btn:hover{background:#f5f5f5;}
 .btn.primary{background:#378ADD;color:#fff;border-color:#378ADD;}
 .btn.primary:hover{background:#185FA5;}
-.board-wrap{flex:1;overflow-x:auto;padding:16px 20px;}
+.board-wrap{flex:1;overflow-x:auto;overflow-y:hidden;padding:16px 20px;cursor:grab;user-select:none;}
+.board-wrap.dragging-board{cursor:grabbing;}
 .board{display:flex;gap:12px;align-items:flex-start;min-width:max-content;height:100%;}
 .column{background:#ebecf0;border-radius:10px;padding:10px;width:220px;flex-shrink:0;max-height:calc(100vh - 140px);display:flex;flex-direction:column;}
 .col-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
@@ -126,7 +127,11 @@ select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;ou
 
 <div class="app" id="app">
   <header>
-    <h1>訂房管理看板</h1>
+    <h1 style="font-size:14px;">🏡 木屋民宿管理</h1>
+    <div style="display:flex;gap:4px;">
+      <span style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;background:#378ADD;color:#fff;">看板</span>
+      <a href="calendar.html" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#666;border:1px solid #ddd;text-decoration:none;background:#fff;">📅 日曆</a>
+    </div>
     <div class="user-info">
       <img class="user-avatar" id="userAvatar" src="" alt="">
       <span id="userName"></span>
@@ -326,6 +331,41 @@ window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);i
 window.deleteBooking=async function(fid,name){if(!confirm(`確定要刪除「${name}」的訂房嗎？`))return;await deleteDoc(doc(db,'bookings',fid));showToast('已刪除');};
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// 看板水平拖動（電腦版）
+(function(){
+  const wrap = document.querySelector('.board-wrap') || document.getElementById('app');
+  let isDown=false, startX=0, scrollLeft=0, isDraggingBoard=false;
+  document.addEventListener('DOMContentLoaded',()=>{
+    const bw=document.querySelector('.board-wrap');
+    if(!bw) return;
+    bw.addEventListener('mousedown',e=>{
+      if(e.button!==0) return;
+      if(e.target.closest('.card')||e.target.closest('.btn')||e.target.closest('.icon-btn')||e.target.closest('button')||e.target.closest('select')||e.target.closest('input')) return;
+      isDown=true; isDraggingBoard=false;
+      startX=e.pageX - bw.offsetLeft;
+      scrollLeft=bw.scrollLeft;
+    });
+    document.addEventListener('mousemove',e=>{
+      if(!isDown) return;
+      const x=e.pageX - bw.offsetLeft;
+      const walk=(x-startX)*1.2;
+      if(Math.abs(walk)>5){
+        isDraggingBoard=true;
+        bw.classList.add('dragging-board');
+        bw.scrollLeft=scrollLeft-walk;
+      }
+    });
+    document.addEventListener('mouseup',()=>{
+      isDown=false;
+      setTimeout(()=>{ isDraggingBoard=false; },0);
+      document.querySelector('.board-wrap')?.classList.remove('dragging-board');
+    });
+    bw.addEventListener('click',e=>{
+      if(isDraggingBoard) e.stopPropagation();
+    },true);
+  });
+})();
 function setSyncStatus(s){const el=document.getElementById('syncStatus');if(s==='online'){el.textContent='● 即時同步';el.className='sync-status online';}else if(s==='offline'){el.textContent='● 離線';el.className='sync-status offline';}else{el.textContent='◌ 連線中...';el.className='sync-status syncing';}}
 
 function startListening(){
