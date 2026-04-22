@@ -651,11 +651,11 @@ window.analyzeChat=async function(){
   resultEl.style.display='block';
   resultEl.innerHTML='<span style="color:#aaa;">AI 分析中，請稍候...</span>';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/.netlify/functions/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'gemini-2.5-flash',
         max_tokens:1000,
         system:`你是兀瑪斯農莊（南投山區民宿）的訂房助理。請從 Line 對話中萃取訂房資訊，並分析客人的態度和口氣。
 回覆格式必須是純 JSON，不要有其他文字：
@@ -679,6 +679,7 @@ window.analyzeChat=async function(){
         messages:[{role:'user',content:`請分析以下 Line 對話：\n\n${chat}`}]
       })
     });
+    if(!res.ok){const errText=await res.text();throw new Error(`HTTP ${res.status}: ${errText}`);}
     const data=await res.json();
     const text=data.content?.[0]?.text||'{}';
     let parsed;
@@ -718,7 +719,8 @@ window.analyzeChat=async function(){
     `;
     showToast('分析完成，表單已自動填入 ✓');
   }catch(e){
-    resultEl.innerHTML='<span style="color:#b94040;">分析失敗，請稍後再試</span>';
+    resultEl.style.display='block';
+    resultEl.innerHTML='<span style="color:#b94040;">錯誤：'+e.message+'</span>';
   }
   btn.textContent='🤖 分析對話並填入表單';btn.disabled=false;
 };
@@ -743,22 +745,27 @@ window.checkOrder=async function(){
   const quote=document.getElementById('f-quote').value;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/.netlify/functions/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'gemini-2.5-flash',
         max_tokens:800,
         system:'你是兀瑪斯農莊的訂房核對助理。請核對訂單資料是否符合 Line 對話內容，用繁體中文回覆，條列說明符合和不符合的地方，並標示是否有遺漏的需求。回覆要簡潔有重點。',
         messages:[{role:'user',content:`Line 對話：\n${chat}\n\n目前訂單資料：\n姓名：${name}\n入住：${checkin}\n退房：${checkout}\n天數：${nights}晚\n人數：${pax}人\n房型：${rooms}\n方案：${plan}\n報價：NT$${quote}\n備註：${note}\n\n請核對是否符合對話需求，有無遺漏或錯誤。`}]
       })
     });
+    if(!res.ok){
+      const errText=await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText}`);
+    }
     const data=await res.json();
     const text=data.content?.[0]?.text||'無法取得回應';
     resultEl.innerHTML=`<div style="white-space:pre-wrap;">${text.replace(/\n/g,'<br>')}</div>`;
     showToast('核對完成');
   }catch(e){
-    resultEl.innerHTML='<span style="color:#b94040;">核對失敗，請稍後再試</span>';
+    resultEl.style.display='block';
+    resultEl.innerHTML='<span style="color:#b94040;">錯誤：'+e.message+'</span>';
   }
   btn.textContent='✅ 核對訂單是否符合對話';btn.disabled=false;
 };
