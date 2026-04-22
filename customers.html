@@ -346,11 +346,11 @@ window.analyzeCustomer=async function(key){
   }).join('\n');
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/.netlify/functions/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'gemini-2.5-flash',
         max_tokens:800,
         system:`你是兀瑪斯農莊的客戶關係顧問。請根據客戶的訂房歷史和備忘錄，用繁體中文分析這位客人，提供以下內容：
 1. 消費習性分析（幾月常來、喜歡什麼房型、人數特徵）
@@ -361,18 +361,18 @@ window.analyzeCustomer=async function(key){
         messages:[{role:'user',content:`客戶：${c.name}\n電話：${c.phone}\n訂房記錄：\n${orderSummary}\n備忘錄：${memo.note||'無'}`}]
       })
     });
+    if(!res.ok){const errText=await res.text();throw new Error(`HTTP ${res.status}: ${errText}`);}
     const data=await res.json();
     const text=data.content?.[0]?.text||'無法取得分析結果';
     resultEl.className='ai-result';
     resultEl.innerHTML=text.replace(/\n/g,'<br>');
-    // 存入 Firebase
     memo.aiAnalysis=text;
     customerMemos[key]=memo;
     await setDoc(doc(db,'customer_memos',key),memo);
     showToast('AI 分析完成');
   }catch(e){
     resultEl.className='ai-result';
-    resultEl.textContent='分析失敗，請稍後再試';
+    resultEl.textContent='錯誤：'+e.message;
   }
 };
 
