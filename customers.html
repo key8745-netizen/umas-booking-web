@@ -435,6 +435,8 @@ window.saveNewCustomer=async function(){
   showToast('客戶資料已新增 ✓');
   renderList();
 };
+
+window.closeDetail=function(){
   document.getElementById('detailPanel').classList.remove('open');
   currentCustomer=null;
 };
