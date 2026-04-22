@@ -102,6 +102,35 @@ select:focus{border-color:#888;}
 .toast.show{opacity:1;}
 .drop-hint{border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;font-size:11px;color:var(--text3);margin-bottom:6px;display:none;}
 .drop-hint.active{display:block;}
+
+/* ── 手機版 ── */
+.mobile-fab{display:none;position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--text);color:#fff;border:none;font-size:24px;cursor:pointer;z-index:500;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.18);}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid var(--border);height:60px;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav-inner{display:flex;height:100%;}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:var(--text3);font-size:9px;letter-spacing:0.04em;cursor:pointer;}
+.bottom-nav-item.active{color:var(--text);}
+.bottom-nav-icon{font-size:20px;line-height:1;}
+
+@media(max-width:768px){
+  header{padding:0 14px;height:46px;}
+  header h1{font-size:13px;}
+  .nav-pill{display:none;}
+  .toolbar{padding:8px 14px;gap:6px;}
+  .search-box{width:100%;flex:1;}
+  .sort-label{display:none;}
+  #sortKey,#sortDir{font-size:11px;padding:4px 6px;}
+  .board-wrap{padding:10px 14px;padding-bottom:80px;}
+  .column{width:180px;}
+  .card{padding:9px;}
+  .card-name{font-size:12px;}
+  .mobile-fab{display:flex;}
+  .bottom-nav{display:block;}
+  .modal{width:100%!important;max-width:100%;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:92vh;overflow-y:auto;}
+  .modal-bg{padding:0!important;align-items:flex-end!important;}
+  .form-grid{grid-template-columns:1fr 1fr;}
+  .form-grid.col3{grid-template-columns:1fr 1fr;}
+  #undoBtn,#redoBtn{font-size:10px;padding:4px 8px;}
+}
 </style>
 </head>
 <body>
@@ -275,6 +304,28 @@ select:focus{border-color:#888;}
 </div>
 
 <div id="toast" class="toast"></div>
+
+<button class="mobile-fab" onclick="openModal()" title="新增訂房">＋</button>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <span class="bottom-nav-item active" onclick="window.location.href='index.html'">
+      <span class="bottom-nav-icon">⊞</span>主控板
+    </span>
+    <span class="bottom-nav-item" onclick="window.location.href='calendar.html'">
+      <span class="bottom-nav-icon">◫</span>日曆
+    </span>
+    <span class="bottom-nav-item" onclick="window.location.href='checkin.html'">
+      <span class="bottom-nav-icon">⌂</span>控房
+    </span>
+    <span class="bottom-nav-item" onclick="window.location.href='customers.html'">
+      <span class="bottom-nav-icon">☺</span>客戶
+    </span>
+    <span class="bottom-nav-item" onclick="window.location.href='analytics.html'">
+      <span class="bottom-nav-icon">◎</span>統計
+    </span>
+  </div>
+</nav>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 

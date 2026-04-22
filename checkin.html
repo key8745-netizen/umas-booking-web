@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>控房 — 兀瑪斯農莊</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--serif:'Noto Serif TC',serif;--sans:'Noto Sans TC',-apple-system,sans-serif;--bg:#f7f5f2;--border:#e8e4de;--border2:#f0ece6;--text:#1a1a1a;--text2:#888;--text3:#bbb;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;}
+#loading-screen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
+.spinner{width:28px;height:28px;border:2px solid #e8e4de;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#login-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;}
+#login-screen.show{display:flex;}
+.login-card{background:#fff;border-radius:18px;padding:44px 40px;width:360px;text-align:center;border:0.5px solid var(--border);}
+.login-logo{font-family:var(--serif);font-size:22px;font-weight:300;letter-spacing:0.1em;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--text3);letter-spacing:0.08em;margin-bottom:28px;}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:0.5px solid var(--border);border-radius:10px;background:#fff;font-size:13px;cursor:pointer;color:var(--text);}
+.login-btn:hover{background:var(--bg);}
+.login-btn img{width:18px;}
+.app{display:none;flex-direction:column;min-height:100vh;}
+.app.ready{display:flex;}
+header{background:#fff;border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
+header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:0.06em;flex:1;}
+.nav-pill{display:flex;gap:1px;background:var(--bg);border-radius:8px;padding:3px;border:0.5px solid var(--border);}
+.nav-item{padding:4px 10px;border-radius:6px;font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:0.02em;}
+.nav-item.active{background:#fff;color:var(--text);font-weight:500;}
+.user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
+.btn-sm{padding:4px 10px;border:0.5px solid var(--border);border-radius:7px;background:#fff;font-size:11px;cursor:pointer;color:var(--text2);}
+.content{padding:20px;}
+.date-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.date-bar h2{font-family:var(--serif);font-size:16px;font-weight:400;flex:1;}
+.date-sub{font-size:11px;color:var(--text2);}
+.summary-row{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.summary-card{background:#fff;border:0.5px solid var(--border);border-radius:10px;padding:12px 16px;flex:1;min-width:100px;text-align:center;}
+.summary-num{font-size:22px;font-weight:500;color:var(--text);}
+.summary-label{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:0.04em;}
+.building-section{margin-bottom:28px;}
+.building-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border2);}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.room-card{background:#fff;border-radius:12px;border:0.5px solid var(--border);overflow:hidden;}
+.room-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border2);}
+.room-id{font-family:var(--serif);font-size:13px;font-weight:400;letter-spacing:0.04em;}
+.room-cap{font-size:10px;color:var(--text3);}
+.room-status{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:500;}
+.status-empty{background:#f7f5f2;color:var(--text3);}
+.status-checkin{background:#edf5f0;color:#2d6a4f;}
+.status-checkout{background:#fdf0f0;color:#b94040;}
+.status-staying{background:#e8f0fe;color:#3a6ab0;}
+.room-body{padding:12px 14px;}
+.booking-name{font-family:var(--serif);font-size:14px;font-weight:400;margin-bottom:4px;}
+.booking-info{font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.6;}
+.checklist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.check-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);cursor:pointer;}
+.check-item input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:#1a1a1a;}
+.check-item.done{color:var(--text3);text-decoration:line-through;}
+.room-actions{display:flex;gap:6px;}
+.btn{padding:5px 12px;border:0.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:11px;cursor:pointer;}
+.btn:hover{background:var(--bg);}
+.btn.primary{background:var(--text);color:#fff;border-color:var(--text);}
+.btn.green{background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;}
+.empty-room{padding:14px;text-align:center;font-size:11px;color:var(--text3);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;backdrop-filter:blur(2px);}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:24px;width:420px;max-width:100%;border:0.5px solid var(--border);}
+.modal h3{font-family:var(--serif);font-size:15px;font-weight:400;margin-bottom:16px;letter-spacing:0.04em;}
+.section-label{font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin:12px 0 6px;padding-bottom:5px;border-bottom:0.5px solid var(--border2);}
+.info-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--border2);}
+.info-row:last-child{border-bottom:none;}
+.info-label{color:var(--text2);}
+.info-val{font-weight:500;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
+.toast.show{opacity:1;}
+
+@media(max-width:600px){
+  .nav-pill{display:none;}
+  .summary-card{min-width:70px;}
+  .rooms-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div id="loading-screen"><div class="spinner"></div><p style="font-size:12px;color:#bbb;">載入中...</p></div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">兀瑪斯農莊</div>
+    <div class="login-sub">請使用授權帳號登入</div>
+    <button class="login-btn" id="loginBtn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">使用 Google 帳號登入</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <h1>兀瑪斯農莊 <span style="font-size:10px;font-weight:300;color:var(--text3);margin-left:6px;font-family:var(--sans);">Umas</span></h1>
+    <div class="nav-pill">
+      <a href="index.html" class="nav-item">主控板</a>
+      <a href="calendar.html" class="nav-item">日曆檢視</a>
+      <a href="checkin.html" class="nav-item active">控房</a>
+      <a href="analytics.html" class="nav-item">系統分析</a>
+      <a href="customers.html" class="nav-item">客戶資料</a>
+    </div>
+    <img class="user-avatar" id="userAvatar" src="">
+    <button class="btn-sm" id="logoutBtn">登出</button>
+  </header>
+
+  <div class="content">
+    <div class="date-bar">
+      <h2 id="todayTitle"></h2>
+      <span class="date-sub" id="todaySub"></span>
+    </div>
+    <div class="summary-row" id="summaryRow"></div>
+    <div id="buildingsWrap"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="detailBg">
+  <div class="modal">
+    <h3 id="detailTitle">訂房詳情</h3>
+    <div id="detailContent"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn" onclick="closeDetail()">關閉</button>
+      <button class="btn primary" id="detailEditBtn">編輯訂單</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, updateDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig={apiKey:"AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",authDomain:"umas-booking-manager.firebaseapp.com",projectId:"umas-booking-manager",storageBucket:"umas-booking-manager.firebasestorage.app",messagingSenderId:"7381346891",appId:"1:7381346891:web:2affb529e6b8614f6b7bce"};
+const ALLOWED=["key8745@gmail.com","princessangel45@gmail.com"];
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const auth=getAuth(app);
+const provider=new GoogleAuthProvider();
+
+const BUILDINGS=[
+  {id:'A1F',label:'A棟一樓',rooms:[
+    {id:'A-101',label:'A-101',cap:'套房 4人'},
+    {id:'A-102',label:'A-102',cap:'套房 4人'},
+    {id:'A-103',label:'A-103',cap:'套房 4人'},
+  ]},
+  {id:'A2F',label:'A棟二樓',rooms:[
+    {id:'A-201',label:'A-201',cap:'通鋪 6人'},
+    {id:'A-202',label:'A-202',cap:'通鋪 3人'},
+    {id:'A-203',label:'A-203',cap:'通鋪 7人'},
+  ]},
+  {id:'B2F',label:'B棟二樓',rooms:[
+    {id:'B-201',label:'B-201',cap:'通鋪 4人'},
+    {id:'B-202',label:'B-202',cap:'通鋪 4人'},
+    {id:'B-203',label:'B-203',cap:'通鋪 6人'},
+    {id:'B-204',label:'B-204',cap:'通鋪 3人'},
+  ]},
+  {id:'C2F',label:'C棟二樓',rooms:[
+    {id:'C-201',label:'C-201',cap:'套房 3人'},
+    {id:'C-202',label:'C-202',cap:'套房 3人'},
+    {id:'C-203',label:'C-203',cap:'套房 3人'},
+  ]},
+];
+
+const CHECKLIST_ITEMS=['確認訂金已收','身分證登記','說明住宿規則','交付房間鑰匙','說明早餐時間'];
+
+let bookings=[], today='', unsubscribe=null;
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function getToday(){return new Date().toISOString().slice(0,10);}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00').toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});}
+
+function isCheckinToday(b){return b.checkin===today;}
+function isCheckoutToday(b){
+  const co=b.checkout||(b.checkin&&b.nights?addDays(b.checkin,parseInt(b.nights)||1):null);
+  return co===today;
+}
+function isStaying(b){
+  if(!b.checkin) return false;
+  const co=b.checkout||(b.nights?addDays(b.checkin,parseInt(b.nights)||1):null);
+  if(!co) return false;
+  return b.checkin<=today && today<co && b.checkin!==today;
+}
+function addDays(ds,n){const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+
+function getBookingForRoom(roomId){
+  return bookings.filter(b=>{
+    const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+    if(!rooms.includes(roomId)) return false;
+    if(!['confirmed','week-check','checkin'].includes(b.status)) return false;
+    return isCheckinToday(b)||isStaying(b)||isCheckoutToday(b);
+  });
+}
+
+function getRoomStatus(roomId){
+  const bks=getBookingForRoom(roomId);
+  if(!bks.length) return 'empty';
+  if(bks.some(b=>isCheckoutToday(b))) return 'checkout';
+  if(bks.some(b=>isCheckinToday(b))) return 'checkin';
+  return 'staying';
+}
+
+function getChecklist(firestoreId){
+  try{return JSON.parse(localStorage.getItem(`checklist_${firestoreId}`)||'[]');}catch{return [];}
+}
+function saveChecklist(firestoreId,list){
+  localStorage.setItem(`checklist_${firestoreId}`,JSON.stringify(list));
+}
+
+function render(){
+  today=getToday();
+  const dow=['日','一','二','三','四','五','六'];
+  const d=new Date(today+'T00:00');
+  document.getElementById('todayTitle').textContent=`${today.slice(5).replace('-','/')} 控房`;
+  document.getElementById('todaySub').textContent=`星期${dow[d.getDay()]}`;
+
+  const checkinCount=bookings.filter(b=>isCheckinToday(b)&&['confirmed','week-check','checkin'].includes(b.status)).length;
+  const checkoutCount=bookings.filter(b=>isCheckoutToday(b)&&['confirmed','week-check','checkin'].includes(b.status)).length;
+  const stayingCount=bookings.filter(b=>isStaying(b)&&['confirmed','week-check','checkin'].includes(b.status)).length;
+  const occupiedRooms=BUILDINGS.flatMap(bg=>bg.rooms).filter(r=>getRoomStatus(r.id)!=='empty').length;
+
+  document.getElementById('summaryRow').innerHTML=`
+    <div class="summary-card"><div class="summary-num" style="color:#2d6a4f;">${checkinCount}</div><div class="summary-label">今日入住</div></div>
+    <div class="summary-card"><div class="summary-num" style="color:#b94040;">${checkoutCount}</div><div class="summary-label">今日退房</div></div>
+    <div class="summary-card"><div class="summary-num" style="color:#3a6ab0;">${stayingCount}</div><div class="summary-label">續住中</div></div>
+    <div class="summary-card"><div class="summary-num">${occupiedRooms}</div><div class="summary-label">使用房間</div></div>
+  `;
+
+  const wrap=document.getElementById('buildingsWrap');
+  wrap.innerHTML='';
+  BUILDINGS.forEach(bg=>{
+    const sec=document.createElement('div');
+    sec.className='building-section';
+    sec.innerHTML=`<div class="building-title">${bg.label}</div><div class="rooms-grid" id="grid-${bg.id}"></div>`;
+    wrap.appendChild(sec);
+    const grid=document.getElementById(`grid-${bg.id}`);
+    bg.rooms.forEach(room=>{
+      const status=getRoomStatus(room.id);
+      const bks=getBookingForRoom(room.id);
+      const card=document.createElement('div');
+      card.className='room-card';
+
+      const statusLabel={empty:'空房',checkin:'今日入住',checkout:'今日退房',staying:'續住中'}[status];
+      const statusClass={empty:'status-empty',checkin:'status-checkin',checkout:'status-checkout',staying:'status-staying'}[status];
+
+      if(status==='empty'){
+        card.innerHTML=`
+          <div class="room-header">
+            <div><div class="room-id">${room.label}</div><div class="room-cap">${room.cap}</div></div>
+            <span class="room-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="empty-room">今日無訂房</div>`;
+      } else {
+        const b=bks[0];
+        const checklist=getChecklist(b.firestoreId);
+        const doneCount=checklist.filter(Boolean).length;
+        const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'');
+        card.innerHTML=`
+          <div class="room-header">
+            <div><div class="room-id">${room.label}</div><div class="room-cap">${room.cap}</div></div>
+            <span class="room-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="room-body">
+            <div class="booking-name">${b.name||'—'}</div>
+            <div class="booking-info">
+              ${b.pax||1} 人 · ${b.plan==='hiking'?'登山方案':'一般住宿'}<br>
+              ${fmtDate(b.checkin)} → ${fmtDate(b.checkout||addDays(b.checkin,parseInt(b.nights)||1))} · ${b.nights||1}晚<br>
+              ${b.phone?`📞 ${b.phone}`:''}
+            </div>
+            ${status==='checkin'?`
+            <div class="checklist" id="cl-${b.firestoreId}">
+              ${CHECKLIST_ITEMS.map((item,i)=>`
+                <label class="check-item${checklist[i]?' done':''}">
+                  <input type="checkbox" ${checklist[i]?'checked':''} onchange="toggleCheck('${b.firestoreId}',${i},this.checked)">
+                  ${item}
+                </label>`).join('')}
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">${doneCount}/${CHECKLIST_ITEMS.length} 完成</div>`:''}
+            <div class="room-actions">
+              <button class="btn" onclick="openDetail('${b.firestoreId}')">詳情</button>
+              ${status==='checkin'&&doneCount===CHECKLIST_ITEMS.length?`<button class="btn green" onclick="confirmCheckin('${b.firestoreId}')">✓ 完成入住</button>`:''}
+            </div>
+          </div>`;
+      }
+      grid.appendChild(card);
+    });
+  });
+}
+
+window.toggleCheck=function(fid,index,val){
+  const list=getChecklist(fid);
+  while(list.length<CHECKLIST_ITEMS.length) list.push(false);
+  list[index]=val;
+  saveChecklist(fid,list);
+  render();
+};
+
+window.confirmCheckin=async function(fid){
+  if(!confirm('確認完成入住程序？')) return;
+  await updateDoc(doc(db,'bookings',fid),{status:'checkin'});
+  showToast('已更新為入住中 ✓');
+};
+
+window.openDetail=function(fid){
+  const b=bookings.find(x=>x.firestoreId===fid);
+  if(!b) return;
+  const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'—');
+  document.getElementById('detailTitle').textContent=b.name||'訂房詳情';
+  document.getElementById('detailContent').innerHTML=`
+    <div class="section-label">訂房資訊</div>
+    <div class="info-row"><span class="info-label">房型</span><span class="info-val">${rooms}</span></div>
+    <div class="info-row"><span class="info-label">人數</span><span class="info-val">${b.pax||1} 人</span></div>
+    <div class="info-row"><span class="info-label">入住</span><span class="info-val">${b.checkin||'—'}</span></div>
+    <div class="info-row"><span class="info-label">退房</span><span class="info-val">${b.checkout||'—'}</span></div>
+    <div class="info-row"><span class="info-label">方案</span><span class="info-val">${b.plan==='hiking'?'登山方案':'一般住宿'}</span></div>
+    <div class="section-label">費用</div>
+    <div class="info-row"><span class="info-label">報價</span><span class="info-val">NT$ ${(parseFloat(b.quote)||0).toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-label">已付訂金</span><span class="info-val" style="color:#2d6a4f;">NT$ ${(parseFloat(b.deposit)||0).toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-label">應收尾款</span><span class="info-val" style="color:#b94040;">NT$ ${(parseFloat(b.due)||0).toLocaleString()}</span></div>
+    <div class="section-label">聯絡資訊</div>
+    <div class="info-row"><span class="info-label">電話</span><span class="info-val">${b.phone||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Line</span><span class="info-val">${b.line||'—'}</span></div>
+    ${b.note?`<div class="section-label">備註</div><div style="font-size:12px;color:var(--text2);line-height:1.7;padding:6px 0;">${b.note}</div>`:''}
+  `;
+  document.getElementById('detailEditBtn').onclick=()=>{
+    sessionStorage.setItem('editBookingId',fid);
+    window.location.href='index.html?edit=1';
+  };
+  document.getElementById('detailBg').classList.add('open');
+};
+
+window.closeDetail=function(){document.getElementById('detailBg').classList.remove('open');};
+
+document.getElementById('loginBtn').addEventListener('click',async()=>{
+  try{await signInWithPopup(auth,provider);}catch(e){if(e.code!=='auth/popup-closed-by-user')alert('登入失敗：'+e.message);}
+});
+document.getElementById('logoutBtn').addEventListener('click',async()=>{if(unsubscribe){unsubscribe();unsubscribe=null;}await signOut(auth);});
+
+onAuthStateChanged(auth,user=>{
+  document.getElementById('loading-screen').style.display='none';
+  if(!user){document.getElementById('login-screen').classList.add('show');document.getElementById('app').classList.remove('ready');return;}
+  if(!["key8745@gmail.com","princessangel45@gmail.com"].includes(user.email)){document.getElementById('login-screen').classList.remove('show');document.getElementById('app').classList.remove('ready');return;}
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('app').classList.add('ready');
+  document.getElementById('userAvatar').src=user.photoURL||'';
+  if(unsubscribe) unsubscribe();
+  unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
+    bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    render();
+  });
+});
+</script>
+</body>
+</html>
