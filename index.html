@@ -683,8 +683,21 @@ window.analyzeChat=async function(){
     const data=await res.json();
     const text=data.content?.[0]?.text||'{}';
     let parsed;
-    try{ parsed=JSON.parse(text.replace(/```json|```/g,'').trim()); }
-    catch(e){ parsed={}; }
+    try{
+      // 嘗試多種方式解析 JSON
+      const cleaned=text.replace(/```json/g,'').replace(/```/g,'').trim();
+      // 找第一個 { 到最後一個 } 之間的內容
+      const start=cleaned.indexOf('{');
+      const end=cleaned.lastIndexOf('}');
+      const jsonStr=start>=0&&end>start?cleaned.slice(start,end+1):cleaned;
+      parsed=JSON.parse(jsonStr);
+    }catch(e){
+      // 解析失敗，顯示原始回應讓使用者知道
+      resultEl.style.display='block';
+      resultEl.innerHTML=`<div style="color:#b94040;margin-bottom:8px;">JSON 解析失敗，AI 原始回應：</div><pre style="font-size:10px;white-space:pre-wrap;color:#555;">${text}</pre>`;
+      btn.textContent='🤖 分析對話並填入表單';btn.disabled=false;
+      return;
+    }
 
     // 自動填入表單
     const setIfVal=(id,val)=>{ if(val&&document.getElementById(id)) document.getElementById(id).value=val; };
