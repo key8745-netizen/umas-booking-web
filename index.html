@@ -657,25 +657,10 @@ window.analyzeChat=async function(){
       body:JSON.stringify({
         model:'gemini-2.5-flash',
         max_tokens:1000,
-        system:`你是兀瑪斯農莊（南投山區民宿）的訂房助理。請從 Line 對話中萃取訂房資訊，並分析客人的態度和口氣。
-回覆格式必須是純 JSON，不要有其他文字：
-{
-  "name": "客人姓名（如有）",
-  "phone": "電話（如有）",
-  "line": "Line ID（如有）",
-  "checkin": "入住日期 YYYY-MM-DD（如有）",
-  "checkout": "退房日期 YYYY-MM-DD（如有）",
-  "nights": 住宿天數數字（如有）,
-  "pax": 人數數字（如有）,
-  "guesttype": "訪客類型（如有）",
-  "roomtype": "房型需求（如有）",
-  "plan": "normal 或 hiking（如有提到登山）",
-  "note": "對話重點摘要（特殊需求、注意事項等）",
-  "attitude": "客人態度分析（禮貌程度、是否殺價、溝通方式等）",
-  "strategy": "建議應對策略",
-  "risk": "風險提示（如有）",
-  "tag": "好客人 或 普通 或 需注意（根據態度判斷）"
-}`,
+        system:`你是兀瑪斯農莊（南投山區民宿）的訂房助理。請從 Line 對話中萃取訂房資訊並分析客人態度。
+你必須只回傳一個 JSON 物件，從第一個 { 開始到最後一個 } 結束，絕對不可以有任何其他文字、說明或 markdown 格式。
+JSON 欄位如下（沒有的填 null）：
+name（姓名）、phone（電話）、line（Line ID）、checkin（YYYY-MM-DD）、checkout（YYYY-MM-DD）、nights（數字）、pax（數字）、guesttype（訪客類型）、roomtype（房型需求）、plan（normal 或 hiking）、note（對話重點摘要）、attitude（態度分析）、strategy（應對策略）、risk（風險提示）、tag（必填，只能填：好客人 或 普通 或 需注意）`,
         messages:[{role:'user',content:`請分析以下 Line 對話：\n\n${chat}`}]
       })
     });
@@ -694,6 +679,10 @@ window.analyzeChat=async function(){
       btn.textContent='🤖 分析對話並填入表單';btn.disabled=false;
       return;
     }
+
+    // tag 正規化
+    const rawTag=parsed.tag||'';
+    const tag=rawTag.includes('好客人')?'好客人':rawTag.includes('需注意')||rawTag.includes('注意')?'需注意':'普通';
 
     // 自動填入表單
     const setIfVal=(id,val)=>{ if(val&&document.getElementById(id)) document.getElementById(id).value=val; };
@@ -715,11 +704,11 @@ window.analyzeChat=async function(){
     }
 
     // 顯示分析結果
-    const tagColor={'好客人':'#2d6a4f','普通':'#888','需注意':'#b94040'}[parsed.tag]||'#888';
-    const tagBg={'好客人':'#edf5f0','普通':'#f7f5f2','需注意':'#fdf0f0'}[parsed.tag]||'#f7f5f2';
+    const tagColor={'好客人':'#2d6a4f','普通':'#888','需注意':'#b94040'}[tag]||'#888';
+    const tagBg={'好客人':'#edf5f0','普通':'#f7f5f2','需注意':'#fdf0f0'}[tag]||'#f7f5f2';
     resultEl.innerHTML=`
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="font-size:11px;font-weight:600;color:${tagColor};background:${tagBg};padding:3px 10px;border-radius:999px;">${parsed.tag||'未知'}</span>
+        <span style="font-size:11px;font-weight:600;color:${tagColor};background:${tagBg};padding:3px 10px;border-radius:999px;">${tag==='好客人'?'⭐ ':tag==='需注意'?'⚠ ':''}${tag}</span>
         <span style="font-size:11px;color:#888;">客戶評估</span>
       </div>
       ${parsed.attitude?`<div style="margin-bottom:6px;"><span style="color:#aaa;font-size:10px;letter-spacing:0.05em;">態度分析</span><div style="margin-top:2px;">${parsed.attitude}</div></div>`:''}
