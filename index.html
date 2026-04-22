@@ -105,7 +105,6 @@ select:focus{border-color:#888;}
 
 /* ── 手機版 ── */
 .mobile-fab{display:none;position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--text);color:#fff;border:none;font-size:24px;cursor:pointer;z-index:500;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.18);}
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid var(--border);height:60px;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
 .bottom-nav-inner{display:flex;height:100%;}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:var(--text3);font-size:9px;letter-spacing:0.04em;cursor:pointer;}
 .bottom-nav-item.active{color:var(--text);}
@@ -125,7 +124,7 @@ select:focus{border-color:#888;}
   .card{padding:9px;}
   .card-name{font-size:12px;}
   .mobile-fab{display:flex;}
-  .bottom-nav{display:block;}
+  
   .modal{width:100%!important;max-width:100%;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:92vh;overflow-y:auto;}
   .modal-bg{padding:0!important;align-items:flex-end!important;}
   .form-grid{grid-template-columns:1fr 1fr;}
@@ -134,16 +133,19 @@ select:focus{border-color:#888;}
 }
 
 /* ── 底部導覽列（手機） ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
 .bottom-nav-inner{display:flex;height:60px;}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;border:none;background:none;cursor:pointer;font-family:inherit;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1;}
 @media(max-width:768px){
   .nav-pill{display:none!important;}
-  .bottom-nav{display:block;}
+  
   body{padding-bottom:60px;}
 }
+
+
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
+@media(max-width:768px){.bottom-nav{display:block;}}
 </style>
 </head>
 <body>

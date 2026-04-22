@@ -124,7 +124,10 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
   body{padding-bottom:60px;}
 }
 
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:500;padding-bottom:env(safe-area-inset-bottom);display:none;}
+
+
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
+@media(max-width:768px){.bottom-nav{display:block;}}
 </style>
 </head>
 <body>
