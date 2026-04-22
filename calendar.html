@@ -115,10 +115,10 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
 }
 
 /* ── 底部導覽列（手機） ── */
-.bottom-nav-inner{display:flex;height:60px;}
-.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;border:none;background:none;cursor:pointer;font-family:inherit;}
+
+
 .bottom-nav-item.active{color:#1a1a1a;}
-.bottom-nav-icon{font-size:18px;line-height:1;}
+
 @media(max-width:768px){
   .nav-pill{display:none!important;}
   body{padding-bottom:60px;}
@@ -126,8 +126,21 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
 
 
 
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:500;padding-bottom:env(safe-area-inset-bottom);}
-@media(max-width:768px){.bottom-nav{display:block;}}
+
+@media(max-width:768px){}
+
+
+.bottom-nav-item.active{color:var(--text);}
+
+
+@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
+
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid #e8e4de;z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav-inner{display:flex;flex-direction:row;height:60px;width:100%;}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
+.bottom-nav-item.active{color:#1a1a1a;}
+.bottom-nav-icon{font-size:18px;line-height:1.2;}
+@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}}
 </style>
 </head>
 <body>
@@ -683,12 +696,14 @@ onAuthStateChanged(auth, user=>{
   }, ()=>{ document.getElementById('syncDot').className='sync-dot'; });
 });
 </script>
+
+
 <nav class="bottom-nav"><div class="bottom-nav-inner">
-    <a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a>
-    <a class="bottom-nav-item active" href="calendar.html"><span class="bottom-nav-icon">◫</span><span>日曆</span></a>
-    <a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a>
-    <a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">☺</span><span>客戶</span></a>
-    <a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a>
-  </div></nav>
+  <a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a>
+  <a class="bottom-nav-item active" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a>
+  <a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a>
+  <a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a>
+  <a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a>
+</div></nav>
 </body>
 </html>
