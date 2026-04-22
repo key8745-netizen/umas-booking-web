@@ -112,6 +112,7 @@ select:focus{border-color:#888;}
 .bottom-nav-icon{font-size:20px;line-height:1;}
 
 @media(max-width:768px){
+  body{padding-bottom:60px;}
   header{padding:0 14px;height:46px;}
   header h1{font-size:13px;}
   .nav-pill{display:none;}
@@ -309,21 +310,11 @@ select:focus{border-color:#888;}
 
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
-    <span class="bottom-nav-item active" onclick="window.location.href='index.html'">
-      <span class="bottom-nav-icon">⊞</span>主控板
-    </span>
-    <span class="bottom-nav-item" onclick="window.location.href='calendar.html'">
-      <span class="bottom-nav-icon">◫</span>日曆
-    </span>
-    <span class="bottom-nav-item" onclick="window.location.href='checkin.html'">
-      <span class="bottom-nav-icon">⌂</span>控房
-    </span>
-    <span class="bottom-nav-item" onclick="window.location.href='customers.html'">
-      <span class="bottom-nav-icon">☺</span>客戶
-    </span>
-    <span class="bottom-nav-item" onclick="window.location.href='analytics.html'">
-      <span class="bottom-nav-icon">◎</span>統計
-    </span>
+    <a class="bottom-nav-item active" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a>
+    <a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">◫</span><span>日曆</span></a>
+    <a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a>
+    <a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">☺</span><span>客戶</span></a>
+    <a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a>
   </div>
 </nav>
 
