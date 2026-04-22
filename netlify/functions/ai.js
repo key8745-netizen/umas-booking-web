@@ -24,7 +24,7 @@ const handler = async (event) => {
 
     const geminiBody = {
       contents,
-      generationConfig: { maxOutputTokens: body.max_tokens || 1000, temperature: 0.7 }
+      generationConfig: { maxOutputTokens: body.max_tokens || 2000, temperature: 0.7 }
     };
     if (systemPrompt) geminiBody.system_instruction = { parts: [{ text: systemPrompt }] };
 
