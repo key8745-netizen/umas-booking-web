@@ -2,15 +2,24 @@ const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
     'Content-Type': 'application/json',
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ content: [{ type: 'text', text: 'API Key 未設定' }] }) };
+
+  // GET 請求：列出可用模型
+  if (event.httpMethod === 'GET') {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const data = await res.json();
+    const models = data.models?.filter(m => m.supportedGenerationMethods?.includes('generateContent')).map(m => m.name) || [];
+    return { statusCode: 200, headers, body: JSON.stringify({ models }) };
+  }
+
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
 
   try {
     const body = JSON.parse(event.body);
@@ -28,8 +37,7 @@ const handler = async (event) => {
     };
     if (systemPrompt) geminiBody.system_instruction = { parts: [{ text: systemPrompt }] };
 
-    // 依序嘗試免費模型
-    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite-preview-06-17', 'gemini-2.5-pro'];
+    const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash'];
     let lastError = null;
 
     for (const model of models) {
@@ -46,15 +54,14 @@ const handler = async (event) => {
         }
 
         const errCode = data?.error?.code;
-        lastError = data?.error?.message || `HTTP ${res.status}`;
-        // 只有 503/429 才換下一個模型，其他錯誤直接回報
-        if (errCode !== 503 && errCode !== 429) break;
+        lastError = `${model}: ${data?.error?.message || `HTTP ${res.status}`}`;
+        if (errCode !== 503 && errCode !== 429 && errCode !== 404) break;
       } catch(e) {
-        lastError = e.message;
+        lastError = `${model}: ${e.message}`;
       }
     }
 
-    return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text: `AI 暫時無法使用，請稍後再試。錯誤：${lastError}` }] }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text: `AI 暫時無法使用。${lastError}` }] }) };
 
   } catch (err) {
     return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text: '發生錯誤：' + err.message }] }) };
