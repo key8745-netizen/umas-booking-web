@@ -14,12 +14,17 @@ const handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
-  try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return { statusCode: 500, headers, body: JSON.stringify({ error: 'API key not configured' }) };
-    }
+  const apiKey = process.env.GEMINI_API_KEY;
 
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'GEMINI_API_KEY not found', content: [{ type: 'text', text: 'API Key 未設定，請檢查 Netlify 環境變數' }] })
+    };
+  }
+
+  try {
     const body = JSON.parse(event.body);
     const systemPrompt = body.system || '';
     const messages = body.messages || [];
@@ -29,22 +34,47 @@ const handler = async (event) => {
       parts: [{ text: String(msg.content) }]
     }));
 
-    const geminiBody = { contents, generationConfig: { maxOutputTokens: body.max_tokens || 1000, temperature: 0.7 } };
-    if (systemPrompt) geminiBody.system_instruction = { parts: [{ text: systemPrompt }] };
+    const geminiBody = {
+      contents,
+      generationConfig: { maxOutputTokens: body.max_tokens || 1000, temperature: 0.7 }
+    };
+
+    if (systemPrompt) {
+      geminiBody.system_instruction = { parts: [{ text: systemPrompt }] };
+    }
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(geminiBody) }
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody)
+      }
     );
 
     const data = await res.json();
-    if (!res.ok) return { statusCode: res.status, headers, body: JSON.stringify({ error: data }) };
+
+    if (!res.ok) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ content: [{ type: 'text', text: 'Gemini 錯誤：' + JSON.stringify(data) }] })
+      };
+    }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得回應';
-    return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text }] }) };
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ content: [{ type: 'text', text }] })
+    };
 
   } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ content: [{ type: 'text', text: '發生錯誤：' + err.message }] })
+    };
   }
 };
 
