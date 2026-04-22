@@ -17,24 +17,48 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(body),
-    });
+    const apiKey = process.env.GEMINI_API_KEY;
+    const systemPrompt = body.system || '';
+    const messages = body.messages || [];
+
+    const contents = messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    const geminiBody = {
+      contents,
+      generationConfig: {
+        maxOutputTokens: body.max_tokens || 1000,
+        temperature: 0.7,
+      }
+    };
+
+    if (systemPrompt) {
+      geminiBody.system_instruction = {
+        parts: [{ text: systemPrompt }]
+      };
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody),
+      }
+    );
 
     const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得回應';
+
     return {
-      statusCode: response.status,
+      statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ content: [{ type: 'text', text }] }),
     };
   } catch (error) {
     return {
