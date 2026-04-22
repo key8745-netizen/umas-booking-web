@@ -134,10 +134,32 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
         <button class="tag-btn" id="filter-warn" onclick="setFilter('需注意')">⚠ 需注意</button>
       </div>
       <span style="font-size:12px;color:var(--text2);" id="customerCount"></span>
+      <button class="btn primary" style="margin-left:auto;" onclick="openNewCustomerModal()">＋ 新增客戶</button>
     </div>
 
     <div id="detailPanel" class="detail-panel"></div>
     <div class="customers-grid" id="customersGrid"></div>
+  </div>
+</div>
+
+<!-- 新增客戶 Modal -->
+<div id="newCustomerBg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px);">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:420px;max-width:90%;border:0.5px solid var(--border);">
+    <h3 style="font-family:var(--serif);font-size:15px;font-weight:400;margin-bottom:16px;letter-spacing:0.04em;">新增客戶資料</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">姓名 *</div><input id="nc-name" placeholder="例：張欣如" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">電話</div><input id="nc-phone" placeholder="0933-000-000" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">Line ID</div><input id="nc-line" placeholder="Line 帳號" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">Facebook</div><input id="nc-fb" placeholder="FB 名稱" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">身分證字號</div><input id="nc-idno" placeholder="A123456789" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">居住地址</div><input id="nc-address" placeholder="縣市區路..." style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;"></div>
+    </div>
+    <div style="font-size:10px;color:var(--text2);margin-bottom:6px;">備忘錄</div>
+    <textarea id="nc-note" placeholder="習性、偏好、注意事項..." style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;resize:vertical;min-height:60px;outline:none;background:#fafaf8;font-family:var(--sans);margin-bottom:14px;"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeNewCustomerModal()">取消</button>
+      <button class="btn primary" onclick="saveNewCustomer()">儲存</button>
+    </div>
   </div>
 </div>
 
@@ -173,6 +195,15 @@ function buildCustomers(){
     map[key].totalRevenue+=parseFloat(b.quote)||0;
     map[key].totalDue+=parseFloat(b.due)||0;
     if(b.guesttype) map[key].types.add(b.guesttype);
+  });
+  // 加入手動新增的客戶（沒有訂單的）
+  Object.entries(customerMemos).forEach(([key,memo])=>{
+    if(memo.isManual && !map[key]){
+      map[key]={
+        key, name:memo.name||key, phone:memo.phone||'', line:memo.line||'', fb:memo.fb||'',
+        orders:[], totalRevenue:0, totalDue:0, types:new Set()
+      };
+    }
   });
   return Object.values(map).sort((a,b)=>b.orders.length-a.orders.length);
 }
@@ -375,7 +406,35 @@ window.newOrderFromCustomer=function(key){
   window.location.href='index.html?newOrder=1';
 };
 
-window.closeDetail=function(){
+window.openNewCustomerModal=function(){
+  document.getElementById('newCustomerBg').style.display='flex';
+  document.getElementById('nc-name').focus();
+};
+window.closeNewCustomerModal=function(){
+  document.getElementById('newCustomerBg').style.display='none';
+  ['nc-name','nc-phone','nc-line','nc-fb','nc-idno','nc-address','nc-note'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+};
+window.saveNewCustomer=async function(){
+  const name=document.getElementById('nc-name').value.trim();
+  if(!name){alert('請填寫姓名');return;}
+  const phone=document.getElementById('nc-phone').value.trim();
+  const key=phone||name;
+  const memo={
+    name, phone, line:document.getElementById('nc-line').value.trim(),
+    fb:document.getElementById('nc-fb').value.trim(),
+    idno:document.getElementById('nc-idno').value.trim(),
+    address:document.getElementById('nc-address').value.trim(),
+    note:document.getElementById('nc-note').value.trim(),
+    tag:'普通', isManual:true, createdAt:new Date().toISOString()
+  };
+  customerMemos[key]=memo;
+  await setDoc(doc(db,'customer_memos',key),memo);
+  closeNewCustomerModal();
+  showToast('客戶資料已新增 ✓');
+  renderList();
+};
   document.getElementById('detailPanel').classList.remove('open');
   currentCustomer=null;
 };
