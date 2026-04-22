@@ -90,7 +90,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
   body{padding-bottom:60px;}
 }
 
-/* ── 底部導覽列（手機） ── */
+
 
 
 .bottom-nav-item.active{color:#1a1a1a;}
@@ -103,7 +103,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 
 
 
-@media(max-width:768px){}
+
 
 
 .bottom-nav-item.active{color:var(--text);}
@@ -111,12 +111,19 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 
 @media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
 
+
+
+
+.bottom-nav-item.active{color:#1a1a1a;}
+
+@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:60px;}}
+/* ── 底部導覽列 ── */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid #e8e4de;z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
 .bottom-nav-inner{display:flex;flex-direction:row;height:60px;width:100%;}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}}
+@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}}
 </style>
 </head>
 <body>
@@ -568,12 +575,7 @@ onAuthStateChanged(auth,async user=>{
 </script>
 
 
-<nav class="bottom-nav"><div class="bottom-nav-inner">
-  <a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a>
-  <a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a>
-  <a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a>
-  <a class="bottom-nav-item active" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a>
-  <a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a>
-</div></nav>
+
+<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item active" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 </body>
 </html>
