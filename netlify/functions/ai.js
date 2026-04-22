@@ -15,13 +15,8 @@ const handler = async (event) => {
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-
   if (!apiKey) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'GEMINI_API_KEY not found', content: [{ type: 'text', text: 'API Key 未設定，請檢查 Netlify 環境變數' }] })
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ content: [{ type: 'text', text: 'API Key 未設定' }] }) };
   }
 
   try {
@@ -38,13 +33,12 @@ const handler = async (event) => {
       contents,
       generationConfig: { maxOutputTokens: body.max_tokens || 1000, temperature: 0.7 }
     };
-
     if (systemPrompt) {
       geminiBody.system_instruction = { parts: [{ text: systemPrompt }] };
     }
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,28 +47,15 @@ const handler = async (event) => {
     );
 
     const data = await res.json();
-
     if (!res.ok) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ content: [{ type: 'text', text: 'Gemini 錯誤：' + JSON.stringify(data) }] })
-      };
+      return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text: 'Gemini 錯誤：' + JSON.stringify(data) }] }) };
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得回應';
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ content: [{ type: 'text', text }] })
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text }] }) };
 
   } catch (err) {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ content: [{ type: 'text', text: '發生錯誤：' + err.message }] })
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ content: [{ type: 'text', text: '發生錯誤：' + err.message }] }) };
   }
 };
 
