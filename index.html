@@ -570,6 +570,25 @@ return`<div class="card" id="card-${b.firestoreId}" draggable="true"><div style=
 
 let touchClone=null, touchDragId=null, touchMoved=false;
 
+function getColumnFromPoint(x, y){
+  // 從座標找最近的欄位，放寬判定範圍
+  const els=document.elementsFromPoint(x, y);
+  for(const el of els){
+    if(el.classList.contains('column')) return el;
+    const col=el.closest('.column');
+    if(col) return col;
+  }
+  // 如果找不到，找最近的欄位（橫向距離）
+  let nearest=null, minDist=Infinity;
+  document.querySelectorAll('.column').forEach(col=>{
+    const rect=col.getBoundingClientRect();
+    const centerX=rect.left+rect.width/2;
+    const dist=Math.abs(x-centerX);
+    if(dist<minDist){minDist=dist;nearest=col;}
+  });
+  return minDist<120?nearest:null;
+}
+
 function addTouchDrag(card, fid){
   let longPressTimer=null;
 
@@ -579,12 +598,12 @@ function addTouchDrag(card, fid){
       touchDragId=fid;
       const rect=card.getBoundingClientRect();
       touchClone=card.cloneNode(true);
-      touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.75;z-index:9999;pointer-events:none;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);`;
+      touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:9999;pointer-events:none;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,0.18);transform:scale(1.03);transition:transform 0.1s;`;
       document.body.appendChild(touchClone);
-      card.style.opacity='0.3';
+      card.style.opacity='0.25';
       COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});
-      navigator.vibrate&&navigator.vibrate(40);
-    }, 350);
+      navigator.vibrate&&navigator.vibrate(30);
+    }, 200);  // 縮短為 200ms
   },{passive:true});
 
   card.addEventListener('touchmove', e=>{
@@ -594,12 +613,11 @@ function addTouchDrag(card, fid){
     e.preventDefault();
     const t=e.touches[0];
     touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
-    touchClone.style.top=(t.clientY-30)+'px';
-    const els=document.elementsFromPoint(t.clientX,t.clientY);
+    touchClone.style.top=(t.clientY-50)+'px';
+    // 高亮目標欄位
     document.querySelectorAll('.column').forEach(c=>c.style.background='');
-    const col=els.find(el=>el.classList.contains('column')||el.closest('.column'));
-    const colEl=col?.classList.contains('column')?col:col?.closest('.column');
-    if(colEl) colEl.style.background='#dce8f8';
+    const colEl=getColumnFromPoint(t.clientX, t.clientY);
+    if(colEl) colEl.style.background='#e8f0fe';
   },{passive:false});
 
   card.addEventListener('touchend', async e=>{
@@ -610,12 +628,13 @@ function addTouchDrag(card, fid){
     document.querySelectorAll('.column').forEach(c=>c.style.background='');
     if(!touchDragId){ return; }
     const t=e.changedTouches[0];
-    const els=document.elementsFromPoint(t.clientX,t.clientY);
-    const colEl=els.find(el=>el.classList.contains('column'))||els.map(el=>el.closest('.column')).find(Boolean);
+    const colEl=getColumnFromPoint(t.clientX, t.clientY);
     if(colEl){
       const targetColId=colEl.id.replace('col-','');
       const bk=bookings.find(x=>x.firestoreId===touchDragId);
       if(bk&&bk.status!==targetColId){
+        const oldStatus=bk.status;
+        pushUndo({type:'update',fid:touchDragId,before:{status:oldStatus},after:{status:targetColId}});
         await updateDoc(doc(db,'bookings',touchDragId),{status:targetColId});
         const colObj=COLS.find(c=>c.id===targetColId);
         showToast('已移至「'+(colObj?.label||targetColId)+'」');
@@ -1150,6 +1169,6 @@ onAuthStateChanged(auth, user=>{
 });
 </script>
 
-<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item active" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
+<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item active" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 </body>
 </html>
