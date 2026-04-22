@@ -168,6 +168,12 @@ select:focus{border-color:#888;}
   <div class="modal">
     <h3 id="modalTitle">新增訂房</h3>
     <div class="section-label">客戶資訊</div>
+    <div class="form-row full" style="margin-bottom:8px;">
+      <div style="position:relative;">
+        <input id="customer-search" placeholder="🔍 搜尋已有客戶（姓名或電話）" style="width:100%;padding:7px 10px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;background:#fafaf8;" oninput="searchCustomers(this.value)">
+        <div id="customer-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:0.5px solid var(--border);border-radius:7px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:100;max-height:180px;overflow-y:auto;"></div>
+      </div>
+    </div>
     <div class="form-grid">
       <div class="form-row"><label>姓名 *</label><input id="f-name" placeholder="例：張欣如"></div>
       <div class="form-row"><label>電話</label><input id="f-phone" placeholder="0933-000-000"></div>
@@ -317,6 +323,52 @@ let bookings=[],editId=null,dragId=null,searchQ='',unsubscribe=null;
 
 window.filterCards=()=>{searchQ=document.getElementById('searchInput').value;renderAll();};
 window.calcDue=()=>{const q=parseFloat(document.getElementById('f-quote').value)||0,d=parseFloat(document.getElementById('f-deposit').value)||0;document.getElementById('f-due').value=Math.round(q-d)||'';};
+
+// 搜尋已有客戶
+window.searchCustomers=function(q){
+  const dropdown=document.getElementById('customer-dropdown');
+  if(!q||q.length<1){dropdown.style.display='none';return;}
+  const matches=bookings.filter(b=>b.name&&(b.name.includes(q)||(b.phone||'').includes(q)))
+    .reduce((acc,b)=>{const k=b.phone||b.name;if(!acc.find(x=>(x.phone||x.name)===k))acc.push(b);return acc;},[])
+    .slice(0,6);
+  if(!matches.length){dropdown.style.display='none';return;}
+  dropdown.style.display='block';
+  dropdown.innerHTML=matches.map(b=>`
+    <div onclick="fillCustomerData('${b.name}','${b.phone||''}','${b.line||''}','${b.fb||''}')"
+      style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:0.5px solid var(--border2);"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='#fff'">
+      <span style="font-weight:500;">${b.name}</span>
+      <span style="color:var(--text2);margin-left:8px;">${b.phone||''}</span>
+      ${b.line?`<span style="color:var(--text3);margin-left:6px;">Line: ${b.line}</span>`:''}
+    </div>`).join('');
+};
+
+window.fillCustomerData=function(name,phone,line,fb){
+  document.getElementById('f-name').value=name;
+  document.getElementById('f-phone').value=phone;
+  document.getElementById('f-line').value=line;
+  document.getElementById('f-fb').value=fb;
+  document.getElementById('customer-search').value='';
+  document.getElementById('customer-dropdown').style.display='none';
+  showToast('已帶入客戶資料 ✓');
+};
+
+// 從客戶資料頁面帶入
+function checkPrefillCustomer(){
+  const data=sessionStorage.getItem('prefillCustomer');
+  if(!data) return;
+  sessionStorage.removeItem('prefillCustomer');
+  try{
+    const c=JSON.parse(data);
+    openModal();
+    setTimeout(()=>{
+      if(c.name) document.getElementById('f-name').value=c.name;
+      if(c.phone) document.getElementById('f-phone').value=c.phone;
+      if(c.line) document.getElementById('f-line').value=c.line;
+      if(c.fb) document.getElementById('f-fb').value=c.fb;
+    },300);
+  }catch(e){}
+}
 
 function dateAddDays(ds,n){const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
 function dateDiffDays(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/86400000);}
@@ -998,6 +1050,7 @@ function startListening(){
   unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
     bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
     renderAll();setSyncStatus('online');
+    checkPrefillCustomer();
   },()=>setSyncStatus('offline'));
 }
 

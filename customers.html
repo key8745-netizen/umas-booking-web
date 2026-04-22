@@ -245,32 +245,72 @@ window.openDetail=function(key){
   const memo=getMemo(key);
   const panel=document.getElementById('detailPanel');
   const tag=memo.tag||'普通';
-  const sortedOrders=c.orders.sort((a,b)=>(b.checkin||'').localeCompare(a.checkin||''));
+  const sortedOrders=[...c.orders].sort((a,b)=>(b.checkin||'').localeCompare(a.checkin||''));
   const rooms=[...new Set(c.orders.flatMap(o=>Array.isArray(o.roomtype)?o.roomtype:(o.roomtype?[o.roomtype]:[])))].join('、');
   const types=[...c.types].join('、');
+
+  // 季節偏好分析
+  const seasonMap={spring:0,summer:0,autumn:0,winter:0};
+  const seasonLabel={spring:'春（3-5月）',summer:'夏（6-8月）',autumn:'秋（9-11月）',winter:'冬（12-2月）'};
+  c.orders.forEach(o=>{
+    if(!o.checkin) return;
+    const m=parseInt(o.checkin.slice(5,7));
+    if(m>=3&&m<=5) seasonMap.spring++;
+    else if(m>=6&&m<=8) seasonMap.summer++;
+    else if(m>=9&&m<=11) seasonMap.autumn++;
+    else seasonMap.winter++;
+  });
+  const topSeason=Object.entries(seasonMap).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0);
+  const seasonHtml=topSeason.length>0?topSeason.map(([s,n])=>`<span style="background:var(--bg);border:0.5px solid var(--border);border-radius:999px;padding:2px 8px;font-size:10px;margin-right:4px;">${seasonLabel[s]} ${n}次</span>`).join(''):'尚無資料';
 
   panel.innerHTML=`
     <div class="detail-header">
       <div class="detail-avatar">${initials(c.name)}</div>
       <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <div class="detail-name">${c.name}</div>
           <span class="customer-tag ${tagColor(tag)}">${tag==='好客人'?'⭐ ':tag==='需注意'?'⚠ ':''}${tag}</span>
         </div>
         <div class="detail-sub">${c.phone||''}${c.line?' · Line: '+c.line:''}${c.fb?' · FB: '+c.fb:''}</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="newOrderFromCustomer('${key}')">＋ 新增訂房</button>
         <button class="btn green" onclick="analyzeCustomer('${key}')">🤖 AI 分析</button>
         <button class="btn" onclick="closeDetail()">關閉</button>
       </div>
     </div>
     <div class="detail-grid">
       <div class="kpi"><div class="kpi-label">訂房次數</div><div class="kpi-val">${c.orders.length}</div></div>
-      <div class="kpi"><div class="kpi-label">總消費</div><div class="kpi-val" style="font-size:15px;">NT$${Math.round(c.totalRevenue).toLocaleString()}</div></div>
-      <div class="kpi"><div class="kpi-label">平均消費</div><div class="kpi-val" style="font-size:15px;">NT$${Math.round(c.totalRevenue/(c.orders.length||1)).toLocaleString()}</div></div>
-      <div class="kpi"><div class="kpi-label">未收尾款</div><div class="kpi-val" style="font-size:15px;color:${c.totalDue>0?'#b94040':'#2d6a4f'};">NT$${Math.round(c.totalDue).toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-label">總消費</div><div class="kpi-val" style="font-size:14px;">NT$${Math.round(c.totalRevenue).toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-label">平均消費</div><div class="kpi-val" style="font-size:14px;">NT$${Math.round(c.totalRevenue/(c.orders.length||1)).toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-label">未收尾款</div><div class="kpi-val" style="font-size:14px;color:${c.totalDue>0?'#b94040':'#2d6a4f'};">NT$${Math.round(c.totalDue).toLocaleString()}</div></div>
     </div>
-    ${types?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">訪客類型：${types}　常訂房型：${rooms||'—'}</div>`:''}
+
+    <div class="section-title">基本資料 <button class="btn" style="font-size:10px;padding:2px 8px;margin-left:8px;" onclick="toggleEditInfo('${key}')">編輯</button></div>
+    <div id="info-view-${key}" style="font-size:12px;color:var(--text2);line-height:2;padding:8px 0;">
+      ${types?`<span style="margin-right:16px;">類型：${types}</span>`:''}
+      ${memo.idno?`<span style="margin-right:16px;">身分證：${memo.idno}</span>`:''}
+      ${memo.address?`<div>地址：${memo.address}</div>`:''}
+      ${!memo.idno&&!memo.address?'<span style="color:var(--text3);">尚未填寫身分證字號和地址</span>':''}
+    </div>
+    <div id="info-edit-${key}" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">姓名</div><input id="edit-name-${key}" value="${c.name||''}" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">電話</div><input id="edit-phone-${key}" value="${c.phone||''}" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">Line ID</div><input id="edit-line-${key}" value="${c.line||''}" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">Facebook</div><input id="edit-fb-${key}" value="${c.fb||''}" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">身分證字號</div><input id="edit-idno-${key}" value="${memo.idno||''}" placeholder="A123456789" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+        <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">居住地址</div><input id="edit-address-${key}" value="${memo.address||''}" style="width:100%;padding:6px 9px;border:0.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;"></div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn" onclick="toggleEditInfo('${key}')">取消</button>
+        <button class="btn primary" onclick="saveCustomerInfo('${key}')">儲存</button>
+      </div>
+    </div>
+
+    <div class="section-title">入住季節偏好</div>
+    <div style="padding:6px 0 10px;">${seasonHtml}</div>
+    ${types?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">常訂房型：${rooms||'—'}</div>`:''}
 
     <div class="section-title">訂房歷史</div>
     <div id="detail-orders">
@@ -278,8 +318,8 @@ window.openDetail=function(key){
         const rms=Array.isArray(o.roomtype)?o.roomtype.join('、'):(o.roomtype||'—');
         return `<div class="history-item">
           <div>
-            <div>${o.name} · ${rms} · ${o.pax||1}人</div>
-            <div class="history-date">${fmtDate(o.checkin)} → ${fmtDate(o.checkout)} · ${o.nights||1}晚</div>
+            <div style="font-weight:500;">${rms} · ${o.pax||1}人</div>
+            <div class="history-date">${fmtDate(o.checkin)} → ${fmtDate(o.checkout||'')} · ${o.nights||1}晚</div>
             ${o.note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.note}</div>`:''}
           </div>
           <div class="history-amount">NT$${(parseFloat(o.quote)||0).toLocaleString()}</div>
@@ -289,7 +329,7 @@ window.openDetail=function(key){
 
     <div class="section-title">客戶備忘錄</div>
     <textarea class="memo-area" id="memo-note" placeholder="記錄這位客人的習性、偏好、注意事項...">${memo.note||''}</textarea>
-    <div style="display:flex;gap:6px;margin-top:8px;align-items:center;">
+    <div style="display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;">
       <span style="font-size:11px;color:var(--text2);">標記：</span>
       <button class="btn" style="font-size:11px;${tag==='好客人'?'background:#edf5f0;color:#2d6a4f;border-color:#b5d4b8;':''}" onclick="setTag('${key}','好客人')">⭐ 好客人</button>
       <button class="btn" style="font-size:11px;${tag==='普通'?'background:#f7f5f2;color:#888;':''}" onclick="setTag('${key}','普通')">普通</button>
@@ -304,6 +344,35 @@ window.openDetail=function(key){
 
   panel.classList.add('open');
   panel.scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+window.toggleEditInfo=function(key){
+  const view=document.getElementById(`info-view-${key}`);
+  const edit=document.getElementById(`info-edit-${key}`);
+  if(!view||!edit) return;
+  const isEdit=edit.style.display!=='none';
+  view.style.display=isEdit?'block':'none';
+  edit.style.display=isEdit?'none':'block';
+};
+
+window.saveCustomerInfo=async function(key){
+  const memo=getMemo(key);
+  memo.idno=document.getElementById(`edit-idno-${key}`)?.value||'';
+  memo.address=document.getElementById(`edit-address-${key}`)?.value||'';
+  customerMemos[key]=memo;
+  await setDoc(doc(db,'customer_memos',key),memo);
+  showToast('基本資料已儲存');
+  openDetail(key);
+};
+
+window.newOrderFromCustomer=function(key){
+  const c=buildCustomers().find(x=>x.key===key);
+  if(!c) return;
+  // 把客戶資料存到 localStorage 暫存，跳到主控板
+  sessionStorage.setItem('prefillCustomer',JSON.stringify({
+    name:c.name, phone:c.phone, line:c.line||'', fb:c.fb||''
+  }));
+  window.location.href='index.html?newOrder=1';
 };
 
 window.closeDetail=function(){
