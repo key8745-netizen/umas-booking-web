@@ -506,13 +506,38 @@ window.onNightsChange=function(){
   if(ci){document.getElementById('f-checkout').value=dateAddDays(ci,n);}
   autoCalc();
 };
-const ROOM_INFO={'A-101':{type:'suite',maxPax:4},'A-102':{type:'suite',maxPax:4},'A-103':{type:'suite',maxPax:4},'A-201':{type:'dorm',maxPax:6,fixed:true},'A-202':{type:'dorm',maxPax:3,fixed:true},'A-203':{type:'dorm',maxPax:7,fixed:true},'B-201':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-202':{type:'dorm',maxPax:4,fixed:true,minPax:2},'B-203':{type:'dorm',maxPax:6,fixed:false,minPax:2},'B-204':{type:'dorm',maxPax:3,fixed:false,minPax:0},'C-201':{type:'suite',maxPax:3},'C-202':{type:'suite',maxPax:3},'C-203':{type:'suite',maxPax:3}};
-const SUITE_PRICE={'A-101':{weekday:3000,holiday:3600,special:3960},'A-102':{weekday:3000,holiday:3600,special:3960},'A-103':{weekday:3000,holiday:3600,special:3960},'C-201':{weekday:2200,holiday:2700,special:2970},'C-202':{weekday:2200,holiday:2700,special:2970},'C-203':{weekday:2200,holiday:2700,special:2970}};
-const DORM_FIXED={'A-201':{weekday:3168,holiday:3960},'A-202':{weekday:3168,holiday:3960},'A-203':{weekday:3168,holiday:3960},'B-201':{weekday:2112,holiday:2640},'B-202':{weekday:2112,holiday:2640}};
-const DORM_PER={'B-203':{weekday:528,holiday:660},'B-204':{weekday:528,holiday:660}};
-let _holCache={};
+const ROOM_INFO={
+  'A-101':{type:'suite_A',maxPax:4},'A-102':{type:'suite_A',maxPax:4},'A-103':{type:'suite_A',maxPax:4},
+  'A-201':{type:'dorm',maxPax:6},'A-202':{type:'dorm',maxPax:3},'A-203':{type:'dorm',maxPax:7},
+  'B-201':{type:'dorm',maxPax:4},'B-202':{type:'dorm',maxPax:4},
+  'B-203':{type:'dorm',maxPax:6},'B-204':{type:'dorm',maxPax:3},
+  'C-201':{type:'suite_C',maxPax:3},'C-202':{type:'suite_C',maxPax:3},'C-203':{type:'suite_C',maxPax:3}
+};
 
-function isSpecial(ds){const md=ds.slice(5);return md==='12-24'||md==='12-25';}
+// A 棟套房（按間）
+const SUITE_A={weekday:3000,holiday:3600,special:3960};
+
+// C 棟套房（按人數）
+const SUITE_C={
+  weekday:{1:1800,2:2000,3:2200},
+  holiday:{1:2000,2:2400,3:2700},
+  special:{1:2200,2:2600,3:2970}
+};
+
+// 通鋪（全部按人頭）
+const DORM_PER={weekday:528,holiday:660};
+
+// 每晚折扣係數（第幾晚 → 折扣）
+function nightDiscount(nightIndex){
+  // nightIndex: 0=第1晚, 1=第2晚, ...
+  if(nightIndex===0) return 1.0;
+  if(nightIndex<=2) return 0.9;   // 第2-3晚
+  if(nightIndex<=4) return 0.7;   // 第4-5晚
+  return 0.6;                      // 第6晚以上
+}
+
+let _holCache={};
+function isSpecial(ds){const md=ds.slice(5);return md==='12-24'||md==='12-25'||md==='12-31'||md==='01-01'||md==='02-08'||md==='02-09'||md==='02-10';}
 
 async function getDateType(ds){
   if(!ds) return 'weekday';
@@ -533,28 +558,31 @@ async function getDateType(ds){
   return 'weekday';
 }
 
-function calcRoomPrice(roomId,dateType,pax,plan){
-  const info=ROOM_INFO[roomId];
-  if(!info) return{price:0,note:'未知房型'};
+function calcRoomNightPrice(roomId, dateType, pax, plan){
+  // 登山方案
   if(plan==='hiking'){
-    const pp=info.type==='suite'?700:500;
-    return{price:pp*pax,note:`登山 ${pp}元×${pax}人`};
+    const info=ROOM_INFO[roomId];
+    const pp=(info?.type==='suite_A'||info?.type==='suite_C')?700:500;
+    return{price:pp*pax, note:`登山 $${pp}×${pax}人`};
   }
   const ht=dateType==='holiday'||dateType==='special';
+  const dtKey=dateType==='special'?'special':ht?'holiday':'weekday';
   const dtLabel=dateType==='special'?'定價':ht?'假日':'平日';
-  if(info.type==='suite'){
-    const p=SUITE_PRICE[roomId];
-    const price=p[dateType==='special'?'special':ht?'holiday':'weekday'];
-    return{price,note:`${dtLabel} 按間 NT$${price.toLocaleString()}`};
+  const info=ROOM_INFO[roomId];
+  if(!info) return{price:0,note:'未知房型'};
+
+  if(info.type==='suite_A'){
+    const price=SUITE_A[dtKey];
+    return{price, note:`${dtLabel} 按間 $${price.toLocaleString()}`};
   }
-  if(info.fixed){
-    const p=DORM_FIXED[roomId];
-    const price=p[ht?'holiday':'weekday'];
-    return{price,note:`${dtLabel} 固定 NT$${price.toLocaleString()}`};
+  if(info.type==='suite_C'){
+    const p=Math.min(pax,3);
+    const price=SUITE_C[dtKey][p]||SUITE_C[dtKey][3];
+    return{price, note:`${dtLabel} ${p}人 $${price.toLocaleString()}`};
   }
-  const p=DORM_PER[roomId];
-  const pp=p[ht?'holiday':'weekday'];
-  return{price:pp*pax,note:`${dtLabel} ${pp}元×${pax}人`};
+  // 通鋪按人頭
+  const pp=ht?DORM_PER.holiday:DORM_PER.weekday;
+  return{price:pp*pax, note:`${dtLabel} $${pp}×${pax}人`};
 }
 
 window.autoCalc=async function(){
@@ -568,18 +596,28 @@ window.autoCalc=async function(){
   if(!checkin||rooms.length===0){bdEl.style.display='none';return;}
   bdEl.style.display='block';
   bdEl.innerHTML='<span style="color:#aaa;font-size:12px;">計算中...</span>';
-  let total=0,lines=[];
+
+  let total=0, lines=[];
   for(let n=0;n<nights;n++){
     const d=new Date(checkin+'T00:00');
     d.setDate(d.getDate()+n);
     const ds=d.toISOString().slice(0,10);
     const dt=dtOvr==='auto'?await getDateType(ds):dtOvr;
     const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
-    let nightTotal=0,rLines=[];
-    for(const rid of rooms){const{price,note}=calcRoomPrice(rid,dt,pax,plan);nightTotal+=price;rLines.push(`<span style="color:#555;">${rid}</span>：${note}`);}
+    const discount=nightDiscount(n);
+    const discLabel=discount<1?` × ${discount}`:'';
+
+    let nightTotal=0, rLines=[];
+    for(const rid of rooms){
+      const{price,note}=calcRoomNightPrice(rid,dt,pax,plan);
+      const discPrice=Math.round(price*discount);
+      nightTotal+=discPrice;
+      rLines.push(`<span style="color:#555;">${rid}</span>：${note}${discLabel}`);
+    }
     total+=nightTotal;
     const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
-    lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
+    const nightLabel=`第${n+1}晚${discount<1?' ('+Math.round(discount*10)+'折)':''}`;
+    lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）${nightLabel}</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
   }
   const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
   bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間 合計</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
