@@ -602,16 +602,41 @@ return`<div class="card" id="card-${b.firestoreId}" draggable="true"><div style=
 
 
 let touchClone=null, touchDragId=null, touchMoved=false;
+let autoScrollInterval=null;
+
+function startAutoScroll(clientX){
+  stopAutoScroll();
+  const boardWrap=document.querySelector('.board-wrap');
+  if(!boardWrap) return;
+  const W=window.innerWidth;
+  const ZONE=72; // 觸發區域寬度px
+  const MAX_SPEED=18; // 最大捲動速度px/tick
+  autoScrollInterval=setInterval(()=>{
+    if(!touchDragId){stopAutoScroll();return;}
+    let speed=0;
+    if(clientX>W-ZONE){
+      // 靠右：往右捲，越靠邊越快
+      speed=Math.round((clientX-(W-ZONE))/ZONE*MAX_SPEED);
+      boardWrap.scrollLeft+=speed;
+    } else if(clientX<ZONE){
+      // 靠左：往左捲
+      speed=Math.round((ZONE-clientX)/ZONE*MAX_SPEED);
+      boardWrap.scrollLeft-=speed;
+    }
+  },16);
+}
+
+function stopAutoScroll(){
+  if(autoScrollInterval){clearInterval(autoScrollInterval);autoScrollInterval=null;}
+}
 
 function getColumnFromPoint(x, y){
-  // 從座標找最近的欄位，放寬判定範圍
   const els=document.elementsFromPoint(x, y);
   for(const el of els){
     if(el.classList.contains('column')) return el;
     const col=el.closest('.column');
     if(col) return col;
   }
-  // 如果找不到，找最近的欄位（橫向距離）
   let nearest=null, minDist=Infinity;
   document.querySelectorAll('.column').forEach(col=>{
     const rect=col.getBoundingClientRect();
@@ -636,7 +661,7 @@ function addTouchDrag(card, fid){
       card.style.opacity='0.25';
       COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});
       navigator.vibrate&&navigator.vibrate(30);
-    }, 200);  // 縮短為 200ms
+    }, 200);
   },{passive:true});
 
   card.addEventListener('touchmove', e=>{
@@ -647,6 +672,8 @@ function addTouchDrag(card, fid){
     const t=e.touches[0];
     touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
     touchClone.style.top=(t.clientY-50)+'px';
+    // 自動捲動
+    startAutoScroll(t.clientX);
     // 高亮目標欄位
     document.querySelectorAll('.column').forEach(c=>c.style.background='');
     const colEl=getColumnFromPoint(t.clientX, t.clientY);
@@ -655,6 +682,7 @@ function addTouchDrag(card, fid){
 
   card.addEventListener('touchend', async e=>{
     clearTimeout(longPressTimer);
+    stopAutoScroll();
     if(touchClone){ touchClone.remove(); touchClone=null; }
     card.style.opacity='';
     COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});
@@ -678,6 +706,7 @@ function addTouchDrag(card, fid){
 
   card.addEventListener('touchcancel',()=>{
     clearTimeout(longPressTimer);
+    stopAutoScroll();
     if(touchClone){touchClone.remove();touchClone=null;}
     card.style.opacity='';
     touchDragId=null;
