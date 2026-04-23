@@ -28,14 +28,11 @@ body{font-family:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;backgr
 .app{display:none;flex-direction:column;height:100vh;height:100dvh;}
 .app.ready{display:flex;}
 
-header{background:#fff;border-bottom:0.5px solid #e8e4de;padding:0 16px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
-header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;letter-spacing:0.06em;flex:1;}
 .nav-tabs{display:flex;gap:4px;}
 .nav-tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#666;border:1px solid transparent;}
 .nav-tab.active{background:#1a1a1a;color:#fff;}
 .nav-tab:hover:not(.active){background:#f0f2f5;}
 .user-info{display:flex;align-items:center;gap:6px;font-size:11px;color:#888;}
-.user-avatar{width:24px;height:24px;border-radius:50%;}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;}
 .sync-dot.online{background:#34a853;}
 .btn-sm{padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:11px;cursor:pointer;color:#666;}
@@ -67,17 +64,14 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
 .booking-bar{position:absolute;top:4px;bottom:4px;border-radius:4px;cursor:pointer;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;z-index:5;transition:filter 0.1s;}
 .booking-bar:hover{filter:brightness(0.92);}
 .resize-handle{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:ew-resize;z-index:6;}
-.section-header{background:#e9ecef;position:sticky;left:0;}
-.section-header td{background:#e9ecef;padding:4px 8px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.05em;position:sticky;left:0;}
+.section-.section-header td{background:#e9ecef;padding:4px 8px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.05em;position:sticky;left:0;}
 
 /* ── MONTH ── */
 .month-wrap{flex:1;overflow:auto;display:none;padding:16px;}
 .month-wrap.active{display:block;}
-.month-grid-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
-.month-grid-header h2{font-size:15px;font-weight:600;flex:1;}
+.month-grid-.month-grid-header h2{font-size:15px;font-weight:600;flex:1;}
 .month-cal{background:#fff;border-radius:12px;border:0.5px solid #e8e4de;overflow:hidden;}
-.month-cal-header{display:grid;grid-template-columns:repeat(7,1fr);}
-.month-cal-header div{padding:8px;text-align:center;font-size:11px;font-weight:600;color:#888;background:#f8f9fa;border-bottom:0.5px solid #e8e4de;}
+.month-cal-.month-cal-header div{padding:8px;text-align:center;font-size:11px;font-weight:600;color:#888;background:#f8f9fa;border-bottom:0.5px solid #e8e4de;}
 .month-cal-header div:first-child{color:#e53935;}
 .month-cal-header div:last-child{color:#1a73e8;}
 .month-days{display:grid;grid-template-columns:repeat(7,1fr);}
@@ -131,11 +125,13 @@ header h1{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:400;lette
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
 @media(min-width:769px){.bottom-nav{display:none;}}
-
-.nav-pill{display:flex;gap:1px;background:#f7f5f2;border-radius:8px;padding:3px;border:0.5px solid #e8e4de;}
-.nav-item{padding:4px 12px;border-radius:6px;font-size:11px;color:#888;cursor:pointer;font-weight:400;text-decoration:none;letter-spacing:0.02em;}
-.nav-item.active{background:#fff;color:#1a1a1a;font-weight:500;}
-.nav-item:hover:not(.active){color:#1a1a1a;}
+header{background:#fff;border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
+header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:0.06em;color:var(--text);flex:1;}
+.nav-pill{display:flex;gap:1px;background:var(--bg);border-radius:8px;padding:3px;border:0.5px solid var(--border);}
+.nav-item{padding:4px 12px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;font-weight:400;text-decoration:none;letter-spacing:0.02em;}
+.nav-item.active{background:#fff;color:var(--text);font-weight:500;}
+.nav-item:hover:not(.active){color:var(--text);}
+.user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
 </style>
 </head>
 <body>
