@@ -243,49 +243,109 @@ export function initNotifications(db) {
     animateFab('bounce');
   };
 
-  // 拖曳
+  // 拖曳（含慣性）
   let isDragging=false, startX, startY, origX, origY;
+  let velX=0, velY=0, lastX=0, lastY=0, lastT=0;
+  let inertiaRaf=null;
+
+  function clampFab(x, y){
+    return [
+      Math.max(8, Math.min(window.innerWidth-58, x)),
+      Math.max(8, Math.min(window.innerHeight-58, y))
+    ];
+  }
+
+  function applyInertia(){
+    const friction=0.82;
+    velX*=friction; velY*=friction;
+    let cx=parseInt(fab.style.left)||0;
+    let cy=parseInt(fab.style.top)||0;
+    cx+=velX; cy+=velY;
+    const [nx,ny]=clampFab(cx,cy);
+    // 碰邊反彈衰減
+    if(nx!==cx) velX*=-0.3;
+    if(ny!==cy) velY*=-0.3;
+    fab.style.left=nx+'px'; fab.style.top=ny+'px';
+    if(panel.classList.contains('open')) positionPanel();
+    if(Math.abs(velX)>0.4||Math.abs(velY)>0.4){
+      inertiaRaf=requestAnimationFrame(applyInertia);
+    } else {
+      saveFabPos();
+      // 停下時小抖動
+      animateFab('bounce');
+    }
+  }
+
+  function stopInertia(){
+    if(inertiaRaf){ cancelAnimationFrame(inertiaRaf); inertiaRaf=null; }
+  }
 
   fab.addEventListener('mousedown', e=>{
-    fab._dragged = false;
-    isDragging = true;
+    stopInertia();
+    fab._dragged=false; isDragging=true;
     startX=e.clientX; startY=e.clientY;
     origX=fab.getBoundingClientRect().left;
     origY=fab.getBoundingClientRect().top;
+    lastX=e.clientX; lastY=e.clientY; lastT=Date.now();
+    velX=0; velY=0;
+    fab.style.transition='none';
     e.preventDefault();
   });
   document.addEventListener('mousemove', e=>{
     if(!isDragging) return;
     const dx=e.clientX-startX, dy=e.clientY-startY;
     if(Math.abs(dx)>4||Math.abs(dy)>4) fab._dragged=true;
-    const nx=Math.max(8, Math.min(window.innerWidth-58, origX+dx));
-    const ny=Math.max(8, Math.min(window.innerHeight-58, origY+dy));
+    const [nx,ny]=clampFab(origX+dx, origY+dy);
     fab.style.left=nx+'px'; fab.style.top=ny+'px';
     fab.style.right='auto'; fab.style.bottom='auto';
+    // 計算速度
+    const now=Date.now(), dt=Math.max(1, now-lastT);
+    velX=(e.clientX-lastX)/dt*16;
+    velY=(e.clientY-lastY)/dt*16;
+    lastX=e.clientX; lastY=e.clientY; lastT=now;
     if(panel.classList.contains('open')) positionPanel();
   });
   document.addEventListener('mouseup', ()=>{
-    if(isDragging && fab._dragged) saveFabPos();
+    if(!isDragging) return;
     isDragging=false;
+    fab.style.transition='';
+    if(fab._dragged && (Math.abs(velX)>1||Math.abs(velY)>1)){
+      applyInertia();
+    } else if(fab._dragged){
+      saveFabPos();
+    }
   });
 
   fab.addEventListener('touchstart', e=>{
+    stopInertia();
     fab._dragged=false;
     startX=e.touches[0].clientX; startY=e.touches[0].clientY;
     origX=fab.getBoundingClientRect().left;
     origY=fab.getBoundingClientRect().top;
+    lastX=startX; lastY=startY; lastT=Date.now();
+    velX=0; velY=0;
+    fab.style.transition='none';
   },{passive:true});
   fab.addEventListener('touchmove', e=>{
-    const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+    const tx=e.touches[0].clientX, ty=e.touches[0].clientY;
+    const dx=tx-startX, dy=ty-startY;
     if(Math.abs(dx)>6||Math.abs(dy)>6) fab._dragged=true;
-    const nx=Math.max(8,Math.min(window.innerWidth-58,origX+dx));
-    const ny=Math.max(8,Math.min(window.innerHeight-58,origY+dy));
+    const [nx,ny]=clampFab(origX+dx, origY+dy);
     fab.style.left=nx+'px'; fab.style.top=ny+'px';
     fab.style.right='auto'; fab.style.bottom='auto';
+    const now=Date.now(), dt=Math.max(1, now-lastT);
+    velX=(tx-lastX)/dt*16;
+    velY=(ty-lastY)/dt*16;
+    lastX=tx; lastY=ty; lastT=now;
     if(panel.classList.contains('open')) positionPanel();
   },{passive:true});
   fab.addEventListener('touchend', e=>{
-    if(fab._dragged){ saveFabPos(); return; }
+    fab.style.transition='';
+    if(fab._dragged){
+      if(Math.abs(velX)>1||Math.abs(velY)>1) applyInertia();
+      else { saveFabPos(); animateFab('bounce'); }
+      return;
+    }
     const opening=!panel.classList.contains('open');
     panel.classList.toggle('open');
     if(opening){ positionPanel(); animateFab('pop'); setMood('normal'); }
