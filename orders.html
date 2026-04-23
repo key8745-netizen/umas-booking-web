@@ -75,7 +75,8 @@ select.filter{padding:6px 10px;border:0.5px solid var(--border);border-radius:7p
 .detail-val{font-weight:500;}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
 
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;white-space:nowrap;letter-spacing:0.03em;}
+.toast.show{opacity:1;}
 .toast.show{opacity:1;}
 
 /* 底部導覽 */
@@ -116,6 +117,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 .nav-item.active{background:#fff;color:var(--text);font-weight:500;}
 .nav-item:hover:not(.active){color:var(--text);}
 .user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
+@media(max-width:768px){.modal{width:100%!important;max-width:100%;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:92vh;overflow-y:auto;}.modal-bg{padding:0!important;align-items:flex-end!important;}}
 </style>
 </head>
 <body>

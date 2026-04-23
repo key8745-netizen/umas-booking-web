@@ -78,7 +78,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .btn.primary{background:var(--text);color:#fff;border-color:var(--text);}
 .btn.primary:hover{background:#333;}
 .btn.green{background:var(--green-bg);color:var(--green);border-color:#c8d4b8;}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;}
 .toast.show{opacity:1;}
   body{padding-bottom:70px;}
 .bottom-nav-item.active{color:#1a1a1a;}
@@ -111,6 +111,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 .nav-item.active{background:#fff;color:var(--text);font-weight:500;}
 .nav-item:hover:not(.active){color:var(--text);}
 .user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
+@media(max-width:768px){.modal{width:100%!important;max-width:100%;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:92vh;overflow-y:auto;}.modal-bg{padding:0!important;align-items:flex-end!important;}}
 </style>
 </head>
 <body>
