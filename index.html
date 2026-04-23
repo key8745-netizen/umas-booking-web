@@ -334,12 +334,28 @@ select:focus{border-color:#888;}
     <div class="form-actions">
       <button class="btn" onclick="closeModal()">取消</button>
       <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="showDepositCard()">📋 發布訂金通知</button>
+      <button class="btn" style="background:#e8f0fe;color:#3a6ab0;border-color:#b5c8e8;" onclick="showRulesCard()">📄 住宿須知</button>
       <button class="btn primary" id="saveBtn" onclick="saveBooking()">儲存</button>
     </div>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- 住宿須知圖卡 Modal -->
+<div class="modal-bg" id="rulesBg">
+  <div class="modal" style="width:420px;padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="font-size:14px;font-weight:500;">住宿須知圖卡</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyRulesText()">📋 複製文字</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" onclick="downloadRulesImage()">🖼 下載圖片</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="closeRules()">關閉</button>
+      </div>
+    </div>
+    <div id="rulesCard" style="user-select:text;-webkit-user-select:text;overflow:auto;max-height:70vh;"></div>
+  </div>
+</div>
 
 
 
@@ -358,6 +374,21 @@ select:focus{border-color:#888;}
       </div>
     </div>
     <div id="depositCard" style="background:#e8f0e0;padding:12px;border-radius:12px;user-select:text;-webkit-user-select:text;"></div>
+  </div>
+</div>
+
+<!-- 住宿須知圖卡 Modal -->
+<div class="modal-bg" id="rulesBg">
+  <div class="modal" style="width:420px;padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="font-size:14px;font-weight:600;">住宿須知圖卡</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyRulesText()">📋 複製文字</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" onclick="downloadRulesImage()">🖼 下載圖片</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="document.getElementById('rulesBg').classList.remove('open')">關閉</button>
+      </div>
+    </div>
+    <div id="rulesCard" style="max-height:70vh;overflow-y:auto;"></div>
   </div>
 </div>
 
@@ -667,6 +698,10 @@ window.renderAll=function(){const board=document.getElementById('board');board.i
 if(col.id==='pending'&&oldStatus==='new-case'&&window.__addNotification){
   await window.__addNotification({type:'deposit_msg',message:`💬 ${bk.name} 已移至暫時保留，記得發送訂金通知給客人！`,link:'index.html'});
   setTimeout(()=>{if(confirm(`${bk.name} 已移至暫時保留，要現在發送訂金通知嗎？`)){const editBtn=document.querySelector(`[data-fid="${dragId}"]`);if(editBtn)editBtn.click();showDepositCard&&showDepositCard();}},300);
+}
+if(col.id==='confirmed'&&oldStatus==='pending'&&window.__addNotification){
+  await window.__addNotification({type:'rules_msg',message:`📄 ${bk.name} 已確認接訂，記得發送住宿須知給客人！`,link:'index.html'});
+  setTimeout(()=>showRulesCard(bk),300);
 }}});});};
 
 function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
@@ -788,7 +823,148 @@ document.addEventListener('keydown', e=>{
 
 window.closeDeposit=function(){document.getElementById('depositBg').classList.remove('open');};
 
-window.analyzeChat=async function(){
+// ── 住宿須知圖卡 ──
+window.showRulesCard=function(bk){
+  if(bk) window.__rulesBooking=bk;
+  const b=window.__rulesBooking||{};
+  const name=b.name||'';
+  const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'');
+  const nights=b.nights||1;
+  const checkin=b.checkin||'';
+  function addDays(ds,n){const d=new Date(ds+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+  const checkout=b.checkout||(checkin?addDays(checkin,parseInt(nights)):'')||'';
+
+  document.getElementById('rulesCard').innerHTML=`
+  <div id="rulesCardInner" style="background:#1a1a1a;color:#f0ece4;font-family:'Noto Serif TC',serif;padding:28px 24px;border-radius:12px;width:360px;min-width:360px;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:11px;letter-spacing:0.2em;color:#888;margin-bottom:6px;">UMAS FARMSTAY</div>
+      <div style="font-size:20px;font-weight:300;letter-spacing:0.12em;border-bottom:0.5px solid #444;padding-bottom:12px;">兀瑪斯農莊</div>
+      <div style="font-size:13px;color:#aaa;margin-top:10px;letter-spacing:0.08em;">訂房住宿須知</div>
+    </div>
+
+    ${name?`<div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:12px;line-height:1.8;border-left:2px solid #666;">
+      <span style="color:#888;">親愛的</span> <span style="color:#f0ece4;font-weight:500;">${name}</span> 莊友您好 👋<br>
+      <span style="color:#888;">感謝您預訂</span>${rooms?` <span style="color:#f0ece4;">${rooms}</span>`:''}${checkin?`，入住日期 <span style="color:#f0ece4;">${checkin}</span> 至 <span style="color:#f0ece4;">${checkout}</span>`:''}
+    </div>`:''}
+
+    <div style="font-size:11px;color:#888;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">入退房時間</div>
+    <div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="text-align:center;padding:8px;border-right:0.5px solid #444;">
+        <div style="font-size:10px;color:#888;margin-bottom:4px;letter-spacing:0.06em;">CHECK IN</div>
+        <div style="font-size:16px;font-weight:300;">15:00</div>
+        <div style="font-size:10px;color:#666;">下午三點後</div>
+      </div>
+      <div style="text-align:center;padding:8px;">
+        <div style="font-size:10px;color:#888;margin-bottom:4px;letter-spacing:0.06em;">CHECK OUT</div>
+        <div style="font-size:16px;font-weight:300;">11:00</div>
+        <div style="font-size:10px;color:#666;">上午十一點前</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:#888;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">早餐</div>
+    <div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;line-height:1.8;">
+      🍳 早餐時段：<span style="color:#f0ece4;">07:30 – 09:00</span><br>
+      <span style="color:#888;">茹素者請事先告知全素或蛋奶素</span>
+    </div>
+
+    <div style="font-size:11px;color:#888;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">溫馨叮嚀</div>
+    <div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;line-height:2;color:#ccc;">
+      🌿 農莊位於山區，難免有蚊蟲昆蟲，請做好防蚊措施<br>
+      🔇 全木造建築，隔音有限，請體諒並降低音量<br>
+      🚫 禁止攜帶寵物入住<br>
+      🚭 全面禁菸、禁酗酒<br>
+      🔑 晚上十點後請降低音量，放輕腳步<br>
+      💧 鼓勵自備盥洗用具，愛護地球
+    </div>
+
+    <div style="font-size:11px;color:#888;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">退訂政策</div>
+    <div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;line-height:2;color:#ccc;">
+      14天前：全額退款（扣手續費 NT$20）<br>
+      10–13天前：扣訂金 30%<br>
+      7–9天前：扣訂金 50%<br>
+      4–6天前：扣訂金 60%<br>
+      2–3天前：扣訂金 70%<br>
+      1天前：扣訂金 80%<br>
+      當日取消：<span style="color:#f08080;">恕不退款</span><br>
+      <span style="color:#888;">✯ 政府發布天災警訊不在此限</span>
+    </div>
+
+    <div style="font-size:11px;color:#888;letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;">其他規定</div>
+    <div style="background:#2a2a2a;border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:11px;line-height:2;color:#ccc;">
+      💰 不提供刷卡，尾款請準備現金<br>
+      🛏 超過限定人數每人加收 NT$500/晚<br>
+      ⚠️ 損壞設施照價 3 倍賠償<br>
+      🍳 借用卡式爐另收 NT$300 清潔費<br>
+      🧳 11:00–15:00 為房務時間，不開放寄放行李
+    </div>
+
+    <div style="text-align:center;padding-top:16px;border-top:0.5px solid #333;">
+      <div style="font-size:10px;color:#666;line-height:2;">
+        南投縣信義鄉卡里布安村望和巷105號<br>
+        0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮<br>
+        <span style="color:#888;">上午10點至晚上8點間來電</span>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('rulesBg').classList.add('open');
+};
+
+window.closeRules=function(){document.getElementById('rulesBg').classList.remove('open');};
+
+window.copyRulesText=function(){
+  const text=`【兀瑪斯農莊 訂房住宿須知】
+
+📅 入住時間：下午 3:00 之後
+🏃 退房時間：上午 11:00 之前
+🍳 早餐時段：07:30 – 09:00（茹素請事先告知）
+
+【溫馨叮嚀】
+・農莊位於山區，難免有蚊蟲，請做好防蚊措施
+・全木造建築，隔音有限，請互相體諒
+・禁止攜帶寵物入住
+・全面禁菸、禁酗酒
+・晚上10點後請降低音量
+
+【退訂政策】
+・14天前取消：全額退款（扣手續費NT$20）
+・10-13天前：扣訂金30%
+・7-9天前：扣訂金50%
+・4-6天前：扣訂金60%
+・2-3天前：扣訂金70%
+・1天前：扣訂金80%
+・當日取消：恕不退款
+✯ 政府發布天災警訊不在此限
+
+【其他規定】
+・不提供刷卡，尾款請備妥現金
+・損壞設施照價3倍賠償
+・借用卡式爐另收NT$300清潔費
+
+完整須知請參閱：https://princessangel45.wixsite.com/umas/blank
+
+兀瑪斯農莊
+南投縣信義鄉卡里布安村望和巷105號
+0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮`;
+  navigator.clipboard.writeText(text).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
+  showToast('✓ 已複製住宿須知文字');
+};
+
+window.downloadRulesImage=async function(){
+  const card=document.getElementById('rulesCardInner');
+  if(!card){showToast('圖卡尚未產生');return;}
+  const btn=document.querySelector('#rulesBg .btn');
+  if(btn){btn.textContent='產生中...';}
+  try{
+    const canvas=await html2canvas(card,{scale:2,useCORS:true,backgroundColor:'#1a1a1a',logging:false});
+    const link=document.createElement('a');
+    link.download=`兀瑪斯農莊_住宿須知_${new Date().toISOString().slice(0,10)}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('✓ 已下載住宿須知圖卡');
+  }catch(e){showToast('下載失敗：'+e.message);}
+  if(btn){btn.textContent='🖼 下載圖片';}
+};
   const chat=document.getElementById('f-chat').value.trim();
   if(!chat){alert('請先貼上 Line 對話內容');return;}
   const btn=document.getElementById('analyzeChatBtn');
@@ -1104,6 +1280,162 @@ https://line.me/R/ti/p/%40mwl6914l
 };
 
 // 看板水平拖動（電腦版）
+
+window.showRulesCard=function(bk){
+  const name=bk?.name||'';
+  document.getElementById('rulesCard').innerHTML=`
+  <div id="rulesCardInner" style="background:#fff;border-radius:14px;overflow:hidden;font-family:'Noto Sans TC',-apple-system,sans-serif;border:0.5px solid #e8e4de;">
+
+    <!-- 標題 -->
+    <div style="background:#1a1a1a;padding:22px 20px;text-align:center;">
+      <div style="font-family:'Noto Serif TC',serif;font-size:11px;font-weight:300;color:rgba(255,255,255,0.45);letter-spacing:0.18em;margin-bottom:6px;">UMAS FARM</div>
+      <div style="font-family:'Noto Serif TC',serif;font-size:22px;font-weight:300;color:#fff;letter-spacing:0.12em;margin-bottom:4px;">訂房住宿須知</div>
+      ${name?`<div style="font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.06em;">感謝 ${name} 選擇兀瑪斯農莊</div>`:''}
+    </div>
+
+    <!-- 溫馨叮嚀 -->
+    <div style="padding:16px 18px 10px;border-bottom:0.5px solid #f0ece6;">
+      <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#888;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">⚠ 溫馨叮嚀</div>
+      ${[
+        '農莊位於山區，難免有蚊蟲昆蟲或爬蟲類誤入，請做好心理準備與防蚊措施。農莊為全木造建築，隔音效果有限，非常怕吵者請斟酌訂房。',
+        '訂房確認後，請於三日內完成訂金匯款（訂金為住宿費用的30%），匯款後請轉知後五碼確認，始完成訂房程序。',
+        '農莊無提供加床服務，超過每間限定人數每人加收 NT$500/晚（含早餐與備品）。',
+        '無提供刷卡服務，入住結清尾款請準備現金。',
+      ].map(t=>`<div style="font-size:11px;color:#555;line-height:1.85;margin-bottom:6px;display:flex;gap:8px;"><span style="color:#b94040;flex-shrink:0;">➢</span><span>${t}</span></div>`).join('')}
+    </div>
+
+    <!-- 入住退房 -->
+    <div style="padding:14px 18px;border-bottom:0.5px solid #f0ece6;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:#f7f5f2;border-radius:8px;padding:10px 12px;text-align:center;">
+        <div style="font-size:9px;color:#888;letter-spacing:0.08em;margin-bottom:4px;">入住時間</div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:20px;font-weight:300;color:#1a1a1a;">15:00</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">下午三點後</div>
+      </div>
+      <div style="background:#f7f5f2;border-radius:8px;padding:10px 12px;text-align:center;">
+        <div style="font-size:9px;color:#888;letter-spacing:0.08em;margin-bottom:4px;">退房時間</div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:20px;font-weight:300;color:#1a1a1a;">11:00</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">上午十一點前</div>
+      </div>
+    </div>
+
+    <!-- 早餐 -->
+    <div style="padding:12px 18px;border-bottom:0.5px solid #f0ece6;display:flex;align-items:center;gap:12px;background:#f9f7f4;">
+      <span style="font-size:22px;">🍳</span>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#1a1a1a;margin-bottom:2px;">早餐時段　07:30 – 09:00</div>
+        <div style="font-size:11px;color:#888;">茹素者（全素 / 蛋奶素）請入住前事先告知</div>
+      </div>
+    </div>
+
+    <!-- 退訂政策 -->
+    <div style="padding:14px 18px;border-bottom:0.5px solid #f0ece6;">
+      <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#888;letter-spacing:0.1em;margin-bottom:10px;">📋 退訂政策</div>
+      ${[
+        ['14天前','扣手續費 NT$20，其餘全額退還'],
+        ['10–13天前','酌收訂金 30%'],
+        ['7–9天前',  '酌收訂金 50%'],
+        ['4–6天前',  '酌收訂金 60%'],
+        ['2–3天前',  '酌收訂金 70%'],
+        ['1天前',    '酌收訂金 80%'],
+        ['當日取消', '恕不退訂'],
+      ].map(([d,p])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:11px;border-bottom:0.5px solid #f7f5f2;">
+        <span style="color:#888;">${d}</span><span style="color:#1a1a1a;font-weight:500;">${p}</span>
+      </div>`).join('')}
+      <div style="margin-top:8px;font-size:10px;color:#aaa;line-height:1.8;">
+        ✯ 政府發布天災警訊不在此限<br>
+        ✯ 非天災因素改期，可異動一次，訂金保留一年
+      </div>
+    </div>
+
+    <!-- 注意事項 -->
+    <div style="padding:14px 18px;border-bottom:0.5px solid #f0ece6;">
+      <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#888;letter-spacing:0.1em;margin-bottom:10px;">🏡 住宿注意事項</div>
+      ${[
+        '農莊全面禁菸、禁酗酒，禁止亂吐檳榔汁',
+        '農莊暫不開放攜帶寵物入住',
+        '晚上 10:00 後請降低音量，輕聲細步',
+        '借用農莊設備如損壞，照價 3 倍賠償',
+        '鼓勵自備盥洗用具，愛護地球',
+        '如需借用卡式爐（自備瓦斯罐），另收 NT$300 清潔費',
+        '農莊有許多花草樹木，請共同愛護',
+      ].map(t=>`<div style="font-size:11px;color:#555;line-height:1.8;margin-bottom:4px;display:flex;gap:8px;"><span style="color:#4a6741;flex-shrink:0;">・</span><span>${t}</span></div>`).join('')}
+    </div>
+
+    <!-- 頁腳 -->
+    <div style="background:#1a1a1a;padding:16px 18px;text-align:center;">
+      <div style="font-family:'Noto Serif TC',serif;font-size:13px;font-weight:300;color:#c8d4b8;letter-spacing:0.08em;margin-bottom:8px;">兀瑪斯農莊</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);line-height:2;letter-spacing:0.04em;">
+        南投縣信義鄉卡里布安村望和巷105號<br>
+        0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮<br>
+        （上午10點至晚上8點）<br>
+        Line：@umas
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('rulesBg').classList.add('open');
+  window._rulesBooking=bk;
+};
+
+window.copyRulesText=function(){
+  const bk=window._rulesBooking;
+  const name=bk?.name?`${bk.name} `:'';
+  const text=`哈囉 ${name}感謝您訂房兀瑪斯農莊！🏡 以下是訂房住宿須知，請詳閱後回覆確認，謝謝您的配合 🙏
+
+【入退房時間】
+・入住：下午 3:00 後
+・退房：上午 11:00 前
+・早餐時段：07:30－09:00（茹素請提前告知）
+
+【溫馨提醒】
+・農莊位於山區，難免有蚊蟲，請做好防蚊準備
+・全木造建築，隔音有限
+・無加床服務，超過限定人數加收 NT$500/人/晚
+・結清尾款請準備現金，無提供刷卡
+
+【退訂規定】
+・14天前：全額退（扣 NT$20 手續費）
+・10-13天前：酌收訂金 3 成
+・7-9天前：酌收訂金 5 成
+・4-6天前：酌收訂金 6 成
+・2-3天前：酌收訂金 7 成
+・1天前：酌收訂金 8 成
+・當日取消：恕不退訂
+✯ 政府發布天災警訊不在此限
+✯ 非天災因素改期，可異動一次，訂金保留一年
+
+【住宿注意事項】
+・全面禁菸、禁酗酒
+・暫不開放攜帶寵物
+・晚上 10:00 後請降低音量
+・設備如有損壞照價 3 倍賠償
+・卡式爐借用另收 NT$300 清潔費
+
+如有任何問題歡迎隨時詢問！
+兀瑪斯農莊 Line：@umas
+0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮`;
+  navigator.clipboard.writeText(text).then(()=>showToast('已複製住宿須知文字 ✓')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('已複製住宿須知文字 ✓');
+  });
+};
+
+window.downloadRulesImage=async function(){
+  const btn=document.querySelector('#rulesBg .btn');
+  const card=document.getElementById('rulesCardInner');
+  if(!card){showToast('找不到圖卡');return;}
+  try{
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    document.head.appendChild(script);
+    await new Promise(r=>script.onload=r);
+    const canvas=await window.html2canvas(card,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});
+    const link=document.createElement('a');
+    link.download=`兀瑪斯農莊_住宿須知_${new Date().toISOString().slice(0,10)}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('圖片下載中 ✓');
+  }catch(e){showToast('下載失敗：'+e.message);}
+};
 (function(){
   const wrap = document.querySelector('.board-wrap') || document.getElementById('app');
   let isDown=false, startX=0, scrollLeft=0, isDraggingBoard=false;
