@@ -90,9 +90,6 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
   body{padding-bottom:70px;}
 }
 
-
-
-
 .bottom-nav-item.active{color:#1a1a1a;}
 
 @media(max-width:768px){
@@ -100,31 +97,25 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
   body{padding-bottom:70px;}
 }
 
-
-
-
-
-
-
 .bottom-nav-item.active{color:var(--text);}
 
-
 }
-
-
-
 
 .bottom-nav-item.active{color:#1a1a1a;}
 
 }
 /* ── 底部導覽列 ── */
+.bottom-nav-inner::-webkit-scrollbar{display:none;}
+.bottom-nav-item.active{color:#1a1a1a;}
+@media(min-width:769px){}@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:9998;padding-bottom:env(safe-area-inset-bottom);display:block;}
 .bottom-nav-inner{display:flex;overflow-x:auto;height:56px;padding:0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .bottom-nav-inner::-webkit-scrollbar{display:none;}
 .bottom-nav-item{flex:0 0 20%;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(min-width:769px){.bottom-nav{display:none;}}@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
+@media(min-width:769px){.bottom-nav{display:none;}}
+@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
 </style>
 </head>
 <body>
@@ -152,12 +143,6 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 <div class="app" id="app">
   <header>
     <h1>兀瑪斯農莊 <span style="font-size:10px;font-weight:300;color:var(--text3);margin-left:6px;font-family:var(--sans);">Umas</span></h1>
-    <div class="nav-pill">
-      <a href="index.html" class="nav-item">主控板</a>
-      <a href="calendar.html" class="nav-item">日曆檢視</a><a href="checkin.html" class="nav-item">控房</a>
-      <a href="analytics.html" class="nav-item">系統分析</a>
-      <span class="nav-item active">客戶資料</span>
-    </div>
     <img class="user-avatar" id="userAvatar" src="">
     <button class="btn-sm" id="logoutBtn">登出</button>
   </header>
@@ -574,8 +559,6 @@ onAuthStateChanged(auth,async user=>{
   });
 });
 </script>
-
-
 
 <nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item active" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 </body>
