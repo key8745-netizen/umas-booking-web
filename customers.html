@@ -510,7 +510,8 @@ window.analyzeCustomer=async function(key){
         messages:[{role:'user',content:`客戶：${c.name}\n電話：${c.phone}\n訂房記錄：\n${orderSummary}\n備忘錄：${memo.note||'無'}`}]
       })
     });
-    if(!res.ok){const errText=await res.text();throw new Error(`HTTP ${res.status}: ${errText}`);}
+    console.log('AI status:', res.status, res.url);
+    if(!res.ok){const errText=await res.text();console.log('AI error body:', errText);throw new Error(`HTTP ${res.status}: ${errText}`);}
     const data=await res.json();
     const text=data.content?.[0]?.text||'無法取得分析結果';
     resultEl.className='ai-result';
