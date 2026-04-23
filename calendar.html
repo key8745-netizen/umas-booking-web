@@ -505,13 +505,14 @@ function renderGantt(){
       const coDate=parseDate(rawCo);
       if(!coDate||isNaN(coDate)) return;
       const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
-      const monthEnd=new Date(dateStr(viewYear,viewMonth,daysInMonth(viewYear,viewMonth)+1)+'T00:00');
+      // 下個月1號作為月底判斷，避免 32 號無效日期問題
+      const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
+      const monthEnd=nextMonth;
       if(coDate<=monthStart||ciDate>=monthEnd) return;
       const startDay=ciDate>=monthStart?ciDate.getDate():1;
       const endDay=coDate<=monthEnd?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
       if(startDay>endDay) return;
       const span=endDay-startDay+1;
-      console.log(`[甘特] ${b.name} ${room.id}: checkin=${b.checkin} checkout=${rawCo} startDay=${startDay} endDay=${endDay} span=${span}`);
 
       // 找起始 td
       const startCell=ganttTable.querySelector(`td[data-date="${dateStr(viewYear,viewMonth,startDay)}"][data-room="${room.id}"]`);
