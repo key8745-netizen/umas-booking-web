@@ -811,29 +811,41 @@ window.undoAction=async function(){
   if(!undoStack.length) return;
   const action=undoStack.pop();
   redoStack.push(action);
-  await applyAction(action,'undo');
+  try{
+    await applyAction(action,'undo');
+    showToast('已復原');
+  }catch(e){
+    undoStack.push(redoStack.pop());
+    showToast('復原失敗：'+e.message);
+  }
   updateUndoRedoBtns();
-  showToast('已復原');
 };
 window.redoAction=async function(){
   if(!redoStack.length) return;
   const action=redoStack.pop();
   undoStack.push(action);
-  await applyAction(action,'redo');
+  try{
+    await applyAction(action,'redo');
+    showToast('已重做');
+  }catch(e){
+    redoStack.push(undoStack.pop());
+    showToast('重做失敗：'+e.message);
+  }
   updateUndoRedoBtns();
-  showToast('已重做');
 };
 
 async function applyAction(action, direction){
   const isUndo = direction==='undo';
+  // 移除 firestoreId，Firestore 不允許更新文件 ID 欄位
+  function clean(obj){ const o={...obj}; delete o.firestoreId; return o; }
   if(action.type==='create'){
     if(isUndo) await deleteDoc(doc(db,'bookings',action.fid));
-    else{ await setDoc(doc(db,'bookings',action.fid), action.data); }
+    else await setDoc(doc(db,'bookings',action.fid), clean(action.data));
   } else if(action.type==='delete'){
-    if(isUndo){ await setDoc(doc(db,'bookings',action.fid), action.data); }
+    if(isUndo) await setDoc(doc(db,'bookings',action.fid), clean(action.data));
     else await deleteDoc(doc(db,'bookings',action.fid));
   } else if(action.type==='update'){
-    await updateDoc(doc(db,'bookings',action.fid), isUndo?action.before:action.after);
+    await updateDoc(doc(db,'bookings',action.fid), clean(isUndo?action.before:action.after));
   }
 }
 
