@@ -494,121 +494,91 @@ function renderGantt(){
   window.__bmap = {};
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
 
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      const sampleCell = ganttTable.querySelector('td.gantt-cell');
-      if(!sampleCell) return;
-      const cellW = sampleCell.offsetWidth;
-      const cellH = sampleCell.offsetHeight;
+  // 直接把 bar 塞進對應的 td，用 colspan 延展
+  ROOMS.forEach(room=>{
+    const rbs = roomBookings[room.id]||[];
+    rbs.forEach(b=>{
+      if(!b.checkin) return;
+      const ciDate=parseDate(b.checkin);
+      if(!ciDate||isNaN(ciDate)) return;
+      const rawCo=b.checkout||addDays(b.checkin,parseInt(b.nights)||1);
+      const coDate=parseDate(rawCo);
+      if(!coDate||isNaN(coDate)) return;
+      const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
+      const monthEnd=new Date(dateStr(viewYear,viewMonth,daysInMonth(viewYear,viewMonth)+1)+'T00:00');
+      if(coDate<=monthStart||ciDate>=monthEnd) return;
+      const startDay=ciDate>=monthStart?ciDate.getDate():1;
+      const endDay=coDate<=monthEnd?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
+      if(startDay>endDay) return;
+      const span=endDay-startDay+1;
 
-      ROOMS.forEach(room=>{
-        const rbs = roomBookings[room.id]||[];
-        rbs.forEach(b=>{
-          if(!b.checkin) return;
-          const ciDate=parseDate(b.checkin);
-          if(!ciDate||isNaN(ciDate)) return;
-          const rawCo=b.checkout||addDays(b.checkin,parseInt(b.nights)||1);
-          const coDate=parseDate(rawCo);
-          if(!coDate||isNaN(coDate)) return;
-          const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
-          const monthEnd=new Date(dateStr(viewYear,viewMonth,daysInMonth(viewYear,viewMonth)+1)+'T00:00');
-          if(coDate<=monthStart||ciDate>=monthEnd) return;
-          const startDay=ciDate>=monthStart?ciDate.getDate():1;
-          const endDay=coDate<=monthEnd?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
-          if(startDay>endDay) return;
+      // 找起始 td
+      const startCell=ganttTable.querySelector(`td[data-date="${dateStr(viewYear,viewMonth,startDay)}"][data-room="${room.id}"]`);
+      if(!startCell) return;
 
-          // 用 offsetTop/offsetLeft 計算，相對 table，不受 scroll 影響
-          const firstCell=ganttTable.querySelector(`td[data-date="${dateStr(viewYear,viewMonth,startDay)}"][data-room="${room.id}"]`);
-          if(!firstCell) return;
-          const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
-          const labelW=labelCell?labelCell.offsetWidth:110;
+      // 移除被 colspan 覆蓋的後續 td
+      const row=startCell.closest('tr');
+      let next=startCell.nextSibling;
+      for(let i=1;i<span;i++){
+        const toRemove=next;
+        if(!toRemove) break;
+        next=toRemove.nextSibling;
+        toRemove.remove();
+      }
 
-          // 累計 offsetTop（相對 table）
-          let top=0, el=firstCell;
-          while(el && el!==ganttTable){ top+=el.offsetTop; el=el.offsetParent; }
+      // 設定 colspan 和插入 bar
+      startCell.colSpan=span;
+      startCell.style.cssText='padding:2px;position:relative;overflow:visible;';
+      startCell.onclick=null;
 
-          const left=labelW+(startDay-1)*cellW+2;
-          const width=(endDay-startDay+1)*cellW-4;
-          const color=roomColor[room.id];
-          const fid=b.firestoreId;
+      const color=roomColor[room.id];
+      const fid=b.firestoreId;
+      const bar=document.createElement('div');
+      bar.className='booking-bar';
+      bar.dataset.fid=fid;
+      bar.style.cssText=`position:relative;width:100%;height:28px;background:${color};color:#fff;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:600;cursor:pointer;overflow:hidden;box-sizing:border-box;`;
+      bar.innerHTML=`<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span><span class="bar-resize" style="width:14px;height:100%;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.7;font-size:12px;position:absolute;right:0;">▎</span>`;
 
-          const bar=document.createElement('div');
-          bar.className='booking-bar';
-          bar.dataset.fid=fid;
-          bar.style.cssText=`left:${left}px;top:${top+3}px;width:${width}px;height:${cellH-6}px;background:${color};color:#fff;position:absolute;border-radius:4px;display:flex;align-items:center;padding:0 4px;font-size:10px;font-weight:600;cursor:pointer;overflow:hidden;z-index:5;box-sizing:border-box;`;
-          bar.innerHTML=`<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span><span class="bar-resize" style="width:12px;height:100%;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.7;font-size:12px;">▎</span>`;
-
-          bar.querySelector('span:first-child').addEventListener('click', e=>{
-            e.stopPropagation();
-            openModal(window.__bmap[fid]);
-          });
-
-          // 滑鼠拖拉調整天數
-          const handle=bar.querySelector('.bar-resize');
-          const displayNights = endDay - startDay + 1;
-          handle.addEventListener('mousedown', e=>{
-            e.stopPropagation(); e.preventDefault();
-            const tableRect=ganttTable.getBoundingClientRect();
-            const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
-            let currentNights=displayNights;
-
-            const onMove=ev=>{
-              // 算滑鼠在 table 內的 X 位置
-              const mouseX=ev.clientX-tableRect.left+scrollLeft;
-              const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
-              const labelW=labelCell?labelCell.offsetWidth:110;
-              // 算滑鼠對應哪一天（從1開始）
-              const targetDay=Math.round((mouseX-labelW)/cellW);
-              currentNights=Math.max(1, targetDay-startDay+1);
-              bar.style.width=(currentNights*cellW-4)+'px';
-              bar.style.opacity='0.8';
-            };
-            const onUp=async()=>{
-              document.removeEventListener('mousemove',onMove);
-              document.removeEventListener('mouseup',onUp);
-              bar.style.opacity='1';
-              if(currentNights!==displayNights){
-                const newCheckout=addDays(b.checkin,currentNights);
-                await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
-                showToast(`已更新為 ${currentNights} 晚`);
-              }
-            };
-            document.addEventListener('mousemove',onMove);
-            document.addEventListener('mouseup',onUp);
-          });
-
-          // 觸控拖拉
-          handle.addEventListener('touchstart', e=>{
-            e.stopPropagation();
-            const tableRect=ganttTable.getBoundingClientRect();
-            const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
-            let currentNights=displayNights;
-            const onMove=ev=>{
-              const mouseX=ev.touches[0].clientX-tableRect.left+scrollLeft;
-              const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
-              const labelW=labelCell?labelCell.offsetWidth:110;
-              const targetDay=Math.round((mouseX-labelW)/cellW);
-              currentNights=Math.max(1,targetDay-startDay+1);
-              bar.style.width=(currentNights*cellW-4)+'px';
-              bar.style.opacity='0.8';
-            };
-            const onUp=async()=>{
-              handle.removeEventListener('touchmove',onMove);
-              handle.removeEventListener('touchend',onUp);
-              bar.style.opacity='1';
-              if(currentNights!==displayNights){
-                const newCheckout=addDays(b.checkin,currentNights);
-                await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
-                showToast(`已更新為 ${currentNights} 晚`);
-              }
-            };
-            handle.addEventListener('touchmove',onMove,{passive:true});
-            handle.addEventListener('touchend',onUp);
-          },{passive:true});
-
-          ganttTable.appendChild(bar);
-        });
+      bar.querySelector('span:first-child').addEventListener('click',e=>{
+        e.stopPropagation();
+        openModal(window.__bmap[fid]);
       });
+
+      // 拖拉調整天數
+      const handle=bar.querySelector('.bar-resize');
+      const displayNights=endDay-startDay+1;
+      handle.addEventListener('mousedown',e=>{
+        e.stopPropagation();e.preventDefault();
+        const ganttScroll=document.querySelector('.gantt-scroll');
+        const tableRect=ganttTable.getBoundingClientRect();
+        const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
+        let currentNights=displayNights;
+        const sCell=ganttTable.querySelector('td.gantt-cell')||ganttTable.querySelector(`td[data-room]`);
+        const cw=sCell?sCell.offsetWidth:32;
+        const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
+        const lw=labelCell?labelCell.offsetWidth:110;
+        const onMove=ev=>{
+          const mx=ev.clientX-tableRect.left+scrollLeft;
+          const targetDay=Math.round((mx-lw)/cw);
+          currentNights=Math.max(1,targetDay-startDay+1);
+          bar.style.opacity='0.8';
+        };
+        const onUp=async()=>{
+          document.removeEventListener('mousemove',onMove);
+          document.removeEventListener('mouseup',onUp);
+          bar.style.opacity='1';
+          if(currentNights!==displayNights){
+            const newCheckout=addDays(b.checkin,currentNights);
+            pushUndo({type:'update',col:'bookings',fid,before:{nights:displayNights,checkout:rawCo},after:{nights:currentNights,checkout:newCheckout}});
+            await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
+            showToast(`已更新為 ${currentNights} 晚`);
+          }
+        };
+        document.addEventListener('mousemove',onMove);
+        document.addEventListener('mouseup',onUp);
+      });
+
+      startCell.appendChild(bar);
     });
   });
 }
