@@ -172,9 +172,10 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
       <img class="user-avatar" id="userAvatar" src="">
       <div class="sync-dot online" id="syncDot"></div>
     </div>
+    
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
     <button class="btn-sm" id="logoutBtn">登出</button>
-    <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
-      <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
     <button class="btn-sm" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="openModal()">+ 新增訂房</button>
   </header>
 

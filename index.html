@@ -199,6 +199,8 @@ select:focus{border-color:#888;}
       <span id="userName"></span>
     </div>
     <span class="sync-status syncing" id="syncStatus">連線中...</span>
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
     <button class="btn-logout" id="logoutBtn">登出</button>
   </header>
   <div class="toolbar">
@@ -213,8 +215,6 @@ select:focus{border-color:#888;}
       <option value="asc">由小到大 ↑</option>
       <option value="desc">由大到小 ↓</option>
     </select>
-    <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
-    <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
     <button class="btn primary" onclick="openModal()">+ 新增訂房</button>
   </div>
   <div class="board-wrap">

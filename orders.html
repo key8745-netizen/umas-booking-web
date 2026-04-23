@@ -135,6 +135,10 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
     <h1>訂單資料</h1>
     <div class="nav-pill"><a href="checkin.html" class="nav-item">控房</a><a href="calendar.html" class="nav-item">日曆</a><a href="index.html" class="nav-item">主控板</a><a href="orders.html" class="nav-item active">訂單</a><a href="customers.html" class="nav-item">客戶</a><a href="analytics.html" class="nav-item">統計</a></div>
     <img class="user-avatar" id="userAvatar" src="">
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
     <button class="btn-sm" id="logoutBtn">登出</button>
   </header>
 
@@ -157,8 +161,6 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
       <select class="filter" id="filterMonth" onchange="renderOrders()">
         <option value="">全部月份</option>
       </select>
-      <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
-      <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
       <button class="btn" onclick="exportCSV()">⬇ 匯出 CSV</button>
       <button class="btn primary" onclick="window.location.href='index.html?newOrder=1'">＋ 新增訂單</button>
     </div>

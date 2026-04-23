@@ -141,6 +141,10 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
     <h1>兀瑪斯農莊 <span style="font-size:10px;font-weight:300;color:var(--text3);margin-left:6px;font-family:var(--sans);">Umas</span></h1>
     <div class="nav-pill"><a href="checkin.html" class="nav-item">控房</a><a href="calendar.html" class="nav-item">日曆</a><a href="index.html" class="nav-item">主控板</a><a href="orders.html" class="nav-item">訂單</a><a href="customers.html" class="nav-item active">客戶</a><a href="analytics.html" class="nav-item">統計</a></div>
     <img class="user-avatar" id="userAvatar" src="">
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
+    <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
+    <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
     <button class="btn-sm" id="logoutBtn">登出</button>
   </header>
 
@@ -154,8 +158,6 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
         <button class="tag-btn" id="filter-warn" onclick="setFilter('需注意')">⚠ 需注意</button>
       </div>
       <span style="font-size:12px;color:var(--text2);" id="customerCount"></span>
-      <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
-      <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
       <button class="btn primary" style="margin-left:auto;" onclick="openNewCustomerModal()">＋ 新增客戶</button>
     </div>
 
