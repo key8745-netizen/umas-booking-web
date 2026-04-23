@@ -489,10 +489,8 @@ function renderGantt(){
   window.__bmap = {};
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
 
-  // 用 rAF 等 DOM 完全渲染後再計算位置
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      // 取得格子寬高（從第一個 cell 取樣）
       const sampleCell = ganttTable.querySelector('td.gantt-cell');
       if(!sampleCell) return;
       const cellW = sampleCell.offsetWidth;
@@ -514,17 +512,16 @@ function renderGantt(){
           const endDay=coDate<=monthEnd?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
           if(startDay>endDay) return;
 
-          // 找到這個房間的第一個 cell 來定位 top
+          // 用 offsetTop/offsetLeft 計算，相對 table，不受 scroll 影響
           const firstCell=ganttTable.querySelector(`td[data-date="${dateStr(viewYear,viewMonth,startDay)}"][data-room="${room.id}"]`);
           if(!firstCell) return;
-          const tableTop=ganttTable.getBoundingClientRect().top;
-          const cellTop=firstCell.getBoundingClientRect().top;
-          const scrollTop=ganttScroll?ganttScroll.scrollTop:0;
-          const top=cellTop-tableTop+scrollTop;
-
-          // 用 header room 欄位寬 + (startDay-1)*cellW 算 left
           const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
           const labelW=labelCell?labelCell.offsetWidth:110;
+
+          // 累計 offsetTop（相對 table）
+          let top=0, el=firstCell;
+          while(el && el!==ganttTable){ top+=el.offsetTop; el=el.offsetParent; }
+
           const left=labelW+(startDay-1)*cellW+2;
           const width=(endDay-startDay+1)*cellW-4;
           const color=roomColor[room.id];
@@ -536,7 +533,6 @@ function renderGantt(){
           bar.style.cssText=`left:${left}px;top:${top+3}px;width:${width}px;height:${cellH-6}px;background:${color};color:#fff;position:absolute;border-radius:4px;display:flex;align-items:center;padding:0 4px;font-size:10px;font-weight:600;cursor:pointer;overflow:hidden;z-index:5;box-sizing:border-box;`;
           bar.innerHTML=`<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span><span class="bar-resize" style="width:12px;height:100%;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.7;font-size:12px;">▎</span>`;
 
-          // 點擊開啟編輯
           bar.querySelector('span:first-child').addEventListener('click', e=>{
             e.stopPropagation();
             openModal(window.__bmap[fid]);
