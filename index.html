@@ -1501,6 +1501,18 @@ function startListening(){
     bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
     renderAll();setSyncStatus('online');
     checkPrefillCustomer();
+    // 從訂單頁跳來編輯
+    const urlParams=new URLSearchParams(window.location.search);
+    if(urlParams.get('edit')==='1'){
+      const fid=sessionStorage.getItem('editBookingId');
+      if(fid){
+        sessionStorage.removeItem('editBookingId');
+        setTimeout(()=>{
+          const b=bookings.find(x=>x.firestoreId===fid);
+          if(b) openModal(b);
+        },400);
+      }
+    }
     generateDailyReminders(db,bookings);
   },()=>setSyncStatus('offline'));
 }

@@ -246,7 +246,7 @@ tr:hover td{background:#fafafa;}
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -260,7 +260,7 @@ const firebaseConfig = {
 };
 const ALLOWED = ["key8745@gmail.com","princessangel45@gmail.com"];
 
-const fbApp = initializeApp(firebaseConfig);
+const fbApp=getApps().length?getApp():initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
