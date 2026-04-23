@@ -5,6 +5,7 @@ import { getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, query, or
 
 const NOTIF_CSS = `
 #notif-fab{position:fixed;z-index:99999;width:48px;height:48px;border-radius:50%;background:#1a1a1a;color:#fff;border:none;cursor:move;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,0.2);user-select:none;touch-action:none;transition:box-shadow 0.15s;}
+@media(max-width:768px){#notif-fab{bottom:76px!important;width:44px;height:44px;font-size:18px;}}
 #notif-fab:hover{box-shadow:0 6px 20px rgba(0,0,0,0.3);}
 #notif-badge{position:absolute;top:-4px;right:-4px;background:#b94040;color:#fff;border-radius:999px;font-size:10px;font-weight:600;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 4px;display:none;}
 #notif-panel{position:fixed;z-index:99998;background:#fff;border-radius:16px;border:0.5px solid #e8e4de;box-shadow:0 8px 32px rgba(0,0,0,0.14);width:320px;max-height:480px;display:none;flex-direction:column;overflow:hidden;}
@@ -55,7 +56,8 @@ export function initNotifications(db) {
   const fab = document.createElement('button');
   fab.id = 'notif-fab';
   fab.innerHTML = `🔔<span id="notif-badge"></span>`;
-  fab.style.bottom = '80px';
+  fab.style.bottom = (window.innerWidth <= 768 ? '76px' : '80px');
+  fab.style.right = '16px';
   fab.style.right = '20px';
   document.body.appendChild(fab);
 

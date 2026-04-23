@@ -111,7 +111,7 @@ select:focus{border-color:#888;}
 
 
 @media(max-width:768px){
-  body{padding-bottom:60px;}
+  body{padding-bottom:70px;}
   header{padding:0 14px;height:46px;}
   header h1{font-size:13px;}
   .nav-pill{display:none;}
@@ -140,7 +140,7 @@ select:focus{border-color:#888;}
 @media(max-width:768px){
   .nav-pill{display:none!important;}
   
-  body{padding-bottom:60px;}
+  body{padding-bottom:70px;}
 }
 
 
@@ -153,20 +153,13 @@ select:focus{border-color:#888;}
 .bottom-nav-item.active{color:#1a1a1a;}
 
 /* ── 底部導覽列 ── */
-
-
-
-.bottom-nav-item.active{color:#1a1a1a;}
-
-@media(max-width:768px){.nav-pill{display:none!important;}}
-
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid #e8e4de;z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
-.bottom-nav-inner{display:flex;overflow-x:auto;height:60px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e8e4de;z-index:9998;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav-inner{display:flex;overflow-x:auto;height:56px;padding:0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .bottom-nav-inner::-webkit-scrollbar{display:none;}
 .bottom-nav-item{flex:0 0 20%;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}}
+@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:70px;}}
 </style>
 </head>
 <body>
@@ -965,6 +958,8 @@ window.downloadRulesImage=async function(){
   }catch(e){showToast('下載失敗：'+e.message);}
   if(btn){btn.textContent='🖼 下載圖片';}
 };
+
+window.analyzeChat=async function(){
   const chat=document.getElementById('f-chat').value.trim();
   if(!chat){alert('請先貼上 Line 對話內容');return;}
   const btn=document.getElementById('analyzeChatBtn');
