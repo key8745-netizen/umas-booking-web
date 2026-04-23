@@ -102,12 +102,20 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 18px;border-radius:999px;font-size:11px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:2000;white-space:nowrap;}
 .toast.show{opacity:1;}
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid var(--border);z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
-.bottom-nav-inner{display:flex;flex-direction:row;height:60px;width:100%;}
-.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--text3);font-size:9px;letter-spacing:0.03em;}
+
+
+
 .bottom-nav-item.active{color:var(--text);}
+
+@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:60px;}.board-wrap{padding:10px 12px;}}
+
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid #e8e4de;z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav-inner{display:flex;overflow-x:auto;height:60px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.bottom-nav-inner::-webkit-scrollbar{display:none;}
+.bottom-nav-item{flex:0 0 20%;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
+.bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}.board-wrap{padding:10px 12px;}}
+@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}}
 </style>
 </head>
 <body>
@@ -231,13 +239,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 </div>
 
 <div id="toast" class="toast"></div>
-<nav class="bottom-nav"><div class="bottom-nav-inner">
-  <a class="bottom-nav-item active" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a>
-  <a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a>
-  <a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a>
-  <a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a>
-  <a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a>
-</div></nav>
+<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item active" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";

@@ -153,12 +153,20 @@ select:focus{border-color:#888;}
 .bottom-nav-item.active{color:#1a1a1a;}
 
 /* ── 底部導覽列 ── */
+
+
+
+.bottom-nav-item.active{color:#1a1a1a;}
+
+@media(max-width:768px){.nav-pill{display:none!important;}}
+
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:0.5px solid #e8e4de;z-index:9999;padding-bottom:env(safe-area-inset-bottom);}
-.bottom-nav-inner{display:flex;flex-direction:row;height:60px;width:100%;}
-.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
+.bottom-nav-inner{display:flex;overflow-x:auto;height:60px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.bottom-nav-inner::-webkit-scrollbar{display:none;}
+.bottom-nav-item{flex:0 0 20%;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}}
+@media(max-width:768px){.nav-pill{display:none!important;}.bottom-nav{display:block;}body{padding-bottom:60px;}}
 </style>
 </head>
 <body>
@@ -357,6 +365,7 @@ select:focus{border-color:#888;}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initNotifications, generateDailyReminders } from "./notifications.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",
@@ -653,7 +662,12 @@ function addTouchDrag(card, fid){
   });
 }
 
-window.renderAll=function(){const board=document.getElementById('board');board.innerHTML='';COLS.forEach(col=>{const raw=bookings.filter(b=>b.status===col.id&&matchSearch(b)),list=sorted(raw),colEl=document.createElement('div');colEl.className='column';colEl.id='col-'+col.id;colEl.innerHTML=`<div class="col-header"><div class="col-label"><div class="col-dot" style="background:${col.dot}"></div><span>${col.label}</span></div><span class="col-count">${list.length}</span></div><div class="drop-hint" id="hint-${col.id}">拖到這裡</div><div class="cards-area" id="area-${col.id}"></div>`;board.appendChild(colEl);const area=document.getElementById('area-'+col.id);list.forEach(b=>{const tmp=document.createElement('div');tmp.innerHTML=cardHTML(b);const card=tmp.firstChild;card.addEventListener('dragstart',()=>{dragId=b.firestoreId;setTimeout(()=>card.classList.add('dragging'),0);COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});});card.addEventListener('dragend',()=>{card.classList.remove('dragging');COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});dragId=null;});addTouchDrag(card,b.firestoreId);area.appendChild(card);});colEl.addEventListener('dragover',e=>e.preventDefault());colEl.addEventListener('drop',async e=>{e.preventDefault();if(!dragId)return;const bk=bookings.find(x=>x.firestoreId===dragId);if(bk&&bk.status!==col.id){const oldStatus=bk.status;pushUndo({type:'update',fid:dragId,before:{status:oldStatus},after:{status:col.id}});await updateDoc(doc(db,'bookings',dragId),{status:col.id});showToast('已移至「'+col.label+'」');}});});};
+window.renderAll=function(){const board=document.getElementById('board');board.innerHTML='';COLS.forEach(col=>{const raw=bookings.filter(b=>b.status===col.id&&matchSearch(b)),list=sorted(raw),colEl=document.createElement('div');colEl.className='column';colEl.id='col-'+col.id;colEl.innerHTML=`<div class="col-header"><div class="col-label"><div class="col-dot" style="background:${col.dot}"></div><span>${col.label}</span></div><span class="col-count">${list.length}</span></div><div class="drop-hint" id="hint-${col.id}">拖到這裡</div><div class="cards-area" id="area-${col.id}"></div>`;board.appendChild(colEl);const area=document.getElementById('area-'+col.id);list.forEach(b=>{const tmp=document.createElement('div');tmp.innerHTML=cardHTML(b);const card=tmp.firstChild;card.addEventListener('dragstart',()=>{dragId=b.firestoreId;setTimeout(()=>card.classList.add('dragging'),0);COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.add('active');});});card.addEventListener('dragend',()=>{card.classList.remove('dragging');COLS.forEach(c=>{const h=document.getElementById('hint-'+c.id);if(h)h.classList.remove('active');});dragId=null;});addTouchDrag(card,b.firestoreId);area.appendChild(card);});colEl.addEventListener('dragover',e=>e.preventDefault());colEl.addEventListener('drop',async e=>{e.preventDefault();if(!dragId)return;const bk=bookings.find(x=>x.firestoreId===dragId);if(bk&&bk.status!==col.id){const oldStatus=bk.status;pushUndo({type:'update',fid:dragId,before:{status:oldStatus},after:{status:col.id}});await updateDoc(doc(db,'bookings',dragId),{status:col.id});showToast('已移至「'+col.label+'」');
+// 拖到「暫時保留待確認」自動提醒發訂金訊息
+if(col.id==='pending'&&oldStatus==='new-case'&&window.__addNotification){
+  await window.__addNotification({type:'deposit_msg',message:`💬 ${bk.name} 已移至暫時保留，記得發送訂金通知給客人！`,link:'index.html'});
+  setTimeout(()=>{if(confirm(`${bk.name} 已移至暫時保留，要現在發送訂金通知嗎？`)){const editBtn=document.querySelector(`[data-fid="${dragId}"]`);if(editBtn)editBtn.click();showDepositCard&&showDepositCard();}},300);
+}}});});};
 
 function populateStatus(cur){document.getElementById('f-status').innerHTML=COLS.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.label}</option>`).join('');}
 function setF(id,val){const el=document.getElementById(id);if(el)el.value=val===undefined||val===null?'':val;}
@@ -1131,6 +1145,7 @@ function startListening(){
     bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
     renderAll();setSyncStatus('online');
     checkPrefillCustomer();
+    generateDailyReminders(db,bookings);
   },()=>setSyncStatus('offline'));
 }
 
@@ -1165,10 +1180,12 @@ onAuthStateChanged(auth, user=>{
   document.getElementById('app').classList.add('ready');
   document.getElementById('userAvatar').src=user.photoURL||'';
   document.getElementById('userName').textContent=user.displayName||user.email;
+  const addNotification=initNotifications(db);
+  window.__addNotification=addNotification;
   startListening();
 });
 </script>
 
-<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item active" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
+<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item active" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 </body>
 </html>
