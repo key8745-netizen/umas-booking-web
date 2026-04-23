@@ -136,6 +136,19 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
     <div class="date-bar"><h2 id="todayTitle"></h2><span class="date-sub" id="todaySub"></span></div>
     <div class="alert-bar" id="alertBar"><span>⏰</span><span id="alertMsg"></span></div>
     <div class="summary-row" id="summaryRow"></div>
+
+    <!-- 視覺化房態總覽 -->
+    <div style="background:#fff;border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">房態總覽</div>
+      <div id="roomOverview"></div>
+      <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);"><span style="width:10px;height:10px;border-radius:3px;background:var(--green-bg);border:1px solid #b5d4b8;display:inline-block;"></span>今日入住</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);"><span style="width:10px;height:10px;border-radius:3px;background:var(--blue-bg);border:1px solid #b5c8e8;display:inline-block;"></span>續住中</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);"><span style="width:10px;height:10px;border-radius:3px;background:var(--red-bg);border:1px solid #e8c8c8;display:inline-block;"></span>今日退房</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);"><span style="width:10px;height:10px;border-radius:3px;background:var(--bg);border:1px solid var(--border);display:inline-block;"></span>空房</span>
+      </div>
+    </div>
+
     <div id="buildingsWrap"></div>
   </div>
 </div>
@@ -359,6 +372,40 @@ function render(){
     <div class="summary-card"><div class="summary-num" style="color:var(--red);">${checkoutList.length}</div><div class="summary-label">今日退房</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--blue);">${stayList.length}</div><div class="summary-label">續住中</div></div>
   `;
+
+  // 視覺化房態總覽
+  const overview=document.getElementById('roomOverview');
+  if(overview){
+    let html='';
+    BUILDINGS.forEach(bg=>{
+      html+=`<div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:5px;letter-spacing:0.04em;">${bg.label}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">`;
+      bg.rooms.forEach(room=>{
+        const b=getBookingForRoom(room.id);
+        let bg_color,border_color,text_color,label='';
+        if(!b){bg_color=`var(--bg)`;border_color=`var(--border)`;text_color=`var(--text3)`;}
+        else if(isCheckinToday(b)){bg_color=`var(--green-bg)`;border_color=`#b5d4b8`;text_color=`var(--green)`;label=b.name||'';}
+        else if(isCheckoutToday(b)){bg_color=`var(--red-bg)`;border_color=`#e8c8c8`;text_color=`var(--red)`;label=b.name||'';}
+        else{bg_color=`var(--blue-bg)`;border_color=`#b5c8e8`;text_color=`var(--blue)`;label=b.name||'';}
+
+        const prog=b?getProgress(b.firestoreId):{};
+        const steps=b?(isStaying(b)?STEPS_STAYING:isCheckoutToday(b)?STEPS_CHECKOUT:STEPS_CHECKIN):[];
+        const pct=steps.length?Math.round(steps.filter(s=>prog[s.id]).length/steps.length*100):0;
+        const fid=b?.firestoreId||'';
+
+        html+=`<div onclick="${fid?`handleStep('${fid}','${steps.find(s=>!prog[s.id])?.id||'eta'}')`:''}"
+          style="background:${bg_color};border:1px solid ${border_color};border-radius:8px;padding:6px 9px;min-width:64px;cursor:${b?'pointer':'default'};transition:opacity 0.1s;"
+          onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+          <div style="font-size:10px;font-weight:600;color:${text_color};font-family:var(--serif);">${room.label}</div>
+          <div style="font-size:9px;color:${text_color};opacity:0.8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${label||room.cap}</div>
+          ${b?`<div style="margin-top:5px;height:3px;background:rgba(0,0,0,0.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${text_color};border-radius:2px;"></div></div>`:''}
+        </div>`;
+      });
+      html+=`</div></div>`;
+    });
+    overview.innerHTML=html;
+  }
 
   const wrap=document.getElementById('buildingsWrap');
   wrap.innerHTML='';
