@@ -173,6 +173,8 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
       <div class="sync-dot online" id="syncDot"></div>
     </div>
     <button class="btn-sm" id="logoutBtn">登出</button>
+    <button class="btn" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩ 復原</button>
+      <button class="btn" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪ 重做</button>
     <button class="btn-sm" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="openModal()">+ 新增訂房</button>
   </header>
 
@@ -250,7 +252,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, doc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -423,7 +425,8 @@ window.saveBooking = async function(){
   };
   const btn=document.getElementById('saveBtn'); btn.textContent='儲存中...'; btn.disabled=true;
   try{
-    if(editId){ await updateDoc(doc(db,'bookings',editId),data); showToast('已更新'); }
+    if(editId){ const _before=bookings.find(x=>x.firestoreId===editId);if(_before)pushUndo({type:'update',col:'bookings',fid:editId,before:{..._before},after:data});
+  await updateDoc(doc(db,'bookings',editId),data); showToast('已更新'); }
     else{ data.createdAt=serverTimestamp(); await addDoc(collection(db,'bookings'),data); showToast('已新增'); }
     closeModal();
   } catch(e){ alert('儲存失敗：'+e.message); }
@@ -434,7 +437,8 @@ window.deleteBooking = async function(){
   if(!editId) return;
   const b=bookings.find(x=>x.firestoreId===editId);
   if(!confirm(`確定要刪除「${b?.name||''}」的訂房嗎？`)) return;
-  await deleteDoc(doc(db,'bookings',editId));
+  const _del=bookings.find(x=>x.firestoreId===editId);if(_del)pushUndo({type:'delete',col:'bookings',fid:editId,data:{..._del}});
+    await deleteDoc(doc(db,'bookings',editId));
   showToast('已刪除'); closeModal();
 };
 
@@ -698,6 +702,55 @@ onAuthStateChanged(auth, user=>{
     document.getElementById('syncDot').className='sync-dot online';
   }, ()=>{ document.getElementById('syncDot').className='sync-dot'; });
 });
+
+// ── Undo / Redo ──
+const undoStack=[], redoStack=[];
+const MAX_HISTORY=30;
+
+function updateUndoRedoBtns(){
+  const uBtn=document.getElementById('undoBtn');
+  const rBtn=document.getElementById('redoBtn');
+  if(uBtn){uBtn.disabled=undoStack.length===0;uBtn.style.opacity=undoStack.length===0?'0.4':'1';uBtn.style.cursor=undoStack.length===0?'not-allowed':'pointer';}
+  if(rBtn){rBtn.disabled=redoStack.length===0;rBtn.style.opacity=redoStack.length===0?'0.4':'1';rBtn.style.cursor=redoStack.length===0?'not-allowed':'pointer';}
+}
+function pushUndo(action){
+  undoStack.push(action);
+  if(undoStack.length>MAX_HISTORY) undoStack.shift();
+  redoStack.length=0;
+  updateUndoRedoBtns();
+}
+async function applyAction(action,direction){
+  const isUndo=direction==='undo';
+  function clean(obj){const o={...obj};delete o.firestoreId;return o;}
+  if(action.type==='create'){
+    if(isUndo) await deleteDoc(doc(db,action.col,action.fid));
+    else await setDoc(doc(db,action.col,action.fid),clean(action.data));
+  } else if(action.type==='delete'){
+    if(isUndo) await setDoc(doc(db,action.col,action.fid),clean(action.data));
+    else await deleteDoc(doc(db,action.col,action.fid));
+  } else if(action.type==='update'){
+    await updateDoc(doc(db,action.col,action.fid),clean(isUndo?action.before:action.after));
+  }
+}
+window.undoAction=async function(){
+  if(!undoStack.length)return;
+  const action=undoStack.pop();redoStack.push(action);
+  try{await applyAction(action,'undo');showToast('↩ 已復原');}
+  catch(e){undoStack.push(redoStack.pop());showToast('復原失敗：'+e.message);}
+  updateUndoRedoBtns();
+};
+window.redoAction=async function(){
+  if(!redoStack.length)return;
+  const action=redoStack.pop();undoStack.push(action);
+  try{await applyAction(action,'redo');showToast('↪ 已重做');}
+  catch(e){redoStack.push(undoStack.pop());showToast('重做失敗：'+e.message);}
+  updateUndoRedoBtns();
+};
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undoAction();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='Z'))){e.preventDefault();redoAction();}
+});
+
 </script>
 
 <nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item active" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
