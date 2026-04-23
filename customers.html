@@ -550,7 +550,12 @@ onAuthStateChanged(auth,async user=>{
 
   if(unsubscribe) unsubscribe();
   unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
-    bookings=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    bookings=snapshot.docs.map(d=>{
+      const b={firestoreId:d.id,...d.data()};
+      if(b.checkin) b.checkin=b.checkin.toString().replace(/\//g,'-').slice(0,10);
+      if(b.checkout) b.checkout=b.checkout.toString().replace(/\//g,'-').slice(0,10);
+      return b;
+    });
     renderList();
   });
 });

@@ -308,13 +308,20 @@ window.goToday = function(){ viewYear=new Date().getFullYear(); viewMonth=new Da
 
 function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function dateStr(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
-function parseDate(s){ return s?new Date(s+'T00:00'):null; }
-function addDays(s,n){ const d=parseDate(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function parseDate(s){ 
+  if(!s) return null;
+  // 支援 2026-07-09 和 2026/07/09 兩種格式
+  const norm = s.toString().replace(/\//g,'-').slice(0,10);
+  return new Date(norm+'T00:00');
+}
+function addDays(s,n){ const d=parseDate(s); if(!d||isNaN(d)) return s; d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+
+function normDate(s){ return s?s.toString().replace(/\//g,'-').slice(0,10):''; }
 
 function bookingOverlapsDay(b, ds){
   if(!b.checkin) return false;
-  const ci=b.checkin;
-  const co=b.checkout||addDays(b.checkin, parseInt(b.nights)||1);
+  const ci=normDate(b.checkin);
+  const co=normDate(b.checkout||addDays(b.checkin, parseInt(b.nights)||1));
   return ci<=ds && ds<co;
 }
 
@@ -494,7 +501,10 @@ function renderGantt(){
         rbs.forEach(b=>{
           if(!b.checkin) return;
           const ciDate=parseDate(b.checkin);
-          const coDate=parseDate(b.checkout||addDays(b.checkin,parseInt(b.nights)||1));
+          if(!ciDate||isNaN(ciDate)) return;
+          const rawCo=b.checkout||addDays(b.checkin,parseInt(b.nights)||1);
+          const coDate=parseDate(rawCo);
+          if(!coDate||isNaN(coDate)) return;
           const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
           const monthEnd=new Date(dateStr(viewYear,viewMonth,daysInMonth(viewYear,viewMonth)+1)+'T00:00');
           if(coDate<=monthStart||ciDate>=monthEnd) return;
@@ -680,7 +690,12 @@ onAuthStateChanged(auth, user=>{
   document.getElementById('userAvatar').src = user.photoURL||'';
   if(unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(query(collection(db,'bookings')), snapshot=>{
-    bookings = snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    bookings = snapshot.docs.map(d=>{
+      const b={firestoreId:d.id,...d.data()};
+      if(b.checkin) b.checkin=b.checkin.toString().replace(/\//g,'-').slice(0,10);
+      if(b.checkout) b.checkout=b.checkout.toString().replace(/\//g,'-').slice(0,10);
+      return b;
+    });
     render();
     document.getElementById('syncDot').className='sync-dot online';
   }, ()=>{ document.getElementById('syncDot').className='sync-dot'; });
