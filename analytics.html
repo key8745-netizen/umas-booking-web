@@ -274,14 +274,16 @@ for(let y = now.getFullYear(); y >= now.getFullYear()-3; y--){
   if(y === now.getFullYear()) o.selected = true;
   yearSel.appendChild(o);
 }
-document.getElementById('filterMonth').value = now.getMonth()+1;
+document.getElementById('filterMonth').value = 0;
 
 function getFiltered(){
   const yr = parseInt(document.getElementById('filterYear').value);
   const mo = parseInt(document.getElementById('filterMonth').value);
   return bookings.filter(b=>{
     if(!b.checkin) return false;
-    const d = new Date(b.checkin+'T00:00');
+    const dateStr = b.checkin.toString().replace(/\//g,'-').slice(0,10);
+    const d = new Date(dateStr+'T00:00');
+    if(isNaN(d)) return false;
     if(d.getFullYear() !== yr) return false;
     if(mo > 0 && d.getMonth()+1 !== mo) return false;
     return true;
