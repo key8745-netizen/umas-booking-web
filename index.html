@@ -1541,8 +1541,10 @@ window.downloadDepositImage=async function(){
 };
 
 window.showDepositCard=function(){
+  console.log('[depositCard] called');
   const name=document.getElementById('f-name').value.trim()||'（未填姓名）';
   const checkin=document.getElementById('f-checkin').value;
+  console.log('[depositCard] checkin=', checkin, 'depositBg=', document.getElementById('depositBg'));
   const nights=parseInt(document.getElementById('f-nights').value)||1;
   const pax=parseInt(document.getElementById('f-pax').value)||1;
   const plan=document.getElementById('f-plan').value;
