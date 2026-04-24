@@ -545,7 +545,7 @@ select:focus{border-color:#888;}
     <div class="form-row"><textarea id="f-note" placeholder="其他備註事項..."></textarea></div>
     <div class="form-actions">
       <button class="btn" onclick="closeModal()">取消</button>
-      <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="showDepositCard()">📋 發布訂金通知</button>
+      <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="showDepositCard()">📋 訂金通知</button>
       <button class="btn" style="background:#e8f0fe;color:#3a6ab0;border-color:#b5c8e8;" onclick="showRulesCard()">📄 住宿須知</button>
       <button class="btn primary" id="saveBtn" onclick="saveBooking()">儲存</button>
     </div>
@@ -578,9 +578,10 @@ select:focus{border-color:#888;}
 <div class="modal-bg" id="depositBg">
   <div class="modal" style="width:400px;padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-size:14px;font-weight:600;">訂金通知圖卡</h3>
+      <h3 style="font-size:14px;font-weight:600;">訂金通知</h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyDepositText()">📋 複製文字</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyDepositSMS()">💬 複製簡訊</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyDepositText()">📋 複製圖卡文字</button>
         <button class="btn" style="font-size:11px;padding:4px 10px;background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" id="downloadImgBtn" onclick="downloadDepositImage()">🖼 下載圖片</button>
         <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="closeDeposit()">關閉</button>
       </div>
@@ -955,8 +956,7 @@ window.autoCalc=async function(){
         <span style="font-size:13px;font-weight:600;color:#2d6a4f;">NT$${deposit.toLocaleString()}</span>
       </div>
       <div style="margin-top:8px;display:flex;gap:6px;">
-        <button class="btn" style="font-size:11px;background:#f2f6ee;color:#2d6a4f;border-color:#b5d4b8;" onclick="genDepositSMS()">💬 生成訂金簡訊</button>
-        <button class="btn" style="font-size:11px;" onclick="showDepositCard()">📋 訂金通知圖卡</button>
+        <button class="btn" style="font-size:11px;background:#f2f6ee;color:#2d6a4f;border-color:#b5d4b8;" onclick="showDepositCard()">📋 訂金通知</button>
       </div>`;
     document.getElementById('f-quote').value=total;
     if(depositEl&&!depositEl.value) depositEl.value=deposit;
@@ -1243,7 +1243,7 @@ document.addEventListener('keydown', e=>{
 
 window.closeDeposit=function(){document.getElementById('depositBg').classList.remove('open');};
 
-window.genDepositSMS=function(){
+window.copyDepositSMS=function(){
   const name=(document.getElementById('f-name')?.value||'您').trim()||'您';
   const checkin=document.getElementById('f-checkin')?.value||'';
   const checkout=document.getElementById('f-checkout')?.value||'';
@@ -1252,12 +1252,9 @@ window.genDepositSMS=function(){
   const deposit=parseFloat(document.getElementById('f-deposit')?.value)||Math.ceil(quote*0.3/100)*100;
   const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value).join('、');
   const pax=document.getElementById('f-pax')?.value||1;
-
-  // 訂金繳交期限（3天後）
   const deadline=new Date();
   deadline.setDate(deadline.getDate()+3);
   const deadlineStr=`${deadline.getMonth()+1}/${deadline.getDate()}`;
-
   const ci=checkin?new Date(checkin+'T00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'numeric',day:'numeric'}):'';
   const co=checkout?new Date(checkout+'T00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'numeric',day:'numeric'}):'';
 
@@ -1281,39 +1278,11 @@ window.genDepositSMS=function(){
 如有任何問題歡迎隨時聯繫 😊
 兀瑪斯農莊 0933-237-628`;
 
-  // 顯示簡訊預覽 modal
-  const bg=document.getElementById('depositBg');
-  const card=document.getElementById('depositCard');
-  if(bg&&card){
-    document.querySelector('#depositBg h3').textContent='訂金簡訊';
-    card.style.background='#f7f5f2';
-    card.style.whiteSpace='pre-wrap';
-    card.style.fontFamily='var(--sans)';
-    card.style.fontSize='13px';
-    card.style.lineHeight='1.8';
-    card.style.color='#1a1a1a';
-    card.innerHTML=sms.replace(/\n/g,'<br>');
-    // 改按鈕為複製文字
-    const btns=bg.querySelector('.form-actions')||bg.querySelector('div:last-child');
-    bg.classList.add('open');
-    window._smsToCopy=sms;
-  }
-};
-
-// 覆寫下載圖片按鈕，在簡訊模式下改為複製
-const _origDownload=window.downloadDepositImage;
-window.downloadDepositImage=async function(){
-  if(window._smsToCopy){
-    navigator.clipboard.writeText(window._smsToCopy).catch(()=>{
-      const ta=document.createElement('textarea');ta.value=window._smsToCopy;
-      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    });
-    showToast('✓ 已複製訂金簡訊');
-    window._smsToCopy=null;
-    document.getElementById('depositBg').classList.remove('open');
-    return;
-  }
-  if(_origDownload) _origDownload();
+  navigator.clipboard.writeText(sms).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=sms;
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  });
+  showToast('✓ 已複製訂金簡訊');
 };
 
 // ── 住宿須知圖卡 ──
