@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>訂房管理 — 兀瑪斯農莊</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1519,7 +1520,7 @@ window.downloadDepositImage=async function(){
   const btn=document.getElementById('downloadImgBtn');
   btn.textContent='產生中...';btn.disabled=true;
   try{
-    const card=document.getElementById('depositCard').firstElementChild;
+    const card=document.getElementById('depositCardInner')||document.getElementById('depositCard').firstElementChild;
     const canvas=await html2canvas(card,{
       scale:2,
       useCORS:true,
@@ -1570,60 +1571,101 @@ window.showDepositCard=function(){
   const dormNote=isDorm?`<div style="font-size:11px;color:#888;line-height:1.8;padding:10px 16px;background:#f7f5f2;border-top:0.5px solid #e8e4de;">・通鋪房型衛浴在外，需與其他莊友共用<br>・早餐時段 07:30－09:00，茹素者請事先告知</div>`:`<div style="font-size:11px;color:#888;line-height:1.8;padding:10px 16px;background:#f7f5f2;border-top:0.5px solid #e8e4de;">・早餐時段 07:30－09:00，茹素者請事先告知</div>`;
 
   document.getElementById('depositCard').innerHTML=`
-  <div style="background:#fff;border-radius:14px;overflow:hidden;font-family:'Noto Sans TC',-apple-system,'Helvetica Neue',sans-serif;user-select:text;-webkit-user-select:text;border:0.5px solid #e8e4de;">
-    <div style="background:#1a1a1a;padding:20px 16px;text-align:center;">
-      <div style="font-family:'Noto Serif TC','Georgia',serif;font-size:20px;font-weight:300;color:#fff;letter-spacing:0.14em;margin-bottom:3px;">兀瑪斯農莊</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;">UMAS FARM · 訂金通知</div>
+  <div id="depositCardInner" style="background:#1a1a1a;font-family:'Noto Sans TC',-apple-system,sans-serif;user-select:text;-webkit-user-select:text;border-radius:12px;overflow:hidden;width:360px;min-width:360px;">
+
+    <!-- 頂部 Logo -->
+    <div style="padding:24px 24px 16px;text-align:center;border-bottom:0.5px solid rgba(255,255,255,0.08);">
+      <div style="font-family:'Noto Serif TC',serif;font-size:11px;font-weight:300;color:rgba(255,255,255,0.3);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:8px;">Umas Farmstay</div>
+      <div style="font-family:'Noto Serif TC',serif;font-size:24px;font-weight:300;color:#fff;letter-spacing:0.14em;">兀瑪斯農莊</div>
+      <div style="width:40px;height:0.5px;background:rgba(255,255,255,0.2);margin:12px auto 0;"></div>
     </div>
-    <div style="padding:14px 16px;border-bottom:0.5px solid #f0ece6;">
-      <div style="font-size:13px;color:#555;line-height:1.7;">
-        哈囉 <span style="font-family:'Noto Serif TC','Georgia',serif;color:#1a1a1a;font-weight:400;">${name}</span> 您好，已為您保留以下住宿。
+
+    <!-- 問候語 -->
+    <div style="padding:16px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.8;">
+        親愛的 <span style="font-family:'Noto Serif TC',serif;color:#fff;font-weight:300;font-size:15px;">${name}</span> 莊友您好
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px;">感謝您預訂兀瑪斯農莊，以下為您的訂房資訊</div>
+    </div>
+
+    <!-- 訂房資訊 -->
+    <div style="padding:16px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Booking Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;margin-bottom:4px;">CHECK IN</div>
+          <div style="font-size:14px;color:#fff;font-weight:300;">${fmtD(checkin)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);">星期${ciDow}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;margin-bottom:4px;">CHECK OUT</div>
+          <div style="font-size:14px;color:#fff;font-weight:300;">${fmtD(checkout)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);">星期${coDow}</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+        ${[
+          ['房型', roomStr],
+          ['人數', `${pax} 位`],
+          ['天數', `${nights} 晚`],
+          ['方案', planLabel],
+        ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+          <span style="color:rgba(255,255,255,0.35);">${l}</span>
+          <span style="color:rgba(255,255,255,0.85);font-weight:400;">${v}</span>
+        </div>`).join('<div style="height:0.5px;background:rgba(255,255,255,0.06);"></div>')}
       </div>
     </div>
-    <div style="padding:12px 16px;">
-      ${[
-        ['入住', `${fmtD(checkin)}（${ciDow}）`],
-        ['退房', `${fmtD(checkout)}（${coDow}）`],
-        ['天數', `${nights} 晚`],
-        ['房型', roomStr],
-        ['人數', `${pax} 位`],
-        ['方案', planLabel],
-        ['報價', quote>0?`NT$ ${quote.toLocaleString()}`:'（待確認）'],
-      ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid #f7f5f2;font-size:12px;"><span style="color:#bbb;min-width:40px;letter-spacing:0.04em;">${l}</span><span style="color:#1a1a1a;font-weight:500;text-align:right;">${v}</span></div>`).join('')}
-    </div>
-    <div style="height:0.5px;background:#e8e4de;margin:0 16px;"></div>
-    <div style="padding:14px 16px;">
-      <div style="font-size:9px;font-weight:500;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">訂金匯款</div>
-      <div style="background:#f7f5f2;border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-size:11px;color:#888;">應付訂金（30%）</div>
-        <div style="font-family:'Noto Serif TC','Georgia',serif;font-size:22px;font-weight:400;color:#1a1a1a;letter-spacing:0.02em;">NT$ ${deposit>0?deposit.toLocaleString():'—'}</div>
+
+    <!-- 金額 -->
+    <div style="padding:16px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Payment</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);">住宿總價</span>
+        <span style="font-size:15px;color:rgba(255,255,255,0.6);font-weight:300;">NT$ ${quote>0?quote.toLocaleString():'—'}</span>
       </div>
-      <div style="font-size:12px;color:#666;line-height:2.1;padding:10px 0;">
-        <div>戶名　<span style="color:#1a1a1a;">伊比・伊斯卡卡夫特</span></div>
-        <div>郵局　<span style="color:#1a1a1a;">700 ／ 帳號 0002371-0218204</span></div>
-        <div>立帳　<span style="color:#1a1a1a;">北投文林郵局</span></div>
-      </div>
-      <div style="border:0.5px solid #e8e4de;border-radius:7px;padding:9px 12px;font-size:12px;color:#888;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:13px;">⏰</span>
-        <span>請於 <span style="color:#1a1a1a;font-weight:500;">${fmtD(deadline)}</span> 前匯款，完成後告知後五碼</span>
+      <div style="background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:3px;">應付訂金（30%）</div>
+          <div style="font-family:'Noto Serif TC',serif;font-size:26px;font-weight:300;color:#fff;letter-spacing:0.04em;">NT$ ${deposit>0?deposit.toLocaleString():'—'}</div>
+        </div>
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:16px;">💰</div>
       </div>
     </div>
-    ${dormNote}
-    <div style="padding:10px 16px;border-top:0.5px solid #e8e4de;">
-      <div style="font-size:11px;color:#aaa;line-height:1.8;">
+
+    <!-- 匯款資訊 -->
+    <div style="padding:16px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">Transfer Info</div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px 14px;font-size:12px;line-height:2.2;color:rgba(255,255,255,0.5);">
+        <div>戶名<span style="margin-left:12px;color:#fff;">伊比・伊斯卡卡夫特</span></div>
+        <div>郵局<span style="margin-left:12px;color:#fff;">700 帳號 0002371-0218204</span></div>
+        <div>立帳<span style="margin-left:12px;color:rgba(255,255,255,0.6);">北投文林郵局</span></div>
+      </div>
+      <div style="margin-top:10px;background:rgba(255,166,0,0.08);border:0.5px solid rgba(255,166,0,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:rgba(255,200,0,0.7);display:flex;align-items:center;gap:8px;">
+        <span>⏰</span>
+        <span>請於 <span style="color:rgba(255,220,0,0.9);font-weight:500;">${fmtD(deadline)}</span> 前完成匯款</span>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.2);text-align:center;">匯款後請告知後五碼，確認始完成訂房</div>
+    </div>
+
+    <!-- 備註 -->
+    <div style="padding:14px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);line-height:2;">
+        ${isDorm?'・通鋪衛浴在外，需與其他莊友共用<br>':''}・早餐時段 07:30－09:00，茹素請告知<br>
         ・農莊無開放帶寵物入住<br>
-        ・訂房住宿需知：<span style="color:#4a6741;">http://princessangel45.wixsite.com/umas/blank</span>
+        ・<a href="https://princessangel45.wixsite.com/umas/blank" style="color:rgba(100,160,100,0.7);text-decoration:none;">訂房住宿需知請參閱連結</a>
       </div>
     </div>
-    <div style="background:#1a1a1a;padding:14px 16px;text-align:center;">
-      <div style="margin-bottom:6px;">
-        <a href="https://line.me/R/ti/p/%40mwl6914l" style="font-family:'Noto Serif TC','Georgia',serif;font-size:13px;font-weight:400;color:#c8d4b8;text-decoration:none;letter-spacing:0.06em;">農莊小幫手 Line：@umas</a>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.9;letter-spacing:0.02em;">
-        <div>0933-237-628 伊比 ／ 0988-344-297 阿關</div>
-        <div>0936-185-753 珊妮（10:00－20:00）</div>
+
+    <!-- 底部聯絡 -->
+    <div style="padding:16px 24px;text-align:center;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.2);margin-bottom:8px;letter-spacing:0.06em;">聯絡我們</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.35);line-height:2;">
+        <div>0933-237-628 伊比 ／ 0988-344-297 阿關 ／ 0936-185-753 珊妮</div>
+        <div style="color:rgba(100,180,100,0.6);">Line：@umas</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.15);margin-top:4px;">上午10點至晚上8點間來電</div>
       </div>
     </div>
+
   </div>`;
 
   document.getElementById('depositBg').classList.add('open');
