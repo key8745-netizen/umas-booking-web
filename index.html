@@ -495,14 +495,30 @@ select:focus{border-color:#888;}
     <div class="form-grid" style="margin-bottom:8px;">
       <div class="form-row">
         <label>入住日類型</label>
-        <select id="f-daytype" onchange="autoCalc()">
+        <select id="f-daytype" onchange="onDaytypeChange()">
           <option value="auto">自動判斷</option>
           <option value="weekday">平日</option>
           <option value="holiday">假日</option>
           <option value="special">定價（聖誕/春節）</option>
+          <option value="custom">自訂金額</option>
         </select>
       </div>
     </div>
+
+    <!-- 自訂金額區塊 -->
+    <div id="custom-price-wrap" style="display:none;background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:10px;border:0.5px solid var(--border);">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">各房間自訂金額（每晚）</div>
+      <div id="custom-price-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border2);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--text2);">× <span id="custom-nights-label">1</span> 晚</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:var(--text2);">總計</span>
+          <span id="custom-total" style="font-size:15px;font-weight:600;color:#378ADD;">NT$0</span>
+          <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="applyCustomPrice()">套用</button>
+        </div>
+      </div>
+    </div>
+
     <div id="price-breakdown" style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#555;display:none;"></div>
     <div class="form-grid col3">
       <div class="form-row">
@@ -618,6 +634,70 @@ const TAG={'new-case':'background:#EEEDFE;color:#3C3489','platform':'background:
 
 let bookings=[],editId=null,dragId=null,searchQ='',unsubscribe=null;
 
+window.onDaytypeChange=function(){
+  const val=document.getElementById('f-daytype').value;
+  if(val==='custom'){
+    document.getElementById('custom-price-wrap').style.display='block';
+    renderCustomPriceList();
+  } else {
+    document.getElementById('custom-price-wrap').style.display='none';
+    autoCalc();
+  }
+};
+
+function renderCustomPriceList(){
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  document.getElementById('custom-nights-label').textContent=nights;
+  const list=document.getElementById('custom-price-list');
+  if(!rooms.length){list.innerHTML='<div style="font-size:12px;color:var(--text3);">請先勾選房間</div>';return;}
+  list.innerHTML=rooms.map(rid=>{
+    const pax=getRoomPax(rid);
+    const info=ROOM_INFO[rid];
+    const typeLabel=info?.type==='suite_A'||info?.type==='suite_C'?'套房':'通鋪';
+    return `<div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:12px;color:var(--text);min-width:60px;">${rid}</span>
+      <span style="font-size:10px;color:var(--text3);">${typeLabel} ${pax}人</span>
+      <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+        <span style="font-size:11px;color:var(--text2);">NT$</span>
+        <input type="number" id="custprice-${rid}" placeholder="0" min="0"
+          style="width:90px;padding:5px 8px;border:0.5px solid var(--border);border-radius:6px;font-size:12px;text-align:right;outline:none;"
+          oninput="updateCustomTotal()">
+        <span style="font-size:11px;color:var(--text3);">/晚</span>
+      </div>
+    </div>`;
+  }).join('');
+  updateCustomTotal();
+}
+
+window.updateCustomTotal=function(){
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  let total=0;
+  rooms.forEach(rid=>{total+=( parseFloat(document.getElementById('custprice-'+rid)?.value)||0)*nights;});
+  const el=document.getElementById('custom-total');
+  if(el) el.textContent='NT$'+total.toLocaleString();
+};
+
+window.applyCustomPrice=function(){
+  const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
+  const nights=parseInt(document.getElementById('f-nights').value)||1;
+  let total=0;const lines=[];
+  rooms.forEach(rid=>{
+    const v=parseFloat(document.getElementById('custprice-'+rid)?.value)||0;
+    total+=v*nights;
+    if(v>0) lines.push(`${rid}：NT$${v.toLocaleString()} × ${nights}晚`);
+  });
+  document.getElementById('f-quote').value=total;
+  const dep=Math.ceil(total*0.3/100)*100;
+  if(!document.getElementById('f-deposit').value) document.getElementById('f-deposit').value=dep;
+  calcDue();
+  const bdEl=document.getElementById('price-breakdown');
+  bdEl.style.display='block';
+  bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">自訂金額明細</div>${lines.map(l=>`<div style="font-size:12px;color:#555;padding:3px 0;">${l}</div>`).join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;"><span style="font-size:11px;color:#888;">${nights}晚合計</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div><div style="margin-top:8px;display:flex;gap:6px;"><button class="btn" style="font-size:11px;background:#f2f6ee;color:#2d6a4f;border-color:#b5d4b8;" onclick="genDepositSMS()">💬 生成訂金簡訊</button><button class="btn" style="font-size:11px;" onclick="showDepositCard()">📋 訂金通知圖卡</button></div>`;
+  showToast('✓ 已套用自訂金額');
+};
+
 window.setPlanType=function(plan){
   document.getElementById('f-plan').value=plan;
   const btnN=document.getElementById('plan-btn-normal');
@@ -632,7 +712,11 @@ window.setPlanType=function(plan){
 window.onRoomToggle=function(roomId, cb){
   const paxEl=document.getElementById('rpax-'+roomId);
   if(paxEl) paxEl.style.display=cb.checked?'block':'none';
-  autoCalc();
+  if(document.getElementById('f-daytype').value==='custom'){
+    renderCustomPriceList();
+  } else {
+    autoCalc();
+  }
 };
 
 // 取得各房間人數
