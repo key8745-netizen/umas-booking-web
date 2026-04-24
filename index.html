@@ -249,6 +249,7 @@ select:focus{border-color:#888;}
       <div class="form-row"><label>退房日期 *</label><input id="f-checkout" type="date" onchange="onCheckoutChange()"></div>
       <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" placeholder="自動計算" onchange="onNightsChange()"></div>
       <div class="form-row"><label>訪客類型</label><input id="f-guesttype" placeholder="登山、觀光..."></div>
+      <div class="form-row"><label>總人數</label><input id="f-pax" type="number" min="1" placeholder="自動計算" readonly style="background:#fafaf8;color:#888;"></div>
     </div>
 
     <!-- 住宿方案 -->
@@ -553,21 +554,6 @@ select:focus{border-color:#888;}
 </div>
 
 <div id="toast" class="toast"></div>
-
-<!-- 住宿須知圖卡 Modal -->
-<div class="modal-bg" id="rulesBg">
-  <div class="modal" style="width:420px;padding:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-size:14px;font-weight:500;">住宿須知圖卡</h3>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="copyRulesText()">📋 複製文字</button>
-        <button class="btn" style="font-size:11px;padding:4px 10px;background:#f0f7ee;color:#2d5a27;border-color:#a8d08a;" onclick="downloadRulesImage()">🖼 下載圖片</button>
-        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="closeRules()">關閉</button>
-      </div>
-    </div>
-    <div id="rulesCard" style="user-select:text;-webkit-user-select:text;overflow:auto;max-height:70vh;"></div>
-  </div>
-</div>
 
 
 
