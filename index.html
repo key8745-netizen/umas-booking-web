@@ -329,58 +329,170 @@ select:focus{border-color:#888;}
       </div>
 
       <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">A 棟二樓 — 通鋪（按人頭）</div>
-      ${['A-201','A-202','A-203'].map(id=>`
-      <div class="room-select-row" id="rrow-${id}">
+
+      <div class="room-select-row" id="rrow-A-201">
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
-          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">${{A201:'6人通鋪',A202:'1-3人通鋪',A203:'7人通鋪'}[id.replace('-','')]}</span></label>
-          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 $528/人</span>
+          <input type="checkbox" id="rc-A-201" value="A-201" style="width:15px;height:15px;" onchange="onRoomToggle('A-201',this)">
+          <label for="rc-A-201" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-201 <span style="color:var(--text3);font-size:10px;">6人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
-        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+        <div id="rpax-A-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font-size:11px;color:var(--text2);">住宿人數</span>
-            <input type="number" id="rpax-val-${id}" min="1" max="${{A201:6,A202:3,A203:7}[id.replace('-','')]}" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <input type="number" id="rpax-val-A-201" min="1" max="6" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
-            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-201"></span>
           </div>
         </div>
-      </div>`).join('')}
+      </div>
+
+      <div class="room-select-row" id="rrow-A-202">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-A-202" value="A-202" style="width:15px;height:15px;" onchange="onRoomToggle('A-202',this)">
+          <label for="rc-A-202" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-202 <span style="color:var(--text3);font-size:10px;">1-3人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
+        </div>
+        <div id="rpax-A-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-A-202" min="1" max="3" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-202"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-select-row" id="rrow-A-203">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-A-203" value="A-203" style="width:15px;height:15px;" onchange="onRoomToggle('A-203',this)">
+          <label for="rc-A-203" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-203 <span style="color:var(--text3);font-size:10px;">7人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
+        </div>
+        <div id="rpax-A-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-A-203" min="1" max="7" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-203"></span>
+          </div>
+        </div>
+      </div>
 
       <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">B 棟二樓 — 通鋪（按人頭）</div>
-      ${['B-201','B-202','B-203','B-204'].map(id=>`
-      <div class="room-select-row" id="rrow-${id}">
+
+      <div class="room-select-row" id="rrow-B-201">
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
-          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">${{B201:'2-4人通鋪',B202:'2-4人通鋪',B203:'2-6人通鋪',B204:'1-3人通鋪'}[id.replace('-','')]}</span></label>
-          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 $528/人</span>
+          <input type="checkbox" id="rc-B-201" value="B-201" style="width:15px;height:15px;" onchange="onRoomToggle('B-201',this)">
+          <label for="rc-B-201" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">B-201 <span style="color:var(--text3);font-size:10px;">2-4人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
-        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+        <div id="rpax-B-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font-size:11px;color:var(--text2);">住宿人數</span>
-            <input type="number" id="rpax-val-${id}" min="1" max="${{B201:4,B202:4,B203:6,B204:3}[id.replace('-','')]}" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <input type="number" id="rpax-val-B-201" min="1" max="4" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
-            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-201"></span>
           </div>
         </div>
-      </div>`).join('')}
+      </div>
+
+      <div class="room-select-row" id="rrow-B-202">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-B-202" value="B-202" style="width:15px;height:15px;" onchange="onRoomToggle('B-202',this)">
+          <label for="rc-B-202" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">B-202 <span style="color:var(--text3);font-size:10px;">2-4人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
+        </div>
+        <div id="rpax-B-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-B-202" min="1" max="4" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-202"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-select-row" id="rrow-B-203">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-B-203" value="B-203" style="width:15px;height:15px;" onchange="onRoomToggle('B-203',this)">
+          <label for="rc-B-203" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">B-203 <span style="color:var(--text3);font-size:10px;">2-6人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
+        </div>
+        <div id="rpax-B-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-B-203" min="1" max="6" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-203"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-select-row" id="rrow-B-204">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-B-204" value="B-204" style="width:15px;height:15px;" onchange="onRoomToggle('B-204',this)">
+          <label for="rc-B-204" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">B-204 <span style="color:var(--text3);font-size:10px;">1-3人通鋪</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
+        </div>
+        <div id="rpax-B-204" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-B-204" min="1" max="3" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-204"></span>
+          </div>
+        </div>
+      </div>
 
       <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">C 棟二樓 — 套房（按人數）</div>
-      ${['C-201','C-202','C-203'].map(id=>`
-      <div class="room-select-row" id="rrow-${id}">
+
+      <div class="room-select-row" id="rrow-C-201">
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
-          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">3人套房</span></label>
-          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 1人$1,800起</span>
+          <input type="checkbox" id="rc-C-201" value="C-201" style="width:15px;height:15px;" onchange="onRoomToggle('C-201',this)">
+          <label for="rc-C-201" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">C-201 <span style="color:var(--text3);font-size:10px;">3人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
         </div>
-        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+        <div id="rpax-C-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font-size:11px;color:var(--text2);">住宿人數</span>
-            <input type="number" id="rpax-val-${id}" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <input type="number" id="rpax-val-C-201" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
-            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-201"></span>
           </div>
         </div>
-      </div>`).join('')}
+      </div>
+
+      <div class="room-select-row" id="rrow-C-202">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-C-202" value="C-202" style="width:15px;height:15px;" onchange="onRoomToggle('C-202',this)">
+          <label for="rc-C-202" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">C-202 <span style="color:var(--text3);font-size:10px;">3人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
+        </div>
+        <div id="rpax-C-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-C-202" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-202"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-select-row" id="rrow-C-203">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-C-203" value="C-203" style="width:15px;height:15px;" onchange="onRoomToggle('C-203',this)">
+          <label for="rc-C-203" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">C-203 <span style="color:var(--text3);font-size:10px;">3人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
+        </div>
+        <div id="rpax-C-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-C-203" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-203"></span>
+          </div>
+        </div>
+      </div>
 
     </div>
     <div class="form-grid col3">
