@@ -769,13 +769,16 @@ async function getDateType(ds){
   const yr=ds.slice(0,4);
   if(!_holCache[yr]){
     try{
-      const r=await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${yr}.json`);
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),3000);
+      const r=await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${yr}.json`,{signal:controller.signal});
+      clearTimeout(timer);
       if(r.ok) _holCache[yr]=await r.json();
       else _holCache[yr]=[];
-    }catch(e){_holCache[yr]=[];}
+    }catch(e){ _holCache[yr]=[]; }
   }
   const key=ds.replace(/-/g,'');
-  const entry=_holCache[yr].find(x=>x.date===key);
+  const entry=(_holCache[yr]||[]).find(x=>x.date===key);
   if(entry&&entry.isHoliday) return 'holiday';
   return 'weekday';
 }
