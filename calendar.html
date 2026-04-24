@@ -210,6 +210,25 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
   </div>
 </div>
 
+<!-- 調整天數確認 popup -->
+<div class="modal-bg" id="adjustBg">
+  <div class="modal" style="width:320px;padding:20px;">
+    <div style="font-size:14px;font-weight:500;margin-bottom:6px;" id="adjust-title">調整住宿天數</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7;" id="adjust-desc"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn" id="adjust-this-btn" style="text-align:left;padding:10px 12px;height:auto;">
+        <div style="font-weight:500;font-size:12px;" id="adjust-this-label"></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px;" id="adjust-this-sub"></div>
+      </button>
+      <button class="btn" id="adjust-all-btn" style="text-align:left;padding:10px 12px;height:auto;background:var(--bg);">
+        <div style="font-weight:500;font-size:12px;" id="adjust-all-label"></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px;" id="adjust-all-sub"></div>
+      </button>
+      <button class="btn" onclick="document.getElementById('adjustBg').classList.remove('open');renderGantt();" style="color:var(--text2);">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -446,6 +465,73 @@ window.deleteBooking = async function(){
 
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
+// 房價設定（與主控板同步）
+const SUITE_A_P={weekday:3000,holiday:3600,special:3960};
+const SUITE_C_P={weekday:{1:1800,2:2000,3:2200},holiday:{1:2000,2:2400,3:2700},special:{1:2200,2:2600,3:2970}};
+const DORM_P={weekday:528,holiday:660};
+function nightDiscount2(n){ if(n===0)return 1;if(n<=2)return 0.9;if(n<=4)return 0.7;return 0.6; }
+function isSpecial2(ds){const m=ds.slice(5);return['12-24','12-25','12-31','01-01','02-08','02-09','02-10'].includes(m);}
+function getDateType2(ds){
+  if(isSpecial2(ds)) return 'special';
+  const dow=new Date(ds+'T00:00').getDay();
+  return (dow===5||dow===6)?'holiday':'weekday';
+}
+function calcOneRoomNights(roomId, checkin, nights, pax, plan){
+  let total=0;
+  const info={
+    'A-101':'suite_A','A-102':'suite_A','A-103':'suite_A',
+    'A-201':'dorm','A-202':'dorm','A-203':'dorm',
+    'B-201':'dorm','B-202':'dorm','B-203':'dorm','B-204':'dorm',
+    'C-201':'suite_C','C-202':'suite_C','C-203':'suite_C'
+  }[roomId]||'dorm';
+  for(let n=0;n<nights;n++){
+    const d=new Date(checkin+'T00:00');
+    d.setDate(d.getDate()+n);
+    const ds=d.toISOString().slice(0,10);
+    const dt=getDateType2(ds);
+    const disc=nightDiscount2(n);
+    let price=0;
+    if(plan==='hiking'){
+      price=(info==='suite_A'||info==='suite_C')?700*pax:500*pax;
+    } else if(info==='suite_A'){
+      price=SUITE_A_P[dt];
+    } else if(info==='suite_C'){
+      const p=Math.min(pax||1,3);
+      price=SUITE_C_P[dt][p]||SUITE_C_P[dt][3];
+    } else {
+      price=DORM_P[dt]*(pax||1);
+    }
+    total+=Math.round(price*disc);
+  }
+  return total;
+}
+
+// 計算含 roomNights 的總報價
+function calcRoomNightsQuote(b, roomNights, overrideNights){
+  const allRooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+  const plan=b.plan||'normal';
+  const totalPax=b.pax||1;
+  const paxPerRoom=Math.ceil(totalPax/allRooms.length)||1;
+  let total=0;
+  allRooms.forEach(rid=>{
+    const n=overrideNights||(roomNights&&roomNights[rid])||b.nights||1;
+    total+=calcOneRoomNights(rid,b.checkin,n,paxPerRoom,plan);
+  });
+  return total;
+}
+
+// 取得某房間的實際天數（考慮 roomNights）
+function getRoomNights(b, roomId){
+  if(b.roomNights&&b.roomNights[roomId]) return b.roomNights[roomId];
+  return b.nights||1;
+}
+
+// 取得某房間的實際退房日
+function getRoomCheckout(b, roomId){
+  const nights=getRoomNights(b,roomId);
+  return addDays(b.checkin,nights);
+}
+
 /* ── RENDER GANTT ── */
 function renderGantt(){
   const days = daysInMonth(viewYear, viewMonth);
@@ -488,100 +574,185 @@ function renderGantt(){
   html += '</tbody>';
 
   const ganttTable = document.getElementById('ganttTable');
-  const ganttScroll = document.querySelector('.gantt-scroll');
   ganttTable.innerHTML = html;
   ganttTable.style.position = 'relative';
 
   window.__bmap = {};
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
 
-  // 直接把 bar 塞進對應的 td，用 colspan 延展
-  ROOMS.forEach(room=>{
-    const rbs = roomBookings[room.id]||[];
-    rbs.forEach(b=>{
-      if(!b.checkin) return;
-      const ciDate=parseDate(b.checkin);
-      if(!ciDate||isNaN(ciDate)) return;
-      const rawCo=b.checkout||addDays(b.checkin,parseInt(b.nights)||1);
-      const coDate=parseDate(rawCo);
-      if(!coDate||isNaN(coDate)) return;
-      const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
-      // 下個月1號作為月底判斷，避免 32 號無效日期問題
-      const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
-      const monthEnd=nextMonth;
-      if(coDate<=monthStart||ciDate>=monthEnd) return;
-      const startDay=ciDate>=monthStart?ciDate.getDate():1;
-      const endDay=coDate<=monthEnd?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
-      if(startDay>endDay) return;
-      const span=endDay-startDay+1;
+  // 等 DOM 渲染完再計算格子寬度
+  requestAnimationFrame(()=>{
+    const firstCell = ganttTable.querySelector('td.gantt-cell');
+    if(!firstCell) return;
+    const cellW = firstCell.getBoundingClientRect().width;
+    const labelCell = ganttTable.querySelector('.gantt-row-label');
+    const labelW = labelCell ? labelCell.getBoundingClientRect().width : 100;
 
-      // 找起始 td
-      const startCell=ganttTable.querySelector(`td[data-date="${dateStr(viewYear,viewMonth,startDay)}"][data-room="${room.id}"]`);
-      if(!startCell) return;
+    ROOMS.forEach(room=>{
+      const rbs = roomBookings[room.id]||[];
+      rbs.forEach(b=>{
+        if(!b.checkin) return;
+        const ciDate=parseDate(b.checkin);
+        if(!ciDate||isNaN(ciDate)) return;
+        // 用各房間各自的天數（roomNights 優先）
+        const thisRoomNights=getRoomNights(b,room.id);
+        const rawCo=getRoomCheckout(b,room.id);
+        const coDate=parseDate(rawCo);
+        if(!coDate||isNaN(coDate)) return;
+        const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
+        const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
+        if(coDate<=monthStart||ciDate>=nextMonth) return;
+        const startDay=ciDate>=monthStart?ciDate.getDate():1;
+        const endDay=coDate<=nextMonth?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
+        if(startDay>endDay) return;
 
-      // 移除被 colspan 覆蓋的後續 td
-      const row=startCell.closest('tr');
-      let next=startCell.nextSibling;
-      for(let i=1;i<span;i++){
-        const toRemove=next;
-        if(!toRemove) break;
-        next=toRemove.nextSibling;
-        toRemove.remove();
-      }
-
-      // 設定 colspan 和插入 bar
-      startCell.colSpan=span;
-      startCell.style.cssText='padding:2px;position:relative;overflow:visible;';
-      startCell.onclick=null;
-
-      const color=roomColor[room.id];
-      const fid=b.firestoreId;
-      const bar=document.createElement('div');
-      bar.className='booking-bar';
-      bar.dataset.fid=fid;
-      bar.style.cssText=`position:relative;width:100%;height:28px;background:${color};color:#fff;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:600;cursor:pointer;overflow:hidden;box-sizing:border-box;`;
-      bar.innerHTML=`<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span><span class="bar-resize" style="width:14px;height:100%;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.7;font-size:12px;position:absolute;right:0;">▎</span>`;
-
-      bar.querySelector('span:first-child').addEventListener('click',e=>{
-        e.stopPropagation();
-        openModal(window.__bmap[fid]);
-      });
-
-      // 拖拉調整天數
-      const handle=bar.querySelector('.bar-resize');
-      const displayNights=endDay-startDay+1;
-      handle.addEventListener('mousedown',e=>{
-        e.stopPropagation();e.preventDefault();
-        const ganttScroll=document.querySelector('.gantt-scroll');
+        // 找到這一 row 的 y 位置
+        const rowEl=ganttTable.querySelector(`tr[data-room="${room.id}"]`);
+        if(!rowEl) return;
         const tableRect=ganttTable.getBoundingClientRect();
-        const scrollLeft=ganttScroll?ganttScroll.scrollLeft:0;
-        let currentNights=displayNights;
-        const sCell=ganttTable.querySelector('td.gantt-cell')||ganttTable.querySelector(`td[data-room]`);
-        const cw=sCell?sCell.offsetWidth:32;
-        const labelCell=ganttTable.querySelector(`tr[data-room="${room.id}"] .gantt-row-label`);
-        const lw=labelCell?labelCell.offsetWidth:110;
-        const onMove=ev=>{
-          const mx=ev.clientX-tableRect.left+scrollLeft;
-          const targetDay=Math.round((mx-lw)/cw);
-          currentNights=Math.max(1,targetDay-startDay+1);
-          bar.style.opacity='0.8';
-        };
-        const onUp=async()=>{
-          document.removeEventListener('mousemove',onMove);
-          document.removeEventListener('mouseup',onUp);
-          bar.style.opacity='1';
-          if(currentNights!==displayNights){
-            const newCheckout=addDays(b.checkin,currentNights);
-            pushUndo({type:'update',col:'bookings',fid,before:{nights:displayNights,checkout:rawCo},after:{nights:currentNights,checkout:newCheckout}});
-            await updateDoc(doc(db,'bookings',fid),{nights:currentNights,checkout:newCheckout});
-            showToast(`已更新為 ${currentNights} 晚`);
-          }
-        };
-        document.addEventListener('mousemove',onMove);
-        document.addEventListener('mouseup',onUp);
-      });
+        const rowRect=rowEl.getBoundingClientRect();
+        const top=rowRect.top - tableRect.top + ganttTable.scrollTop;
+        const rowH=rowRect.height;
 
-      startCell.appendChild(bar);
+        const left=labelW+(startDay-1)*cellW;
+        const width=(endDay-startDay+1)*cellW;
+        const color=roomColor[room.id];
+        const fid=b.firestoreId;
+        let displayNights=endDay-startDay+1;
+
+        const bar=document.createElement('div');
+        bar.className='booking-bar';
+        bar.dataset.fid=fid;
+        bar.dataset.startDay=startDay;
+        bar.style.cssText=`position:absolute;left:${left}px;top:${top+3}px;width:${width}px;height:${rowH-6}px;background:${color};color:#fff;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:600;cursor:grab;overflow:hidden;box-sizing:border-box;z-index:10;`;
+        bar.innerHTML=`<span class="bar-label" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${b.name||''}${b.pax>1?' ×'+b.pax:''}</span><span class="bar-resize" style="width:16px;height:100%;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;position:absolute;right:2px;pointer-events:auto;">▎</span>`;
+
+        // 點擊開啟編輯
+        bar.querySelector('.bar-label').addEventListener('click',e=>{
+          e.stopPropagation();
+          openModal(window.__bmap[fid]);
+        });
+
+        // ── 拖移整個 bar（改變入住日）──
+        bar.addEventListener('mousedown',async e=>{
+          if(e.target.classList.contains('bar-resize')) return;
+          e.preventDefault();
+          const startX=e.clientX;
+          const origLeft=parseFloat(bar.style.left);
+          let moved=false;
+          const onMove=ev=>{
+            moved=true;
+            const dx=ev.clientX-startX;
+            const newLeft=Math.max(labelW, origLeft+dx);
+            bar.style.left=newLeft+'px';
+            bar.style.opacity='0.85';
+            bar.style.cursor='grabbing';
+          };
+          const onUp=async ev=>{
+            document.removeEventListener('mousemove',onMove);
+            document.removeEventListener('mouseup',onUp);
+            bar.style.opacity='1';
+            bar.style.cursor='grab';
+            if(!moved) return;
+            const finalLeft=parseFloat(bar.style.left);
+            const newStartDay=Math.max(1,Math.round((finalLeft-labelW)/cellW)+1);
+            const newCheckin=dateStr(viewYear,viewMonth,newStartDay);
+            const newCheckout=addDays(newCheckin,displayNights);
+            if(newCheckin!==b.checkin){
+              pushUndo({type:'update',col:'bookings',fid,before:{checkin:b.checkin,checkout:rawCo,nights:b.nights},after:{checkin:newCheckin,checkout:newCheckout,nights:displayNights}});
+              await updateDoc(doc(db,'bookings',fid),{checkin:newCheckin,checkout:newCheckout,nights:displayNights});
+              showToast(`已移至 ${newCheckin}`);
+            } else {
+              renderGantt();
+            }
+          };
+          document.addEventListener('mousemove',onMove);
+          document.addEventListener('mouseup',onUp);
+        });
+
+        // ── 拉右邊 handle 調整天數 ──
+        bar.querySelector('.bar-resize').addEventListener('mousedown',e=>{
+          e.stopPropagation();e.preventDefault();
+          const startX=e.clientX;
+          const origW=parseFloat(bar.style.width);
+          const onMove=ev=>{
+            const dx=ev.clientX-startX;
+            const newW=Math.max(cellW,origW+dx);
+            bar.style.width=newW+'px';
+            bar.style.opacity='0.85';
+            displayNights=Math.max(1,Math.round(newW/cellW));
+            bar.querySelector('.bar-label').textContent=`${b.name||''}${b.pax>1?' ×'+b.pax:''} (${displayNights}晚)`;
+          };
+          const onUp=async()=>{
+            document.removeEventListener('mousemove',onMove);
+            document.removeEventListener('mouseup',onUp);
+            bar.style.opacity='1';
+            const origNights=endDay-startDay+1;
+            if(displayNights===origNights){renderGantt();return;}
+            const newCheckout=addDays(b.checkin,displayNights);
+
+            // 找同一訂單的其他房間
+            const allRooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+            const siblings=allRooms.filter(r=>r!==room.id);
+
+            if(siblings.length===0){
+              // 只有一間，直接更新
+              pushUndo({type:'update',col:'bookings',fid,before:{nights:b.nights||origNights,checkout:rawCo},after:{nights:displayNights,checkout:newCheckout}});
+              await updateDoc(doc(db,'bookings',fid),{nights:displayNights,checkout:newCheckout});
+              showToast(`已更新為 ${displayNights} 晚`);
+              return;
+            }
+
+            // 有多間房，跳出選項
+            document.getElementById('adjust-title').textContent=`調整 ${room.id} 的住宿天數`;
+            document.getElementById('adjust-desc').textContent=`${b.name} ${origNights}晚 → ${displayNights}晚`;
+            document.getElementById('adjust-this-label').textContent=`只改 ${room.id}`;
+            document.getElementById('adjust-this-sub').textContent=`${room.id} 退房改為 ${newCheckout}，其他 ${siblings.length} 間維持 ${origNights} 晚，報價重算`;
+            document.getElementById('adjust-all-label').textContent=`全部 ${allRooms.length} 間一起改`;
+            document.getElementById('adjust-all-sub').textContent=`所有房間退房一起改為 ${newCheckout}，報價重算`;
+
+            document.getElementById('adjustBg').classList.add('open');
+
+            // 只改這間：存入 roomNights，報價重算
+            document.getElementById('adjust-this-btn').onclick=async()=>{
+              document.getElementById('adjustBg').classList.remove('open');
+
+              // 建立/更新 roomNights
+              const roomNights={...(b.roomNights||{})};
+              allRooms.forEach(r=>{ if(!roomNights[r]) roomNights[r]=origNights; });
+              roomNights[room.id]=displayNights;
+
+              // 重算報價：每間房各自的天數 × 單價
+              const newQuote=calcRoomNightsQuote(b, roomNights);
+              const newDue=Math.max(0,newQuote-(b.deposit||0));
+
+              pushUndo({type:'update',col:'bookings',fid,
+                before:{roomNights:b.roomNights||null,nights:b.nights,checkout:rawCo,quote:b.quote,due:b.due},
+                after:{roomNights,quote:newQuote,due:newDue}
+              });
+              await updateDoc(doc(db,'bookings',fid),{roomNights,quote:newQuote,due:newDue});
+              showToast(`${room.id} 已改為 ${displayNights} 晚，報價更新`);
+            };
+
+            // 全部一起改：清除 roomNights，統一用新天數
+            document.getElementById('adjust-all-btn').onclick=async()=>{
+              document.getElementById('adjustBg').classList.remove('open');
+              const newQuote=calcRoomNightsQuote(b, null, displayNights);
+              const newDue=Math.max(0,newQuote-(b.deposit||0));
+              pushUndo({type:'update',col:'bookings',fid,
+                before:{roomNights:b.roomNights||null,nights:b.nights,checkout:rawCo,quote:b.quote,due:b.due},
+                after:{roomNights:null,nights:displayNights,checkout:newCheckout,quote:newQuote,due:newDue}
+              });
+              await updateDoc(doc(db,'bookings',fid),{roomNights:null,nights:displayNights,checkout:newCheckout,quote:newQuote,due:newDue});
+              showToast(`全部 ${allRooms.length} 間已更新為 ${displayNights} 晚`);
+            };
+          };
+          document.addEventListener('mousemove',onMove);
+          document.addEventListener('mouseup',onUp);
+        });
+
+        ganttTable.appendChild(bar);
+      });
     });
   });
 }
