@@ -247,32 +247,142 @@ select:focus{border-color:#888;}
       <div class="form-row"><label>入住日期 *</label><input id="f-checkin" type="date" onchange="onCheckinChange()"></div>
       <div class="form-row"><label>退房日期 *</label><input id="f-checkout" type="date" onchange="onCheckoutChange()"></div>
       <div class="form-row"><label>住宿天數</label><input id="f-nights" type="number" min="1" placeholder="自動計算" onchange="onNightsChange()"></div>
-      <div class="form-row"><label>人數</label><input id="f-pax" type="number" min="1" placeholder="3" onchange="autoCalc()"></div>
       <div class="form-row"><label>訪客類型</label><input id="f-guesttype" placeholder="登山、觀光..."></div>
-      <div class="form-row full">
-        <label>預定房型（可複選）</label>
-        <div id="f-roomtype" style="border:1px solid #ddd;border-radius:6px;padding:8px 10px;margin-top:2px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 12px;">
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:2px 0 2px;">A棟一樓</div>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-101" style="width:auto;" onchange="autoCalc()"> A-101 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-102" style="width:auto;" onchange="autoCalc()"> A-102 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-103" style="width:auto;" onchange="autoCalc()"> A-103 <span style="color:#aaa;font-size:10px;">4人套房</span></label>
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">A棟二樓</div>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-201" style="width:auto;" onchange="autoCalc()"> A-201 <span style="color:#aaa;font-size:10px;">6人通鋪</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-202" style="width:auto;" onchange="autoCalc()"> A-202 <span style="color:#aaa;font-size:10px;">1-3人通鋪</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="A-203" style="width:auto;" onchange="autoCalc()"> A-203 <span style="color:#aaa;font-size:10px;">7人通鋪</span></label>
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">B棟二樓</div>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-201" style="width:auto;" onchange="autoCalc()"> B-201 <span style="color:#aaa;font-size:10px;">2-4人通鋪</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-202" style="width:auto;" onchange="autoCalc()"> B-202 <span style="color:#aaa;font-size:10px;">2-4人通鋪</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-203" style="width:auto;" onchange="autoCalc()"> B-203 <span style="color:#aaa;font-size:10px;">2-6人通鋪</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="B-204" style="width:auto;" onchange="autoCalc()"> B-204 <span style="color:#aaa;font-size:10px;">1-3人通鋪</span></label>
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:6px 0 2px;">C棟二樓</div>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-201" style="width:auto;" onchange="autoCalc()"> C-201 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-202" style="width:auto;" onchange="autoCalc()"> C-202 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:#333;"><input type="checkbox" value="C-203" style="width:auto;" onchange="autoCalc()"> C-203 <span style="color:#aaa;font-size:10px;">3人套房</span></label>
-        </div>
+    </div>
+
+    <!-- 住宿方案 -->
+    <div class="section-label">住宿方案</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button type="button" id="plan-btn-normal" onclick="setPlanType('normal')"
+        style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--text2);transition:all 0.15s;">
+        🍳 一般住宿<br><span style="font-size:10px;">含早餐・按人數計</span>
+      </button>
+      <button type="button" id="plan-btn-hiking" onclick="setPlanType('hiking')"
+        style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--text2);transition:all 0.15s;">
+        🏔 登山方案<br><span style="font-size:10px;">不含早餐・通鋪$500・套房$700</span>
+      </button>
+    </div>
+    <input type="hidden" id="f-plan" value="normal">
+
+    <!-- 入住日類型 -->
+    <div class="form-grid" style="margin-bottom:12px;">
+      <div class="form-row">
+        <label>入住日類型</label>
+        <select id="f-daytype" onchange="autoCalc()">
+          <option value="auto">自動判斷</option>
+          <option value="weekday">平日</option>
+          <option value="holiday">假日</option>
+          <option value="special">定價（聖誕/春節）</option>
+        </select>
       </div>
     </div>
-    <div class="section-label">用餐 / 活動</div>
+
+    <!-- 房間選擇 -->
+    <div class="section-label">選擇房間</div>
+    <div id="f-roomtype" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+
+      <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);">A 棟一樓 — 套房（按間）</div>
+      <div class="room-select-row" id="rrow-A-101">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-A-101" value="A-101" style="width:15px;height:15px;" onchange="onRoomToggle('A-101',this)">
+          <label for="rc-A-101" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-101 <span style="color:var(--text3);font-size:10px;">4人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-A-101">平日 $3,000</span>
+        </div>
+        <div id="rpax-A-101" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-A-101" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-101"></span>
+          </div>
+        </div>
+      </div>
+      <div class="room-select-row" id="rrow-A-102">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-A-102" value="A-102" style="width:15px;height:15px;" onchange="onRoomToggle('A-102',this)">
+          <label for="rc-A-102" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-102 <span style="color:var(--text3);font-size:10px;">4人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-A-102">平日 $3,000</span>
+        </div>
+        <div id="rpax-A-102" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-A-102" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-102"></span>
+          </div>
+        </div>
+      </div>
+      <div class="room-select-row" id="rrow-A-103">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-A-103" value="A-103" style="width:15px;height:15px;" onchange="onRoomToggle('A-103',this)">
+          <label for="rc-A-103" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">A-103 <span style="color:var(--text3);font-size:10px;">4人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-A-103">平日 $3,000</span>
+        </div>
+        <div id="rpax-A-103" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-A-103" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-103"></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">A 棟二樓 — 通鋪（按人頭）</div>
+      ${['A-201','A-202','A-203'].map(id=>`
+      <div class="room-select-row" id="rrow-${id}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
+          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">${{A201:'6人通鋪',A202:'1-3人通鋪',A203:'7人通鋪'}[id.replace('-','')]}</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 $528/人</span>
+        </div>
+        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-${id}" min="1" max="${{A201:6,A202:3,A203:7}[id.replace('-','')]}" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+          </div>
+        </div>
+      </div>`).join('')}
+
+      <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">B 棟二樓 — 通鋪（按人頭）</div>
+      ${['B-201','B-202','B-203','B-204'].map(id=>`
+      <div class="room-select-row" id="rrow-${id}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
+          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">${{B201:'2-4人通鋪',B202:'2-4人通鋪',B203:'2-6人通鋪',B204:'1-3人通鋪'}[id.replace('-','')]}</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 $528/人</span>
+        </div>
+        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-${id}" min="1" max="${{B201:4,B202:4,B203:6,B204:3}[id.replace('-','')]}" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+          </div>
+        </div>
+      </div>`).join('')}
+
+      <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);margin-top:4px;">C 棟二樓 — 套房（按人數）</div>
+      ${['C-201','C-202','C-203'].map(id=>`
+      <div class="room-select-row" id="rrow-${id}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="rc-${id}" value="${id}" style="width:15px;height:15px;" onchange="onRoomToggle('${id}',this)">
+          <label for="rc-${id}" style="font-size:12px;flex:1;cursor:pointer;color:var(--text);">${id} <span style="color:var(--text3);font-size:10px;">3人套房</span></label>
+          <span style="font-size:10px;color:var(--text3);" id="rtag-${id}">平日 1人$1,800起</span>
+        </div>
+        <div id="rpax-${id}" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+            <input type="number" id="rpax-val-${id}" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
+            <span style="font-size:11px;color:var(--text2);">人</span>
+            <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-${id}"></span>
+          </div>
+        </div>
+      </div>`).join('')}
+
+    </div>
     <div class="form-grid col3">
       <div class="form-row"><label>用餐類型</label><input id="f-meal" placeholder="早餐、半膳..."></div>
       <div class="form-row"><label>用餐人數</label><input id="f-mealpax" type="number" min="0" placeholder="0"></div>
@@ -283,13 +393,6 @@ select:focus{border-color:#888;}
     </div>
     <div class="section-label">費用</div>
     <div class="form-grid" style="margin-bottom:8px;">
-      <div class="form-row">
-        <label>住宿方案</label>
-        <select id="f-plan" onchange="autoCalc()">
-          <option value="normal">一般住宿（含早餐）</option>
-          <option value="hiking">登山方案（不含早餐）</option>
-        </select>
-      </div>
       <div class="form-row">
         <label>入住日類型</label>
         <select id="f-daytype" onchange="autoCalc()">
@@ -415,7 +518,27 @@ const TAG={'new-case':'background:#EEEDFE;color:#3C3489','platform':'background:
 
 let bookings=[],editId=null,dragId=null,searchQ='',unsubscribe=null;
 
-window.filterCards=()=>{searchQ=document.getElementById('searchInput').value;renderAll();};
+window.setPlanType=function(plan){
+  document.getElementById('f-plan').value=plan;
+  const btnN=document.getElementById('plan-btn-normal');
+  const btnH=document.getElementById('plan-btn-hiking');
+  const activeStyle='flex:1;padding:9px;border-radius:8px;border:2px solid #3a6ab0;background:#e8f0fe;color:#3a6ab0;font-size:12px;cursor:pointer;font-weight:500;';
+  const inactiveStyle='flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--text2);';
+  if(btnN) btnN.style.cssText=plan==='normal'?activeStyle:inactiveStyle;
+  if(btnH) btnH.style.cssText=plan==='hiking'?activeStyle:inactiveStyle;
+  autoCalc();
+};
+
+window.onRoomToggle=function(roomId, cb){
+  const paxEl=document.getElementById('rpax-'+roomId);
+  if(paxEl) paxEl.style.display=cb.checked?'block':'none';
+  autoCalc();
+};
+
+// 取得各房間人數
+function getRoomPax(roomId){
+  return parseInt(document.getElementById('rpax-val-'+roomId)?.value)||1;
+}
 window.calcDue=()=>{const q=parseFloat(document.getElementById('f-quote').value)||0,d=parseFloat(document.getElementById('f-deposit').value)||0;document.getElementById('f-due').value=Math.round(q-d)||'';};
 
 // 搜尋已有客戶
@@ -588,7 +711,6 @@ function calcRoomNightPrice(roomId, dateType, pax, plan){
 window.autoCalc=async function(){
   const checkin=document.getElementById('f-checkin').value;
   const nights=parseInt(document.getElementById('f-nights').value)||1;
-  const pax=parseInt(document.getElementById('f-pax').value)||1;
   const plan=document.getElementById('f-plan').value;
   const dtOvr=document.getElementById('f-daytype').value;
   const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
@@ -605,22 +727,30 @@ window.autoCalc=async function(){
     const dt=dtOvr==='auto'?await getDateType(ds):dtOvr;
     const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
     const discount=nightDiscount(n);
-    const discLabel=discount<1?` × ${discount}`:'';
+    const discLabel=discount<1?` (${Math.round(discount*10)}折)`:'';
 
     let nightTotal=0, rLines=[];
     for(const rid of rooms){
+      const pax=getRoomPax(rid);
       const{price,note}=calcRoomNightPrice(rid,dt,pax,plan);
       const discPrice=Math.round(price*discount);
       nightTotal+=discPrice;
       rLines.push(`<span style="color:#555;">${rid}</span>：${note}${discLabel}`);
+      // 更新房間價格顯示
+      const rpriceEl=document.getElementById('rprice-'+rid);
+      if(rpriceEl&&n===0) rpriceEl.textContent='NT$'+discPrice.toLocaleString();
     }
     total+=nightTotal;
     const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
-    const nightLabel=`第${n+1}晚${discount<1?' ('+Math.round(discount*10)+'折)':''}`;
+    const nightLabel=`第${n+1}晚${discLabel}`;
     lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）${nightLabel}</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
   }
+  // 計算總人數（各房間人數加總）
+  const totalPax=rooms.reduce((s,rid)=>s+getRoomPax(rid),0);
+  document.getElementById('f-pax').value=totalPax;
+
   const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
-  bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間 合計</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
+  bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間・合計${totalPax}人</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
   document.getElementById('f-quote').value=total;
   calcDue();
 };
@@ -778,8 +908,15 @@ setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.
 document.getElementById('f-plan').value=pre?.plan||'normal';
 document.getElementById('f-daytype').value='auto';
 populateStatus(pre?.status||'new-case');
+// 恢復方案按鈕
+setPlanType(pre?.plan||'normal');
+// 恢復房型勾選和人數
 const selected=Array.isArray(pre?.roomtype)?pre.roomtype:(pre?.roomtype?[pre.roomtype]:[]);
-document.querySelectorAll('#f-roomtype input[type=checkbox]').forEach(cb=>{ cb.checked=selected.includes(cb.value); });
+document.querySelectorAll('#f-roomtype input[type=checkbox]').forEach(cb=>{
+  cb.checked=selected.includes(cb.value);
+  const paxEl=document.getElementById('rpax-'+cb.value);
+  if(paxEl) paxEl.style.display=cb.checked?'block':'none';
+});
 document.getElementById('price-breakdown').style.display='none';
 document.getElementById('modalBg').classList.add('open');
 if(pre?.checkin) autoCalc();
