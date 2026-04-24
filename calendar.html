@@ -581,10 +581,11 @@ function renderGantt(){
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
 
   // 等 DOM 渲染完再計算格子寬度
-  requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
     const firstCell = ganttTable.querySelector('td.gantt-cell');
-    if(!firstCell) return;
+    if(!firstCell){ console.warn('gantt-cell not found'); return; }
     const cellW = firstCell.getBoundingClientRect().width;
+    if(!cellW){ console.warn('cellW is 0'); return; }
     const labelCell = ganttTable.querySelector('.gantt-row-label');
     const labelW = labelCell ? labelCell.getBoundingClientRect().width : 100;
 
@@ -609,9 +610,11 @@ function renderGantt(){
         // 找到這一 row 的 y 位置
         const rowEl=ganttTable.querySelector(`tr[data-room="${room.id}"]`);
         if(!rowEl) return;
+        const ganttScroll2=document.querySelector('.gantt-scroll');
         const tableRect=ganttTable.getBoundingClientRect();
         const rowRect=rowEl.getBoundingClientRect();
-        const top=rowRect.top - tableRect.top + ganttTable.scrollTop;
+        const scrollTop=ganttScroll2?ganttScroll2.scrollTop:0;
+        const top=rowRect.top - tableRect.top + scrollTop;
         const rowH=rowRect.height;
 
         const left=labelW+(startDay-1)*cellW;
@@ -754,7 +757,7 @@ function renderGantt(){
         ganttTable.appendChild(bar);
       });
     });
-  });
+  }));
 }
 
 window.onCellClick = function(date, room){
