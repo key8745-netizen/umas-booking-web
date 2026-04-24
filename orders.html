@@ -109,7 +109,7 @@ select.filter{padding:6px 10px;border:0.5px solid var(--border);border-radius:7p
 .bottom-nav-item{flex:0 0 20%;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#bbb;font-size:9px;letter-spacing:0.03em;}
 .bottom-nav-item.active{color:#1a1a1a;}
 .bottom-nav-icon{font-size:18px;line-height:1.2;}
-@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}}
+@media(max-width:768px){.nav-pill{display:none!important;}body{padding-bottom:70px;}#undoBtn,#redoBtn{display:flex;font-size:11px;padding:4px 8px;}}
 @media(min-width:769px){.bottom-nav{display:none;}}
 header{background:#fff;border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
 header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:0.06em;color:var(--text);flex:1;}
@@ -438,6 +438,46 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undoAction();}
   if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='Z'))){e.preventDefault();redoAction();}
 });
+
+
+// ── 搖晃手機觸發 undo/redo ──
+(function(){
+  let lastX=0,lastY=0,lastZ=0,lastTime=0;
+  let shakeCount=0,shakeTimer=null;
+  window.addEventListener('devicemotion',e=>{
+    const a=e.accelerationIncludingGravity;
+    if(!a) return;
+    const now=Date.now();
+    if(now-lastTime<100) return;
+    const dx=Math.abs(a.x-lastX),dy=Math.abs(a.y-lastY),dz=Math.abs(a.z-lastZ);
+    if(dx+dy+dz>25){
+      shakeCount++;
+      clearTimeout(shakeTimer);
+      shakeTimer=setTimeout(()=>{shakeCount=0;},800);
+      if(shakeCount>=3){
+        shakeCount=0;
+        // 顯示選單
+        showShakeMenu();
+      }
+    }
+    lastX=a.x;lastY=a.y;lastZ=a.z;lastTime=now;
+  });
+
+  function showShakeMenu(){
+    const existing=document.getElementById('shake-menu');
+    if(existing){existing.remove();return;}
+    const menu=document.createElement('div');
+    menu.id='shake-menu';
+    menu.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border-radius:16px;padding:16px 20px;z-index:99997;display:flex;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:shakeMenuIn 0.25s cubic-bezier(0.34,1.56,0.64,1);';
+    menu.innerHTML=`
+      <style>@keyframes shakeMenuIn{from{opacity:0;transform:translateX(-50%) scale(0.85)}to{opacity:1;transform:translateX(-50%) scale(1)}}</style>
+      <button onclick="undoAction();document.getElementById('shake-menu')?.remove()" style="background:#2a2a2a;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">↩ 復原</button>
+      <button onclick="redoAction();document.getElementById('shake-menu')?.remove()" style="background:#2a2a2a;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">↪ 重做</button>
+      <button onclick="document.getElementById('shake-menu')?.remove()" style="background:transparent;color:rgba(255,255,255,0.4);border:none;padding:10px;font-size:16px;cursor:pointer;">✕</button>`;
+    document.body.appendChild(menu);
+    setTimeout(()=>menu.remove(),4000);
+  }
+})();
 
 </script>
 <nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item active" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
