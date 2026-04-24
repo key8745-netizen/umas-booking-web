@@ -189,7 +189,9 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
       <button onclick="goToday()">今天</button>
     </div>
     <div class="gantt-scroll">
-      <table class="gantt-table" id="ganttTable"></table>
+      <div style="position:relative;" id="ganttWrap">
+        <table class="gantt-table" id="ganttTable"></table>
+      </div>
     </div>
   </div>
 
@@ -574,11 +576,14 @@ function renderGantt(){
   html += '</tbody>';
 
   const ganttTable = document.getElementById('ganttTable');
+  const ganttWrap = document.getElementById('ganttWrap');
   ganttTable.innerHTML = html;
-  ganttTable.style.position = 'relative';
 
   window.__bmap = {};
   bookings.forEach(b=>{ window.__bmap[b.firestoreId]=b; });
+
+  // 移除舊的 bar
+  ganttWrap.querySelectorAll('.booking-bar').forEach(el=>el.remove());
 
   // 等 DOM 渲染完再計算格子寬度
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -588,6 +593,7 @@ function renderGantt(){
     if(!cellW){ console.warn('cellW is 0'); return; }
     const labelCell = ganttTable.querySelector('.gantt-row-label');
     const labelW = labelCell ? labelCell.getBoundingClientRect().width : 100;
+    const wrapRect = ganttWrap.getBoundingClientRect();
 
     ROOMS.forEach(room=>{
       const rbs = roomBookings[room.id]||[];
@@ -607,14 +613,11 @@ function renderGantt(){
         const endDay=coDate<=nextMonth?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
         if(startDay>endDay) return;
 
-        // 找到這一 row 的 y 位置
+        // 找到這一 row 的 y 位置（相對 ganttWrap）
         const rowEl=ganttTable.querySelector(`tr[data-room="${room.id}"]`);
         if(!rowEl) return;
-        const ganttScroll2=document.querySelector('.gantt-scroll');
-        const tableRect=ganttTable.getBoundingClientRect();
         const rowRect=rowEl.getBoundingClientRect();
-        const scrollTop=ganttScroll2?ganttScroll2.scrollTop:0;
-        const top=rowRect.top - tableRect.top + scrollTop;
+        const top=rowRect.top - wrapRect.top;
         const rowH=rowRect.height;
 
         const left=labelW+(startDay-1)*cellW;
@@ -754,7 +757,7 @@ function renderGantt(){
           document.addEventListener('mouseup',onUp);
         });
 
-        ganttTable.appendChild(bar);
+        ganttWrap.appendChild(bar);
       });
     });
   }));
