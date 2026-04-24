@@ -1159,14 +1159,14 @@ document.addEventListener('keydown', e=>{
 window.closeDeposit=function(){document.getElementById('depositBg').classList.remove('open');};
 
 window.genDepositSMS=function(){
-  const name=document.getElementById('f-name').value||'您';
-  const checkin=document.getElementById('f-checkin').value;
-  const checkout=document.getElementById('f-checkout').value;
-  const nights=document.getElementById('f-nights').value||1;
-  const quote=parseFloat(document.getElementById('f-quote').value)||0;
-  const deposit=parseFloat(document.getElementById('f-deposit').value)||Math.ceil(quote*0.3/100)*100;
+  const name=(document.getElementById('f-name')?.value||'您').trim()||'您';
+  const checkin=document.getElementById('f-checkin')?.value||'';
+  const checkout=document.getElementById('f-checkout')?.value||'';
+  const nights=document.getElementById('f-nights')?.value||1;
+  const quote=parseFloat(document.getElementById('f-quote')?.value)||0;
+  const deposit=parseFloat(document.getElementById('f-deposit')?.value)||Math.ceil(quote*0.3/100)*100;
   const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value).join('、');
-  const pax=document.getElementById('f-pax').value||1;
+  const pax=document.getElementById('f-pax')?.value||1;
 
   // 訂金繳交期限（3天後）
   const deadline=new Date();
@@ -1541,16 +1541,13 @@ window.downloadDepositImage=async function(){
 };
 
 window.showDepositCard=function(){
-  console.log('[depositCard] called');
-  const name=document.getElementById('f-name').value.trim()||'（未填姓名）';
-  const checkin=document.getElementById('f-checkin').value;
-  console.log('[depositCard] checkin=', checkin, 'depositBg=', document.getElementById('depositBg'));
-  const nights=parseInt(document.getElementById('f-nights').value)||1;
-  const pax=parseInt(document.getElementById('f-pax').value)||1;
-  const plan=document.getElementById('f-plan').value;
-  const quote=parseFloat(document.getElementById('f-quote').value)||0;
+  const name=(document.getElementById('f-name')?.value||'').trim()||'（未填姓名）';
+  const checkin=document.getElementById('f-checkin')?.value||'';
+  const nights=parseInt(document.getElementById('f-nights')?.value)||1;
+  const pax=parseInt(document.getElementById('f-pax')?.value)||1;
+  const plan=document.getElementById('f-plan')?.value||'normal';
+  const quote=parseFloat(document.getElementById('f-quote')?.value)||0;
   const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
-
   if(!checkin){alert('請先填寫入住日期');return;}
 
   const coDate=new Date(checkin+'T00:00');
