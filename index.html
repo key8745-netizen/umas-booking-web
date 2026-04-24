@@ -810,48 +810,51 @@ function calcRoomNightPrice(roomId, dateType, pax, plan){
 window.autoCalc=async function(){
   const checkin=document.getElementById('f-checkin').value;
   const nights=parseInt(document.getElementById('f-nights').value)||1;
-  const plan=document.getElementById('f-plan').value;
-  const dtOvr=document.getElementById('f-daytype').value;
+  const plan=document.getElementById('f-plan').value||'normal';
+  const dtOvr=document.getElementById('f-daytype').value||'auto';
   const rooms=[...document.querySelectorAll('#f-roomtype input[type=checkbox]:checked')].map(cb=>cb.value);
   const bdEl=document.getElementById('price-breakdown');
   if(!checkin||rooms.length===0){bdEl.style.display='none';return;}
   bdEl.style.display='block';
   bdEl.innerHTML='<span style="color:#aaa;font-size:12px;">計算中...</span>';
 
-  let total=0, lines=[];
-  for(let n=0;n<nights;n++){
-    const d=new Date(checkin+'T00:00');
-    d.setDate(d.getDate()+n);
-    const ds=d.toISOString().slice(0,10);
-    const dt=dtOvr==='auto'?await getDateType(ds):dtOvr;
-    const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
-    const discount=nightDiscount(n);
-    const discLabel=discount<1?` (${Math.round(discount*10)}折)`:'';
+  try{
+    let total=0, lines=[];
+    for(let n=0;n<nights;n++){
+      const d=new Date(checkin+'T00:00');
+      d.setDate(d.getDate()+n);
+      const ds=d.toISOString().slice(0,10);
+      let dt='weekday';
+      try{ dt=dtOvr==='auto'?await getDateType(ds):dtOvr; }catch(e){ dt='weekday'; }
+      const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
+      const discount=nightDiscount(n);
+      const discLabel=discount<1?` (${Math.round(discount*10)}折)`:'';
 
-    let nightTotal=0, rLines=[];
-    for(const rid of rooms){
-      const pax=getRoomPax(rid);
-      const{price,note}=calcRoomNightPrice(rid,dt,pax,plan);
-      const discPrice=Math.round(price*discount);
-      nightTotal+=discPrice;
-      rLines.push(`<span style="color:#555;">${rid}</span>：${note}${discLabel}`);
-      // 更新房間價格顯示
-      const rpriceEl=document.getElementById('rprice-'+rid);
-      if(rpriceEl&&n===0) rpriceEl.textContent='NT$'+discPrice.toLocaleString();
+      let nightTotal=0, rLines=[];
+      for(const rid of rooms){
+        const pax=getRoomPax(rid);
+        const{price,note}=calcRoomNightPrice(rid,dt,pax,plan);
+        const discPrice=Math.round(price*discount);
+        nightTotal+=discPrice;
+        rLines.push(`<span style="color:#555;">${rid}</span>：${note}${discLabel}`);
+        const rpriceEl=document.getElementById('rprice-'+rid);
+        if(rpriceEl&&n===0) rpriceEl.textContent='NT$'+discPrice.toLocaleString();
+      }
+      total+=nightTotal;
+      const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
+      const nightLabel=`第${n+1}晚${discLabel}`;
+      lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）${nightLabel}</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
     }
-    total+=nightTotal;
-    const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
-    const nightLabel=`第${n+1}晚${discLabel}`;
-    lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）${nightLabel}</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
+    const totalPax=rooms.reduce((s,rid)=>s+getRoomPax(rid),0);
+    const paxEl=document.getElementById('f-pax');
+    if(paxEl) paxEl.value=totalPax;
+    const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
+    bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間・合計${totalPax}人</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
+    document.getElementById('f-quote').value=total;
+    calcDue();
+  }catch(err){
+    bdEl.innerHTML=`<span style="color:#b94040;font-size:12px;">計算失敗：${err.message}</span>`;
   }
-  // 計算總人數（各房間人數加總）
-  const totalPax=rooms.reduce((s,rid)=>s+getRoomPax(rid),0);
-  document.getElementById('f-pax').value=totalPax;
-
-  const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
-  bdEl.innerHTML=`<div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>${lines.join('')}<div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間・合計${totalPax}人</span><span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span></div>`;
-  document.getElementById('f-quote').value=total;
-  calcDue();
 };
 
 function getSortKey(){return document.getElementById('sortKey').value;}
