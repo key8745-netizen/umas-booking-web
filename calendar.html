@@ -588,12 +588,17 @@ function renderGantt(){
   // 等 DOM 渲染完再計算格子寬度
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     const firstCell = ganttTable.querySelector('td.gantt-cell');
-    if(!firstCell){ console.warn('gantt-cell not found'); return; }
-    const cellW = firstCell.getBoundingClientRect().width;
-    if(!cellW){ console.warn('cellW is 0'); return; }
+    console.log('[gantt] firstCell:', firstCell);
+    if(!firstCell){ console.warn('[gantt] gantt-cell not found'); return; }
+    const cellRect = firstCell.getBoundingClientRect();
+    console.log('[gantt] cellRect:', cellRect);
+    const cellW = cellRect.width;
+    if(!cellW){ console.warn('[gantt] cellW is 0'); return; }
     const labelCell = ganttTable.querySelector('.gantt-row-label');
     const labelW = labelCell ? labelCell.getBoundingClientRect().width : 100;
     const wrapRect = ganttWrap.getBoundingClientRect();
+    console.log('[gantt] cellW:', cellW, 'labelW:', labelW, 'wrapRect:', wrapRect);
+    console.log('[gantt] bookings to render:', bookings.length);
 
     ROOMS.forEach(room=>{
       const rbs = roomBookings[room.id]||[];
