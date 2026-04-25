@@ -599,9 +599,10 @@ function renderGantt(){
     const wrapRect = ganttWrap.getBoundingClientRect();
     console.log('[gantt] cellW:', cellW, 'labelW:', labelW, 'wrapRect:', wrapRect);
     console.log('[gantt] bookings to render:', bookings.length);
-
+    console.log('[gantt] viewYear:', viewYear, 'viewMonth:', viewMonth);
     ROOMS.forEach(room=>{
       const rbs = roomBookings[room.id]||[];
+      if(rbs.length>0) console.log(`[gantt] room ${room.id}:`, rbs.length, 'bookings');
       rbs.forEach(b=>{
         if(!b.checkin) return;
         const ciDate=parseDate(b.checkin);
