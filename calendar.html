@@ -631,6 +631,7 @@ function renderGantt(){
         const color=roomColor[room.id];
         const fid=b.firestoreId;
         let displayNights=endDay-startDay+1;
+        console.log(`[gantt] bar ${b.name} ${room.id}: left=${left} top=${top} width=${width} rowH=${rowH}`);
 
         const bar=document.createElement('div');
         bar.className='booking-bar';
