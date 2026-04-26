@@ -539,9 +539,7 @@ function getRoomNights(b, roomId){
 
 function getRoomCheckout(b, roomId){
   const nights=getRoomNights(b,roomId);
-  const co=addDays(b.checkin,nights);
-  console.log(`[getRoomCheckout] room=${roomId} checkin=${b.checkin} nights=${nights} co=${co} b.nights=${b.nights} typeof=${typeof b.nights}`);
-  return co;
+  return addDays(b.checkin,nights);
 }
 
 /* ── RENDER GANTT ── */
@@ -607,7 +605,6 @@ function renderGantt(){
     const wrapRect = ganttWrap.getBoundingClientRect();
     ROOMS.forEach(room=>{
       const rbs = roomBookings[room.id]||[];
-      if(rbs.length>0) console.log(`[gantt] room ${room.id}:`, rbs.length, 'bookings');
       rbs.forEach(b=>{
         if(!b.checkin){return;}
         const ciDate=parseDate(b.checkin);
@@ -633,7 +630,6 @@ function renderGantt(){
         const color=roomColor[room.id];
         const fid=b.firestoreId;
         let displayNights=endDay-startDay+1;
-        console.log(`[gantt] bar ${b.name} ${room.id}: left=${left} top=${top} width=${width} rowH=${rowH}`);
 
         const bar=document.createElement('div');
         bar.className='booking-bar';
