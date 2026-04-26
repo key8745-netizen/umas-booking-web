@@ -599,10 +599,16 @@ async function render(){
   // 房間欄（依棟分組，只顯示今日有訂單的棟）
   let lastSection='';
   ROOM_COLS.forEach(room=>{
-    // 目前在這個房間的訂單
+    // 在這個房間的訂單：
+    // 1. inRoom === room.id（指定帶位到這間）
+    // 2. 或 roomtype 包含這間 且 status==='checkin'（多間房一起入住）
     const roomBookings=todayBookings.filter(b=>{
       const prog=getProgress(b.firestoreId);
-      return prog.inRoom===room.id;
+      const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+      if(prog.inRoom===room.id) return true;
+      if(b.status==='checkin'&&rooms.includes(room.id)&&prog.inRoom===undefined) return true;
+      if(b.status==='checkin'&&rooms.includes(room.id)&&!prog.inRoom) return true;
+      return false;
     });
     const isOccupied=roomBookings.length>0;
 
@@ -636,17 +642,17 @@ async function render(){
     colEl.addEventListener('dragover',e=>e.preventDefault());
     colEl.addEventListener('drop',async e=>{
       e.preventDefault();
-      if(!dragId)return;
-      const bk=bookings.find(x=>x.firestoreId===dragId);
+      const id=dragId||touchDragId;
+      if(!id)return;
+      const bk=bookings.find(x=>x.firestoreId===id);
       if(!bk)return;
-      // 拖入房間 = 帶位入房
-      const prog=getProgress(dragId);
+      const prog=getProgress(id);
       prog.inRoom=room.id;
       prog.key=true;
       prog.key_time=nowTime();
-      await saveProgress(dragId,prog);
-      // 更新 Firebase 狀態為入住中
-      await updateDoc(doc(db,'bookings',dragId),{status:'checkin'});
+      await saveProgress(id,prog);
+      await updateDoc(doc(db,'bookings',id),{status:'checkin'});
+      touchDragId=null;dragId=null;
       render();showToast(`已帶位入房：${room.label}`);
     });
   });
