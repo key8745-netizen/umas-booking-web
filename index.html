@@ -786,6 +786,7 @@ window.getRoomNightsInput=function(roomId){
   const v=parseInt(el?.value)||0;
   return v>0?v:(parseInt(document.getElementById('f-nights').value)||1);
 };
+window.setPlanType=function(plan){
   document.getElementById('f-plan').value=plan;
   const btnN=document.getElementById('plan-btn-normal');
   const btnH=document.getElementById('plan-btn-hiking');
