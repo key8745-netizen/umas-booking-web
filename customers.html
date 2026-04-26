@@ -432,21 +432,46 @@ window.openDetail=function(key){
     <div style="padding:6px 0 10px;">${seasonHtml}</div>
     ${types?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">常訂房型：${rooms||'—'}</div>`:''}
 
-    <div class="section-title">訂房歷史</div>
-    <div id="detail-orders">
-      ${sortedOrders.map(o=>{
+    <div class="section-title">活動時間軸</div>
+    <div id="detail-orders" style="position:relative;padding-left:24px;">
+      <div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border2);border-radius:2px;"></div>
+      ${sortedOrders.map((o,idx)=>{
         const rms=Array.isArray(o.roomtype)?o.roomtype.join('、'):(o.roomtype||'—');
-        return `<div class="history-item">
-          <div>
-            <div style="font-weight:500;">${rms} · ${o.pax||1}人</div>
-            <div class="history-date">${fmtDate(o.checkin)} → ${fmtDate(o.checkout||'')} · ${o.nights||1}晚</div>
-            ${o.note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.note}</div>`:''}
+        const statusColor={'new-case':'#888','pending':'#e8a020','confirmed':'#2d6a4f','checkin':'#3a6ab0','checkout':'#555','cancelled':'#b94040'}[o.status]||'#888';
+        const statusLabel={'new-case':'新案','pending':'暫保留','confirmed':'已接訂','checkin':'入住中','checkout':'已退房','cancelled':'取消'}[o.status]||o.status;
+        const nights=o.nights||1;
+        const isRecent=idx===0;
+        return `
+        <div style="position:relative;margin-bottom:16px;padding-left:16px;">
+          <div style="position:absolute;left:-17px;top:4px;width:12px;height:12px;border-radius:50%;background:${isRecent?statusColor:'#fff'};border:2px solid ${statusColor};box-sizing:border-box;"></div>
+          <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:10px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <div>
+                <span style="font-size:12px;font-weight:500;color:var(--text);">${o.checkin||'—'}</span>
+                <span style="font-size:11px;color:var(--text2);margin-left:6px;">${nights}晚</span>
+                ${o.checkout?`<span style="font-size:11px;color:var(--text3);margin-left:4px;">→ ${o.checkout}</span>`:''}
+              </div>
+              <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:${statusColor}22;color:${statusColor};font-weight:500;">${statusLabel}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.8;">
+              <span style="margin-right:12px;">🛏 ${rms}</span>
+              <span style="margin-right:12px;">👥 ${o.pax||'—'}人</span>
+              ${o.plan==='hiking'?'<span style="margin-right:12px;">🏔 登山</span>':''}
+              ${o.hotel?`<span style="margin-right:12px;">📍 ${o.hotel}</span>`:''}
+            </div>
+            ${o.quote?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border2);">
+              <span style="font-size:11px;color:var(--text2);">報價 NT$${Math.round(o.quote).toLocaleString()}</span>
+              ${o.due>0?`<span style="font-size:11px;color:#b94040;">尾款 NT$${Math.round(o.due).toLocaleString()}</span>`:'<span style="font-size:11px;color:#2d6a4f;">✓ 已結清</span>'}
+            </div>`:''}
+            ${o.note?`<div style="font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border2);">📝 ${o.note}</div>`:''}
+            <div style="margin-top:8px;">
+              <button class="btn" style="font-size:10px;padding:3px 10px;" onclick="window.location='index.html?edit='+encodeURIComponent('${o.firestoreId||''}')">編輯訂單</button>
+            </div>
           </div>
-          <div class="history-amount">NT$${(parseFloat(o.quote)||0).toLocaleString()}</div>
         </div>`;
       }).join('')}
+      ${sortedOrders.length===0?`<div style="color:var(--text3);font-size:12px;padding:12px 0;">尚無訂房記錄</div>`:''}
     </div>
-
     <div class="section-title">客戶備忘錄</div>
     <textarea class="memo-area" id="memo-note" placeholder="記錄這位客人的習性、偏好、注意事項...">${memo.note||''}</textarea>
     <div style="display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;">
