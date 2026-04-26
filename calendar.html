@@ -528,10 +528,11 @@ function getRoomNights(b, roomId){
   return b.nights||1;
 }
 
-// 取得某房間的實際退房日
 function getRoomCheckout(b, roomId){
   const nights=getRoomNights(b,roomId);
-  return addDays(b.checkin,nights);
+  const co=addDays(b.checkin,nights);
+  console.log(`[getRoomCheckout] room=${roomId} checkin=${b.checkin} nights=${nights} co=${co} b.nights=${b.nights} typeof=${typeof b.nights}`);
+  return co;
 }
 
 /* ── RENDER GANTT ── */
