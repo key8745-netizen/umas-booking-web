@@ -604,24 +604,22 @@ function renderGantt(){
       const rbs = roomBookings[room.id]||[];
       if(rbs.length>0) console.log(`[gantt] room ${room.id}:`, rbs.length, 'bookings');
       rbs.forEach(b=>{
-        if(!b.checkin) return;
+        try{
+        if(!b.checkin){console.log('[gantt] skip: no checkin');return;}
         const ciDate=parseDate(b.checkin);
-        if(!ciDate||isNaN(ciDate)) return;
-        // 用各房間各自的天數（roomNights 優先）
+        if(!ciDate||isNaN(ciDate)){console.log('[gantt] skip: invalid ciDate',b.checkin);return;}
         const thisRoomNights=getRoomNights(b,room.id);
         const rawCo=getRoomCheckout(b,room.id);
         const coDate=parseDate(rawCo);
-        if(!coDate||isNaN(coDate)) return;
+        if(!coDate||isNaN(coDate)){console.log('[gantt] skip: invalid coDate',rawCo);return;}
         const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
         const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
-        if(coDate<=monthStart||ciDate>=nextMonth) return;
+        if(coDate<=monthStart||ciDate>=nextMonth){console.log('[gantt] skip: out of range',b.checkin,rawCo,'month:',viewMonth+1);return;}
         const startDay=ciDate>=monthStart?ciDate.getDate():1;
         const endDay=coDate<=nextMonth?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
-        if(startDay>endDay) return;
-
-        // 找到這一 row 的 y 位置（相對 ganttWrap）
+        if(startDay>endDay){console.log('[gantt] skip: startDay>endDay',startDay,endDay);return;}
         const rowEl=ganttTable.querySelector(`tr[data-room="${room.id}"]`);
-        if(!rowEl) return;
+        if(!rowEl){console.log('[gantt] skip: no rowEl for',room.id);return;}
         const rowRect=rowEl.getBoundingClientRect();
         const top=rowRect.top - wrapRect.top;
         const rowH=rowRect.height;
@@ -765,6 +763,7 @@ function renderGantt(){
         });
 
         ganttWrap.appendChild(bar);
+        }catch(err){console.error('[gantt] bar error:',err);}
       });
     });
   }));
