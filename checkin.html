@@ -684,8 +684,13 @@ function makeCard(b,colId){
   const arrStr=prog.arrivedTime?`✅ 抵達 ${prog.arrivedTime}`:'';
 
   card.innerHTML=`
-    <div class="card-name">${b.name||'—'}</div>
-    <div class="card-info">${rooms} · ${b.pax||1}人<br>${fmtDate(b.checkin)}→${fmtDate(b.checkout||addDays(b.checkin,parseInt(b.nights)||1))} · ${b.nights||1}晚${etaStr?`<br>${etaStr}`:''}${arrStr?`<br>${arrStr}`:''}</div>
+    <div style="display:flex;align-items:flex-start;gap:6px;">
+      <div class="drag-handle" style="display:flex;flex-direction:column;justify-content:center;padding:4px 4px 4px 0;cursor:grab;color:var(--text3);font-size:16px;line-height:1;touch-action:none;flex-shrink:0;margin-top:2px;">⠿</div>
+      <div style="flex:1;min-width:0;">
+        <div class="card-name">${b.name||'—'}</div>
+        <div class="card-info">${rooms} · ${b.pax||1}人<br>${fmtDate(b.checkin)}→${fmtDate(b.checkout||addDays(b.checkin,parseInt(b.nights)||1))} · ${b.nights||1}晚${etaStr?`<br>${etaStr}`:''}${arrStr?`<br>${arrStr}`:''}</div>
+      </div>
+    </div>
     <div class="card-progress"><div class="card-progress-fill" style="width:${pct}%"></div></div>
     <div class="card-steps">
       ${showSteps.map((s,i)=>{
@@ -726,36 +731,65 @@ function bindDrag(){
 let touchClone=null,touchDragId=null;
 async function addTouchDrag(card){
   let timer=null;
+  let startX=0,startY=0,dragging=false;
+
+  function startDrag(e){
+    dragging=true;
+    touchDragId=card.dataset.fid;
+    const touch=e.touches[0];
+    const rect=card.getBoundingClientRect();
+    touchClone=card.cloneNode(true);
+    touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.9;z-index:9999;pointer-events:none;transform:scale(1.04);box-shadow:0 10px 28px rgba(0,0,0,0.2);transition:transform 0.1s;`;
+    document.body.appendChild(touchClone);
+    card.style.opacity='0.25';
+    document.querySelectorAll('.drop-hint').forEach(h=>h.classList.add('active'));
+    navigator.vibrate&&navigator.vibrate([15,10,15]);
+  }
+
+  // 把手區域：立即觸發（不需長按）
+  const handle=card.querySelector('.drag-handle');
+  if(handle){
+    handle.addEventListener('touchstart',e=>{
+      e.stopPropagation();
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      startDrag(e);
+    },{passive:true});
+  }
+
+  // 卡片其他區域：長按 150ms 觸發
   card.addEventListener('touchstart',e=>{
-    timer=setTimeout(()=>{
-      touchDragId=card.dataset.fid;
-      const rect=card.getBoundingClientRect();
-      touchClone=card.cloneNode(true);
-      touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:9999;pointer-events:none;transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,0.15);`;
-      document.body.appendChild(touchClone);
-      card.style.opacity='0.25';
-      document.querySelectorAll('.drop-hint').forEach(h=>h.classList.add('active'));
-      navigator.vibrate&&navigator.vibrate(30);
-    },200);
+    if(e.target.closest('.drag-handle,.btn,.card-step')) return;
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+    timer=setTimeout(()=>startDrag(e),150);
   },{passive:true});
+
   card.addEventListener('touchmove',e=>{
-    clearTimeout(timer);
-    if(!touchClone)return;
+    if(!dragging){
+      // 移動超過 8px 就取消長按計時器
+      const dx=e.touches[0].clientX-startX;
+      const dy=e.touches[0].clientY-startY;
+      if(Math.abs(dx)>8||Math.abs(dy)>8) clearTimeout(timer);
+      return;
+    }
     e.preventDefault();
     const t=e.touches[0];
     touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
-    touchClone.style.top=(t.clientY-50)+'px';
+    touchClone.style.top=(t.clientY-60)+'px';
     document.querySelectorAll('.col').forEach(c=>c.style.background='');
     const el=document.elementFromPoint(t.clientX,t.clientY);
     const col=el?.closest('.col');
-    if(col)col.style.background='#e8f0fe';
+    if(col) col.style.background='#e8f0fe';
   },{passive:false});
+
   card.addEventListener('touchend',async e=>{
     clearTimeout(timer);
     if(touchClone){touchClone.remove();touchClone=null;}
     card.style.opacity='';
     document.querySelectorAll('.drop-hint').forEach(h=>h.classList.remove('active'));
     document.querySelectorAll('.col').forEach(c=>c.style.background='');
+    dragging=false;
     if(!touchDragId)return;
     const t=e.changedTouches[0];
     const el=document.elementFromPoint(t.clientX,t.clientY);
@@ -784,10 +818,12 @@ async function addTouchDrag(card){
     }
     touchDragId=null;
   });
+
   card.addEventListener('touchcancel',()=>{
     clearTimeout(timer);
     if(touchClone){touchClone.remove();touchClone=null;}
     card.style.opacity='';
+    dragging=false;
     touchDragId=null;
     document.querySelectorAll('.drop-hint').forEach(h=>h.classList.remove('active'));
     document.querySelectorAll('.col').forEach(c=>c.style.background='');
