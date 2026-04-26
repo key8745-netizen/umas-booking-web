@@ -667,7 +667,7 @@ select:focus{border-color:#888;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initNotifications, generateDailyReminders } from "./notifications.js";
 
@@ -1285,7 +1285,12 @@ window.saveBooking=async function(){
     if(v>0&&v!==nights){roomNightsData[rid]=v;hasCustomRoomNights=true;}
   });
   const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,checkout,nights,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};
-  if(hasCustomRoomNights) data.roomNights=roomNightsData;
+  if(hasCustomRoomNights){
+    data.roomNights=roomNightsData;
+  } else {
+    // 切回統一天數，清除 Firebase 裡的 roomNights
+    data.roomNights=deleteField();
+  }
   const saveBtn=document.getElementById('saveBtn');
   if(saveBtn){saveBtn.textContent='儲存中...';saveBtn.disabled=true;}
   try{
