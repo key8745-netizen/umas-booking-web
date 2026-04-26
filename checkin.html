@@ -577,16 +577,17 @@ async function render(){
     colEl.addEventListener('dragover',e=>e.preventDefault());
     colEl.addEventListener('drop',async e=>{
       e.preventDefault();
-      if(!dragId)return;
-      const bk=bookings.find(x=>x.firestoreId===dragId);
+      const id=dragId||touchDragId;
+      if(!id)return;
+      const bk=bookings.find(x=>x.firestoreId===id);
       if(!bk)return;
-      const prog=getProgress(dragId);
-      // 更新流程欄位
+      const prog=getProgress(id);
       if(col.id==='arrived')prog.arrived=true;
       else if(col.id==='checked'){prog.arrived=true;prog.register=true;}
       else if(col.id==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
       delete prog.inRoom;
-      await saveProgress(dragId,prog);
+      await saveProgress(id,prog);
+      touchDragId=null;dragId=null;
       render();showToast('已移至「'+col.label+'」');
     });
   });
