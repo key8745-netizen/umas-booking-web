@@ -604,11 +604,12 @@ async function render(){
     // 2. 或 roomtype 包含這間 且 status==='checkin'（多間房一起入住）
     const roomBookings=todayBookings.filter(b=>{
       const prog=getProgress(b.firestoreId);
-      const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
-      if(prog.inRoom===room.id) return true;
-      if(b.status==='checkin'&&rooms.includes(room.id)&&prog.inRoom===undefined) return true;
-      if(b.status==='checkin'&&rooms.includes(room.id)&&!prog.inRoom) return true;
-      return false;
+      if(!prog.inRoom) return false;
+      const allRooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
+      // 單間房：inRoom === room.id
+      if(allRooms.length<=1) return prog.inRoom===room.id;
+      // 多間房：roomtype 包含這間 且 已設定 inRoom（代表已入住）
+      return allRooms.includes(room.id)&&!!prog.inRoom;
     });
     const isOccupied=roomBookings.length>0;
 
@@ -647,7 +648,18 @@ async function render(){
       const bk=bookings.find(x=>x.firestoreId===id);
       if(!bk)return;
       const prog=getProgress(id);
-      prog.inRoom=room.id;
+      // 取得訂單的所有房間
+      const allRooms=Array.isArray(bk.roomtype)?bk.roomtype:(bk.roomtype?[bk.roomtype]:[]);
+      // 如果訂單包含這間房，設為帶位到這間
+      // 如果有多間，每間各自設 inRoom（存在 prog 的 map 裡）
+      if(allRooms.length>1){
+        // 多間房：記錄哪些房間已帶位
+        if(!prog.roomMap) prog.roomMap={};
+        allRooms.forEach(r=>{ prog.roomMap[r]=room.id===r; });
+        prog.inRoom=room.id; // 主要入住房間
+      } else {
+        prog.inRoom=room.id;
+      }
       prog.key=true;
       prog.key_time=nowTime();
       await saveProgress(id,prog);
