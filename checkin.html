@@ -309,8 +309,25 @@ function isCheckinToday(b){return b.checkin===today;}
 function isCheckoutToday(b){const co=b.checkout||(b.checkin&&b.nights?addDays(b.checkin,parseInt(b.nights)||1):null);return co===today;}
 function isStaying(b){if(!b.checkin)return false;const co=b.checkout||(b.nights?addDays(b.checkin,parseInt(b.nights)||1):null);if(!co)return false;return b.checkin<today&&today<co;}
 
-function getProgress(fid){try{return JSON.parse(localStorage.getItem(`ci_${fid}`)||'{}');}catch{return {};}}
-function saveProgress(fid,p){localStorage.setItem(`ci_${fid}`,JSON.stringify(p));}
+// 控房進度 - Firebase（跨裝置同步）
+const _progCache={};
+
+function getProgress(fid){ return _progCache[fid]||{}; }
+
+async function loadAllProgress(fids){
+  await Promise.all(fids.map(async fid=>{
+    try{
+      const snap=await getDoc(doc(db,'checkin_progress',fid));
+      _progCache[fid]=snap.exists()?snap.data():{};
+    }catch(e){ _progCache[fid]={}; }
+  }));
+}
+
+async function saveProgress(fid,p){
+  _progCache[fid]={...p};
+  try{ await setDoc(doc(db,'checkin_progress',fid),p); }
+  catch(e){ console.warn('saveProgress:',e); }
+}
 
 // 取得訂單今日在控房看板的欄位
 function getCheckinCol(b,prog){
@@ -722,13 +739,17 @@ onAuthStateChanged(auth,user=>{
   document.getElementById('app').classList.add('ready');
   document.getElementById('userAvatar').src=user.photoURL||'';
   if(unsubscribe)unsubscribe();
-  unsubscribe=onSnapshot(query(collection(db,'bookings')),snapshot=>{
+  unsubscribe=onSnapshot(query(collection(db,'bookings')),async snapshot=>{
     bookings=snapshot.docs.map(d=>{
       const b={firestoreId:d.id,...d.data()};
       if(b.checkin) b.checkin=b.checkin.toString().replace(/\//g,'-').slice(0,10);
       if(b.checkout) b.checkout=b.checkout.toString().replace(/\//g,'-').slice(0,10);
       return b;
     });
+    // 載入所有今日相關訂單的進度
+    const todayFids=bookings.filter(b=>isToday(b)||isStaying(b)).map(b=>b.firestoreId);
+    const newFids=todayFids.filter(fid=>!_progCache[fid]);
+    if(newFids.length>0) await loadAllProgress(newFids);
     render();
   });
   setInterval(render,60000);
