@@ -113,6 +113,72 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 .nav-item:hover:not(.active){color:var(--text);}
 .user-avatar{width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);}
 @media(max-width:768px){.modal{width:100%!important;max-width:100%;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:92vh;overflow-y:auto;}.modal-bg{padding:0!important;align-items:flex-end!important;}}
+
+/* ── 手機版 App 風格優化 ── */
+@media(max-width:768px){
+
+  /* Header 更緊湊 */
+  header{height:44px;padding:0 14px;}
+  header h1{font-size:14px;}
+  #undoBtn,#redoBtn{font-size:13px;padding:6px 10px;min-width:36px;min-height:36px;}
+  .btn-sm,#logoutBtn{font-size:12px;padding:6px 10px;min-height:36px;}
+
+  /* 底部導覽列更大更好點 */
+  .bottom-nav{height:64px;padding-bottom:env(safe-area-inset-bottom);}
+  .bottom-nav-inner{height:64px;justify-content:space-around;padding:0;}
+  .bottom-nav-item{flex:1;min-width:0;padding:6px 0;gap:3px;}
+  .bottom-nav-icon{font-size:22px;}
+  .bottom-nav-item span:last-child{font-size:10px;}
+  .bottom-nav-item.active .bottom-nav-icon{transform:scale(1.15);}
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom));}
+
+  /* Modal 從底部滑出，高度更合理 */
+  .modal-bg{padding:0!important;align-items:flex-end!important;overflow-y:hidden!important;}
+  .modal{
+    width:100%!important;max-width:100%;
+    border-radius:20px 20px 0 0;
+    position:relative!important;
+    margin:0;
+    max-height:88vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:calc(env(safe-area-inset-bottom) + 16px);
+  }
+  .modal-bg.open{overflow-y:auto!important;}
+
+  /* 表單元素更好點擊 */
+  input,select,textarea{
+    font-size:16px!important; /* 防止 iOS 自動縮放 */
+    min-height:44px;
+    padding:10px 12px;
+    border-radius:10px;
+  }
+  textarea{min-height:80px;}
+  .form-row label{font-size:13px;margin-bottom:4px;}
+  .form-grid{gap:10px;}
+
+  /* 按鈕更大 */
+  .btn{min-height:44px;font-size:13px;padding:10px 16px;border-radius:10px;}
+  .btn.primary{min-height:48px;font-size:14px;}
+  .form-actions{gap:10px;padding-top:12px;}
+  .form-actions .btn{flex:1;}
+
+  /* 卡片更好點 */
+  .card{padding:12px;border-radius:12px;margin-bottom:8px;}
+  .card-name{font-size:14px;}
+
+  /* 房間選擇區塊 */
+  .room-select-row{padding:10px 0;}
+  #f-roomtype input[type=checkbox]{width:20px;height:20px;}
+  .rpax-row,.pax-row{padding:12px;}
+
+  /* 浮動新增按鈕更大 */
+  .mobile-fab{width:56px;height:56px;font-size:24px;bottom:80px;}
+
+  /* 看板卡片 */
+  .col{min-width:200px;}
+}
+
 </style>
 </head>
 <body>
@@ -140,7 +206,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 <div class="app" id="app">
   <header>
     <h1>兀瑪斯農莊 <span style="font-size:10px;font-weight:300;color:var(--text3);margin-left:6px;font-family:var(--sans);">Umas</span></h1>
-    <div class="nav-pill"><a href="checkin.html" class="nav-item">控房</a><a href="calendar.html" class="nav-item">日曆</a><a href="index.html" class="nav-item">主控板</a><a href="orders.html" class="nav-item">訂單</a><a href="customers.html" class="nav-item active">客戶</a><a href="analytics.html" class="nav-item">統計</a></div>
+    <div class="nav-pill"><a href="index.html" class="nav-item ".strip()>主控板</a><a href="calendar.html" class="nav-item ".strip()>日曆</a><a href="checkin.html" class="nav-item ".strip()>控房</a><a href="orders.html" class="nav-item ".strip()>訂單</a><a href="customers.html" class="nav-item active".strip()>客戶</a><a href="analytics.html" class="nav-item ".strip()>統計</a></div>
     <img class="user-avatar" id="userAvatar" src="">
     <button class="btn-sm" id="undoBtn" onclick="undoAction()" title="復原 Ctrl+Z" style="opacity:0.4;cursor:not-allowed;" disabled>↩</button>
     <button class="btn-sm" id="redoBtn" onclick="redoAction()" title="重做 Ctrl+Y" style="opacity:0.4;cursor:not-allowed;" disabled>↪</button>
@@ -659,6 +725,6 @@ document.addEventListener('keydown',e=>{
 
 </script>
 
-<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item" href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item" href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item" href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item" href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item active" href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item" href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
+<nav class="bottom-nav"><div class="bottom-nav-inner"><a class="bottom-nav-item ".strip() href="index.html"><span class="bottom-nav-icon">⊞</span><span>主控板</span></a><a class="bottom-nav-item ".strip() href="calendar.html"><span class="bottom-nav-icon">▦</span><span>日曆</span></a><a class="bottom-nav-item ".strip() href="checkin.html"><span class="bottom-nav-icon">⌂</span><span>控房</span></a><a class="bottom-nav-item ".strip() href="orders.html"><span class="bottom-nav-icon">📋</span><span>訂單</span></a><a class="bottom-nav-item active".strip() href="customers.html"><span class="bottom-nav-icon">♡</span><span>客戶</span></a><a class="bottom-nav-item ".strip() href="analytics.html"><span class="bottom-nav-icon">◎</span><span>統計</span></a></div></nav>
 </body>
 </html>
