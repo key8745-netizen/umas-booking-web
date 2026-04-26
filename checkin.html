@@ -340,7 +340,7 @@ function getCheckinCol(b,prog){
   return'today';
 }
 
-function render(){
+async function render(){
   today=getToday();
   const dow=['日','一','二','三','四','五','六'];
   const d=new Date(today+'T00:00');
@@ -549,7 +549,7 @@ function bindDrag(){
 
 // 觸控拖曳
 let touchClone=null,touchDragId=null;
-function addTouchDrag(card){
+async function addTouchDrag(card){
   let timer=null;
   card.addEventListener('touchstart',e=>{
     timer=setTimeout(()=>{
@@ -701,18 +701,18 @@ window.saveReg=async()=>{
   prog.register=true;prog.register_time=nowTime();
   await saveProgress(currentFid,prog);closeModal('regBg');render();showToast('✓ 入住登記完成');
 };
-window.savePay=()=>{
+window.savePay=async()=>{
   const prog=getProgress(currentFid);
   prog.payment=true;prog.payMethod=document.getElementById('pay-method').value;prog.payAmount=document.getElementById('pay-amount').value;prog.payment_time=nowTime();
   await saveProgress(currentFid,prog);closeModal('payBg');render();showToast('✓ 已記錄收款');
 };
-window.saveCo=()=>{
+window.saveCo=async()=>{
   if(!document.getElementById('co-key').checked||!document.getElementById('co-room').checked){alert('請確認鑰匙歸還和房間檢查');return;}
   const prog=getProgress(currentFid);
   prog.checkout=true;prog.checkout_time=nowTime();
   await saveProgress(currentFid,prog);closeModal('coBg');render();showToast('✓ 退房完成');
 };
-window.copyFare=()=>{
+window.copyFare=async()=>{
   const text=document.getElementById('fare-text').textContent;
   navigator.clipboard.writeText(text).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
   const prog=getProgress(window._fareFid);
