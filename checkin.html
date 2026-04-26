@@ -258,6 +258,22 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
       <div class="form-row"><label>出生年月日</label><input id="reg-birth" type="date"></div>
       <div class="form-row"><label>電話 *</label><input id="reg-phone"></div>
       <div class="form-row full"><label>居住地址</label><input id="reg-addr"></div>
+      <div class="form-row full">
+        <label>身分證照片 <span style="font-size:10px;color:var(--text3);">（選填，180天後自動刪除）</span></label>
+        <div id="id-photo-area" style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;" onclick="document.getElementById('id-photo-input').click()">
+          <div id="id-photo-preview" style="display:none;">
+            <img id="id-photo-img" style="max-width:100%;max-height:200px;border-radius:8px;margin-bottom:8px;">
+            <div style="font-size:11px;color:var(--text2);" id="id-photo-watermark-note"></div>
+          </div>
+          <div id="id-photo-placeholder">
+            <div style="font-size:24px;margin-bottom:6px;">📷</div>
+            <div style="font-size:12px;color:var(--text2);">點此拍照或選擇圖片</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px;">支援 JPG、PNG，系統自動加浮水印保護</div>
+          </div>
+          <input type="file" id="id-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="onIdPhotoSelected(this)">
+        </div>
+        <div id="id-photo-status" style="font-size:11px;color:var(--text2);margin-top:6px;display:none;"></div>
+      </div>
     </div>
     <div class="sec-label">同行</div>
     <div class="form-grid">
@@ -318,6 +334,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, updateDoc, doc, setDoc, getDoc, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig={apiKey:"AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",authDomain:"umas-booking-manager.firebaseapp.com",projectId:"umas-booking-manager",storageBucket:"umas-booking-manager.firebasestorage.app",messagingSenderId:"7381346891",appId:"1:7381346891:web:2affb529e6b8614f6b7bce"};
 const ALLOWED=["key8745@gmail.com","princessangel45@gmail.com"];
@@ -325,6 +342,98 @@ const fbApp=initializeApp(firebaseConfig);
 const db=getFirestore(fbApp);
 const auth=getAuth(fbApp);
 const provider=new GoogleAuthProvider();
+const storage=getStorage(fbApp);
+
+// ── 身分證照片處理 ──
+let _idPhotoBlob=null;
+
+window.onIdPhotoSelected=function(input){
+  const file=input.files[0];
+  if(!file) return;
+  if(file.size>10*1024*1024){alert('圖片過大，請選擇 10MB 以下的圖片');return;}
+
+  const reader=new FileReader();
+  reader.onload=e=>{
+    // 在 canvas 加浮水印
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=img.width;
+      canvas.height=img.height;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0);
+
+      // 浮水印文字
+      const text='兀瑪斯農莊 僅供入住登記使用';
+      const fontSize=Math.max(20,Math.min(img.width/20,60));
+      ctx.font=`bold ${fontSize}px Arial`;
+      ctx.globalAlpha=0.35;
+      ctx.fillStyle='#ffffff';
+      ctx.strokeStyle='#000000';
+      ctx.lineWidth=2;
+
+      // 斜角重複浮水印
+      ctx.save();
+      ctx.translate(img.width/2,img.height/2);
+      ctx.rotate(-Math.PI/6);
+      for(let y=-img.height;y<img.height;y+=fontSize*3){
+        for(let x=-img.width;x<img.width;x+=img.width/2){
+          ctx.strokeText(text,x,y);
+          ctx.fillText(text,x,y);
+        }
+      }
+      ctx.restore();
+      ctx.globalAlpha=1;
+
+      // 預覽
+      const dataUrl=canvas.toDataURL('image/jpeg',0.85);
+      document.getElementById('id-photo-img').src=dataUrl;
+      document.getElementById('id-photo-preview').style.display='block';
+      document.getElementById('id-photo-placeholder').style.display='none';
+      document.getElementById('id-photo-watermark-note').textContent='已加入浮水印保護';
+
+      // 轉成 blob 備用
+      canvas.toBlob(blob=>{ _idPhotoBlob=blob; },'image/jpeg',0.85);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+async function uploadIdPhoto(fid, name){
+  if(!_idPhotoBlob) return null;
+  try{
+    const statusEl=document.getElementById('id-photo-status');
+    if(statusEl){statusEl.style.display='block';statusEl.textContent='上傳中...';}
+
+    // 路徑：id_photos/{訂單ID}/{時間戳}.jpg
+    const path=`id_photos/${fid}/${Date.now()}.jpg`;
+    const fileRef=sRef(storage,path);
+
+    // 設定 metadata（含 180 天後刪除的資訊）
+    const deleteAfter=new Date();
+    deleteAfter.setDate(deleteAfter.getDate()+180);
+    const metadata={
+      contentType:'image/jpeg',
+      customMetadata:{
+        bookingId:fid,
+        guestName:name,
+        deleteAfter:deleteAfter.toISOString(),
+        uploadedBy:auth.currentUser?.email||''
+      }
+    };
+
+    await uploadBytes(fileRef,_idPhotoBlob,metadata);
+    const url=await getDownloadURL(fileRef);
+    if(statusEl){statusEl.textContent='✓ 照片已上傳';}
+    return {url,path};
+  }catch(e){
+    console.error('上傳失敗:',e);
+    const statusEl=document.getElementById('id-photo-status');
+    if(statusEl){statusEl.textContent='⚠ 上傳失敗，登記仍可繼續';}
+    return null;
+  }
+}
 
 // 流程欄位
 const FLOW_COLS=[
@@ -701,6 +810,12 @@ window.handleStep=async function(e,fid,stepId){
     const b=bookings.find(x=>x.firestoreId===fid);
     if(b){document.getElementById('reg-name').value=b.name||'';document.getElementById('reg-phone').value=b.phone||'';document.getElementById('reg-pax').value=b.pax||1;}
     document.getElementById('reg-agree').checked=false;
+    // 重置照片狀態
+    _idPhotoBlob=null;
+    document.getElementById('id-photo-preview').style.display='none';
+    document.getElementById('id-photo-placeholder').style.display='block';
+    document.getElementById('id-photo-status').style.display='none';
+    document.getElementById('id-photo-input').value='';
     document.getElementById('regBg').classList.add('open');
   } else if(stepId==='payment'){
     const b=bookings.find(x=>x.firestoreId===fid);
@@ -757,15 +872,37 @@ window.saveReg=async()=>{
   const idno=document.getElementById('reg-idno').value.trim();
   const phone=document.getElementById('reg-phone').value.trim();
   if(!name||!idno||!phone){alert('請填寫姓名、身分證和電話');return;}
-  const data={name,idno,phone,birthday:document.getElementById('reg-birth').value,address:document.getElementById('reg-addr').value,pax:document.getElementById('reg-pax').value,plate:document.getElementById('reg-plate').value,note:document.getElementById('reg-note').value,checkinDate:today,checkinTime:nowTime(),bookingId:currentFid};
+
+  // 先上傳照片（如果有）
+  const photoResult=await uploadIdPhoto(currentFid,name);
+
+  const data={
+    name,idno,phone,
+    birthday:document.getElementById('reg-birth').value,
+    address:document.getElementById('reg-addr').value,
+    pax:document.getElementById('reg-pax').value,
+    plate:document.getElementById('reg-plate').value,
+    note:document.getElementById('reg-note').value,
+    checkinDate:today,
+    checkinTime:nowTime(),
+    bookingId:currentFid,
+    ...(photoResult?{idPhotoUrl:photoResult.url,idPhotoPath:photoResult.path}:{})
+  };
   await setDoc(doc(db,'checkin_records',currentFid),data);
+
+  // 同步更新客戶備忘錄
   const key=phone||name;
   const memoRef=doc(db,'customer_memos',key);
   const snap=await getDoc(memoRef);
-  await setDoc(memoRef,{...(snap.exists()?snap.data():{}),idno,address:data.address,phone,name});
+  const memoUpdate={...(snap.exists()?snap.data():{}),idno,address:data.address,phone,name};
+  if(photoResult) memoUpdate.idPhotoUrl=photoResult.url;
+  await setDoc(memoRef,memoUpdate);
+
   const prog=getProgress(currentFid);
   prog.register=true;prog.register_time=nowTime();
-  await saveProgress(currentFid,prog);closeModal('regBg');render();showToast('✓ 入住登記完成');
+  await saveProgress(currentFid,prog);
+  closeModal('regBg');render();
+  showToast(photoResult?'✓ 入住登記完成（含身分證照片）':'✓ 入住登記完成');
 };
 window.savePay=async()=>{
   const prog=getProgress(currentFid);
