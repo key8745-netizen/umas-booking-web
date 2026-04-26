@@ -955,6 +955,16 @@ onAuthStateChanged(auth,user=>{
   document.getElementById('app').classList.add('ready');
   document.getElementById('userAvatar').src=user.photoURL||'';
   if(unsubscribe)unsubscribe();
+  // 即時監聽 checkin_progress collection
+  let unsubscribeProgress=null;
+  function subscribeProgress(){
+    if(unsubscribeProgress) unsubscribeProgress();
+    unsubscribeProgress=onSnapshot(query(collection(db,'checkin_progress')),snapshot=>{
+      snapshot.docs.forEach(d=>{ _progCache[d.id]={...d.data()}; });
+      render();
+    });
+  }
+
   unsubscribe=onSnapshot(query(collection(db,'bookings')),async snapshot=>{
     bookings=snapshot.docs.map(d=>{
       const b={firestoreId:d.id,...d.data()};
@@ -962,24 +972,15 @@ onAuthStateChanged(auth,user=>{
       if(b.checkout) b.checkout=b.checkout.toString().replace(/\//g,'-').slice(0,10);
       return b;
     });
-    // 載入所有今日相關訂單的進度
-    const todayFids=bookings.filter(b=>isCheckinToday(b)||isStaying(b)).map(b=>b.firestoreId);
-    const newFids=todayFids.filter(fid=>!_progCache[fid]);
-    if(newFids.length>0) await loadAllProgress(newFids);
     render();
   });
+
+  subscribeProgress();
   setInterval(render,60000);
 
-  // 回到頁面時強制重新載入所有進度（解決離開後狀態不更新問題）
-  document.addEventListener('visibilitychange',async()=>{
-    if(document.hidden) return;
-    const todayFids=bookings.filter(b=>isCheckinToday(b)||isStaying(b)).map(b=>b.firestoreId);
-    if(todayFids.length===0) return;
-    // 清除 cache，強制重新讀取
-    todayFids.forEach(fid=>{ delete _progCache[fid]; });
-    await loadAllProgress(todayFids);
-    render();
-    showToast('已更新最新狀態');
+  // 回到頁面時強制 render（確保畫面最新）
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden) render();
   });
 });
 
