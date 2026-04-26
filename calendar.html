@@ -341,7 +341,16 @@ function parseDate(s){
   const norm = s.toString().replace(/\//g,'-').slice(0,10);
   return new Date(norm+'T00:00');
 }
-function addDays(s,n){ const d=parseDate(s); if(!d||isNaN(d)) return s; d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function addDays(s,n){ 
+  const d=parseDate(s); 
+  if(!d||isNaN(d)) return s; 
+  d.setDate(d.getDate()+n); 
+  // 不用 toISOString（會有時區問題），改用本地時間格式
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 
 function normDate(s){ return s?s.toString().replace(/\//g,'-').slice(0,10):''; }
 
@@ -589,38 +598,32 @@ function renderGantt(){
   // 等 DOM 渲染完再計算格子寬度
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     const firstCell = ganttTable.querySelector('td.gantt-cell');
-    console.log('[gantt] firstCell:', firstCell);
-    if(!firstCell){ console.warn('[gantt] gantt-cell not found'); return; }
+    if(!firstCell){ return; }
     const cellRect = firstCell.getBoundingClientRect();
-    console.log('[gantt] cellRect:', cellRect);
     const cellW = cellRect.width;
-    if(!cellW){ console.warn('[gantt] cellW is 0'); return; }
+    if(!cellW){ return; }
     const labelCell = ganttTable.querySelector('.gantt-row-label');
     const labelW = labelCell ? labelCell.getBoundingClientRect().width : 100;
     const wrapRect = ganttWrap.getBoundingClientRect();
-    console.log('[gantt] cellW:', cellW, 'labelW:', labelW, 'wrapRect:', wrapRect);
-    console.log('[gantt] bookings to render:', bookings.length);
-    console.log('[gantt] viewYear:', viewYear, 'viewMonth:', viewMonth);
     ROOMS.forEach(room=>{
       const rbs = roomBookings[room.id]||[];
       if(rbs.length>0) console.log(`[gantt] room ${room.id}:`, rbs.length, 'bookings');
       rbs.forEach(b=>{
-        try{
-        if(!b.checkin){console.log('[gantt] skip: no checkin');return;}
+        if(!b.checkin){return;}
         const ciDate=parseDate(b.checkin);
-        if(!ciDate||isNaN(ciDate)){console.log('[gantt] skip: invalid ciDate',b.checkin);return;}
+        if(!ciDate||isNaN(ciDate)){return;}
         const thisRoomNights=getRoomNights(b,room.id);
         const rawCo=getRoomCheckout(b,room.id);
         const coDate=parseDate(rawCo);
-        if(!coDate||isNaN(coDate)){console.log('[gantt] skip: invalid coDate',rawCo);return;}
+        if(!coDate||isNaN(coDate)){return;}
         const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
         const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
-        if(coDate<=monthStart||ciDate>=nextMonth){console.log('[gantt] skip: out of range',b.checkin,rawCo,'month:',viewMonth+1);return;}
+        if(coDate<=monthStart||ciDate>=nextMonth){return;}
         const startDay=ciDate>=monthStart?ciDate.getDate():1;
         const endDay=coDate<=nextMonth?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
-        if(startDay>endDay){console.log('[gantt] skip: startDay>endDay',startDay,endDay);return;}
+        if(startDay>endDay){return;}
         const rowEl=ganttTable.querySelector(`tr[data-room="${room.id}"]`);
-        if(!rowEl){console.log('[gantt] skip: no rowEl for',room.id);return;}
+        if(!rowEl){return;}
         const rowRect=rowEl.getBoundingClientRect();
         const top=rowRect.top - wrapRect.top;
         const rowH=rowRect.height;
@@ -764,7 +767,7 @@ function renderGantt(){
         });
 
         ganttWrap.appendChild(bar);
-        }catch(err){console.error('[gantt] bar error:',err);}
+        }catch(err){}
       });
     });
   }));
