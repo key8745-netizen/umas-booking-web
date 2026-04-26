@@ -271,6 +271,24 @@ select:focus{border-color:#888;}
 
     <!-- 房間選擇 -->
     <div class="section-label">選擇房間</div>
+
+    <!-- 天數模式切換 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:0.5px solid var(--border2);">
+      <span style="font-size:11px;color:var(--text2);">天數模式</span>
+      <div style="display:flex;gap:4px;margin-left:4px;">
+        <button type="button" id="nights-mode-same" onclick="setNightsMode('same')"
+          style="padding:4px 12px;border-radius:6px;border:0.5px solid var(--border);background:#1a1a1a;color:#fff;font-size:11px;cursor:pointer;">
+          統一天數
+        </button>
+        <button type="button" id="nights-mode-custom" onclick="setNightsMode('custom')"
+          style="padding:4px 12px;border-radius:6px;border:0.5px solid var(--border);background:#fff;color:var(--text2);font-size:11px;cursor:pointer;">
+          各房間自訂
+        </button>
+      </div>
+      <span style="font-size:11px;color:var(--text3);margin-left:auto;" id="nights-mode-hint">各房間與入住天數相同</span>
+    </div>
+    <input type="hidden" id="f-nights-mode" value="same">
+
     <div id="f-roomtype" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
 
       <div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:3px 0;border-bottom:0.5px solid var(--border2);">A 棟一樓 — 套房（按間）</div>
@@ -281,10 +299,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);" id="rtag-A-101">平日 $3,000</span>
         </div>
         <div id="rpax-A-101" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-101" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-101" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-101"></span>
           </div>
         </div>
@@ -296,10 +315,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);" id="rtag-A-102">平日 $3,000</span>
         </div>
         <div id="rpax-A-102" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-102" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-102" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-102"></span>
           </div>
         </div>
@@ -311,10 +331,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);" id="rtag-A-103">平日 $3,000</span>
         </div>
         <div id="rpax-A-103" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-103" min="1" max="4" value="4" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-103" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-103"></span>
           </div>
         </div>
@@ -329,10 +350,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-A-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-201" min="1" max="6" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-201" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-201"></span>
           </div>
         </div>
@@ -345,10 +367,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-A-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-202" min="1" max="3" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-202" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-202"></span>
           </div>
         </div>
@@ -361,10 +384,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-A-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-A-203" min="1" max="7" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-A-203" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-A-203"></span>
           </div>
         </div>
@@ -379,10 +403,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-B-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-B-201" min="1" max="4" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-B-201" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-201"></span>
           </div>
         </div>
@@ -395,10 +420,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-B-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-B-202" min="1" max="4" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-B-202" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-202"></span>
           </div>
         </div>
@@ -411,10 +437,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-B-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-B-203" min="1" max="6" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-B-203" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-203"></span>
           </div>
         </div>
@@ -427,10 +454,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 $528/人</span>
         </div>
         <div id="rpax-B-204" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-B-204" min="1" max="3" value="2" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-B-204" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-B-204"></span>
           </div>
         </div>
@@ -445,10 +473,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
         </div>
         <div id="rpax-C-201" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-C-201" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-C-201" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-201"></span>
           </div>
         </div>
@@ -461,10 +490,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
         </div>
         <div id="rpax-C-202" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-C-202" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-C-202" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-202"></span>
           </div>
         </div>
@@ -477,10 +507,11 @@ select:focus{border-color:#888;}
           <span style="font-size:10px;color:var(--text3);">平日 1人$1,800起</span>
         </div>
         <div id="rpax-C-203" style="display:none;margin-top:6px;padding:9px 12px;background:var(--bg);border-radius:7px;border:0.5px solid var(--border2);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:var(--text2);">住宿人數</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--text2);">人數</span>
             <input type="number" id="rpax-val-C-203" min="1" max="3" value="3" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()">
             <span style="font-size:11px;color:var(--text2);">人</span>
+            <span class="rnights-wrap" style="display:none;align-items:center;gap:4px;margin-left:4px;"><span style="font-size:11px;color:var(--text2);">天數</span><input type="number" id="rnights-val-C-203" min="1" value="" placeholder="同入住" style="width:60px;text-align:center;font-size:12px;" onchange="autoCalc()"><span style="font-size:11px;color:var(--text2);">晚</span></span>
             <span style="font-size:12px;font-weight:500;color:var(--blue);margin-left:auto;" id="rprice-C-203"></span>
           </div>
         </div>
@@ -728,7 +759,33 @@ window.applyCustomPrice=function(){
   showToast('✓ 已套用自訂金額');
 };
 
-window.setPlanType=function(plan){
+window.setNightsMode=function(mode){
+  document.getElementById('f-nights-mode').value=mode;
+  const isSame=mode==='same';
+  const btnSame=document.getElementById('nights-mode-same');
+  const btnCustom=document.getElementById('nights-mode-custom');
+  const hint=document.getElementById('nights-mode-hint');
+  if(btnSame){btnSame.style.background=isSame?'#1a1a1a':'#fff';btnSame.style.color=isSame?'#fff':'var(--text2)';}
+  if(btnCustom){btnCustom.style.background=isSame?'#fff':'#1a1a1a';btnCustom.style.color=isSame?'var(--text2)':'#fff';}
+  if(hint) hint.textContent=isSame?'各房間與入住天數相同':'可為每間房設定不同天數';
+  // 顯示或隱藏各房間天數欄位
+  const ALL_ROOMS=['A-101','A-102','A-103','A-201','A-202','A-203','B-201','B-202','B-203','B-204','C-201','C-202','C-203'];
+  ALL_ROOMS.forEach(rid=>{
+    const el=document.getElementById('rnights-val-'+rid);
+    const wrap=el?.closest('.rnights-wrap');
+    if(wrap) wrap.style.display=isSame?'none':'flex';
+    if(isSame&&el) el.value=''; // 清空天數，讓它用全域天數
+  });
+  autoCalc();
+};
+
+window.getRoomNightsInput=function(roomId){
+  const mode=document.getElementById('f-nights-mode')?.value||'same';
+  if(mode==='same') return parseInt(document.getElementById('f-nights').value)||1;
+  const el=document.getElementById('rnights-val-'+roomId);
+  const v=parseInt(el?.value)||0;
+  return v>0?v:(parseInt(document.getElementById('f-nights').value)||1);
+};
   document.getElementById('f-plan').value=plan;
   const btnN=document.getElementById('plan-btn-normal');
   const btnH=document.getElementById('plan-btn-hiking');
@@ -752,6 +809,13 @@ window.onRoomToggle=function(roomId, cb){
 // 取得各房間人數
 function getRoomPax(roomId){
   return parseInt(document.getElementById('rpax-val-'+roomId)?.value)||1;
+}
+
+// 取得各房間天數（若未填則用全域天數）
+function getRoomNightsInput(roomId){
+  const el=document.getElementById('rnights-val-'+roomId);
+  const v=parseInt(el?.value)||0;
+  return v>0?v:(parseInt(document.getElementById('f-nights').value)||1);
 }
 window.calcDue=()=>{const q=parseFloat(document.getElementById('f-quote').value)||0,d=parseFloat(document.getElementById('f-deposit').value)||0;document.getElementById('f-due').value=Math.round(q-d)||'';};
 
@@ -938,30 +1002,28 @@ window.autoCalc=async function(){
 
   try{
     let total=0, lines=[];
-    for(let n=0;n<nights;n++){
-      const d=new Date(checkin+'T00:00');
-      d.setDate(d.getDate()+n);
-      const ds=d.toISOString().slice(0,10);
-      let dt='weekday';
-      try{ dt=dtOvr==='auto'?await getDateType(ds):dtOvr; }catch(e){ dt='weekday'; }
-      const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
-      const discount=nightDiscount(n);
-      const discLabel=discount<1?` (${Math.round(discount*10)}折)`:'';
-
-      let nightTotal=0, rLines=[];
-      for(const rid of rooms){
-        const pax=getRoomPax(rid);
+    for(const rid of rooms){
+      const pax=getRoomPax(rid);
+      const roomNights=getRoomNightsInput(rid);
+      let roomTotal=0, roomLines=[];
+      for(let n=0;n<roomNights;n++){
+        const d=new Date(checkin+'T00:00');
+        d.setDate(d.getDate()+n);
+        const ds=d.toISOString().slice(0,10);
+        let dt='weekday';
+        try{ dt=dtOvr==='auto'?await getDateType(ds):dtOvr; }catch(e){ dt='weekday'; }
+        const dtLabel=dt==='special'?'定價':dt==='holiday'?'假日':'平日';
+        const discount=nightDiscount(n);
+        const discLabel=discount<1?` (${Math.round(discount*10)}折)`:'';
         const{price,note}=calcRoomNightPrice(rid,dt,pax,plan);
         const discPrice=Math.round(price*discount);
-        nightTotal+=discPrice;
-        rLines.push(`<span style="color:#555;">${rid}</span>：${note}${discLabel}`);
-        const rpriceEl=document.getElementById('rprice-'+rid);
-        if(rpriceEl&&n===0) rpriceEl.textContent='NT$'+discPrice.toLocaleString();
+        roomTotal+=discPrice;
+        roomLines.push(`${dtLabel}${discLabel}`);
       }
-      total+=nightTotal;
-      const dl=d.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
-      const nightLabel=`第${n+1}晚${discLabel}`;
-      lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#aaa;margin-right:6px;">${dl}（${dtLabel}）${nightLabel}</span>${rLines.join('、')}</span><span style="font-weight:600;color:#333;margin-left:8px;">NT$${nightTotal.toLocaleString()}</span></div>`);
+      total+=roomTotal;
+      const rpriceEl=document.getElementById('rprice-'+rid);
+      if(rpriceEl) rpriceEl.textContent='NT$'+roomTotal.toLocaleString();
+      lines.push(`<div style="margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;font-size:12px;"><span style="color:#555;">${rid}</span><span style="color:#888;">${roomNights}晚</span><span style="font-weight:600;">NT$${roomTotal.toLocaleString()}</span></div>`);
     }
     const totalPax=rooms.reduce((s,rid)=>s+getRoomPax(rid),0);
     const paxEl=document.getElementById('f-pax');
@@ -973,11 +1035,13 @@ window.autoCalc=async function(){
     if(depositEl&&!depositEl.value) depositEl.value=deposit;
 
     const planLabel=plan==='hiking'?'登山方案（不含早餐）':'一般住宿（含早餐）';
+    const hasCustomNights=rooms.some(rid=>getRoomNightsInput(rid)!==nights);
+    const subtitleStr=hasCustomNights?'各房間天數不同':''+nights+'晚';
     bdEl.innerHTML=`
-      <div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}</div>
+      <div style="font-size:10px;font-weight:600;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">試算明細 — ${planLabel}・${subtitleStr}</div>
       ${lines.join('')}
       <div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:11px;color:#888;">${nights}晚 × ${rooms.length}間・合計${totalPax}人</span>
+        <span style="font-size:11px;color:#888;">合計 ${rooms.length}間 ${totalPax}人</span>
         <span style="font-size:14px;font-weight:700;color:#378ADD;">NT$${total.toLocaleString()}</span>
       </div>
       <div style="border-top:1px solid #e0e0e0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:center;">
@@ -1148,6 +1212,9 @@ setF('f-pax',pre?.pax||1);setF('f-guesttype',pre?.guesttype);setF('f-meal',pre?.
 document.getElementById('f-plan').value=pre?.plan||'normal';
 document.getElementById('f-daytype').value='auto';
 populateStatus(pre?.status||'new-case');
+// 恢復天數模式（如果有 roomNights 就切到自訂）
+const hasRoomNights=pre?.roomNights&&Object.keys(pre.roomNights).length>0;
+setNightsMode(hasRoomNights?'custom':'same');
 // 恢復方案按鈕
 setPlanType(pre?.plan||'normal');
 // 恢復房型勾選和人數
@@ -1156,10 +1223,46 @@ document.querySelectorAll('#f-roomtype input[type=checkbox]').forEach(cb=>{
   cb.checked=selected.includes(cb.value);
   const paxEl=document.getElementById('rpax-'+cb.value);
   if(paxEl) paxEl.style.display=cb.checked?'block':'none';
+  // 恢復各房間天數
+  const nightsEl=document.getElementById('rnights-val-'+cb.value);
+  if(nightsEl&&pre?.roomNights&&pre.roomNights[cb.value]){
+    nightsEl.value=pre.roomNights[cb.value];
+  } else if(nightsEl){
+    nightsEl.value='';
+  }
 });
 document.getElementById('price-breakdown').style.display='none';
 document.getElementById('modalBg').classList.add('open');
-if(pre?.checkin) autoCalc();
+
+// 如果有 roomNights（各房間不同天數），自動切換到自訂金額模式
+if(pre?.roomNights&&Object.keys(pre.roomNights).length>0){
+  document.getElementById('f-daytype').value='custom';
+  document.getElementById('custom-price-wrap').style.display='block';
+  // 等 DOM 更新後填入各房間金額
+  setTimeout(()=>{
+    renderCustomPriceList();
+    // 計算各房間單晚均價填入
+    const rn=pre.roomNights;
+    const allRooms=selected;
+    const totalQuote=pre.quote||0;
+    const nights=pre.nights||1;
+    // 如果有 quote，按天數比例分配到各房間
+    allRooms.forEach(rid=>{
+      const roomNights=rn[rid]||nights;
+      const el=document.getElementById('custprice-'+rid);
+      if(el){
+        // 用原報價按比例估算（簡單除法）
+        const roomRatio=roomNights/allRooms.reduce((s,r)=>s+(rn[r]||nights),0);
+        const roomPrice=Math.round(totalQuote*roomRatio/roomNights/100)*100;
+        el.value=roomPrice||'';
+      }
+    });
+    document.getElementById('custom-nights-label').textContent=nights;
+    updateCustomTotal();
+  },100);
+} else if(pre?.checkin){
+  autoCalc();
+}
 };
 window.closeModal=function(){document.getElementById('modalBg').classList.remove('open');};
 
@@ -1173,7 +1276,15 @@ window.saveBooking=async function(){
   const nights=parseInt(document.getElementById('f-nights').value)||1;
   const coEl=document.getElementById('f-checkout');
   const checkout=(coEl&&coEl.value)?coEl.value:dateAddDays(checkin,nights);
+  // 收集各房間天數（若有填且與全域天數不同才存）
+  const roomNightsData={};
+  let hasCustomRoomNights=false;
+  roomtype.forEach(rid=>{
+    const v=parseInt(document.getElementById('rnights-val-'+rid)?.value)||0;
+    if(v>0&&v!==nights){roomNightsData[rid]=v;hasCustomRoomNights=true;}
+  });
   const data={name,phone:document.getElementById('f-phone').value,line:document.getElementById('f-line').value,fb:document.getElementById('f-fb').value,hotel:document.getElementById('f-hotel').value,platform:document.getElementById('f-platform').value,confirm:document.getElementById('f-confirm').value,checkin,checkout,nights,pax:parseInt(document.getElementById('f-pax').value)||1,guesttype:document.getElementById('f-guesttype').value,roomtype,plan:document.getElementById('f-plan').value,meal:document.getElementById('f-meal').value,mealpax:parseInt(document.getElementById('f-mealpax').value)||0,special:document.getElementById('f-special').value,extra:document.getElementById('f-extra').value,activity:document.getElementById('f-activity').value,actpax:parseInt(document.getElementById('f-actpax').value)||0,quote:q,deposit:dep,due:Math.round(q-dep),note:document.getElementById('f-note').value,status:document.getElementById('f-status').value};
+  if(hasCustomRoomNights) data.roomNights=roomNightsData;
   const saveBtn=document.getElementById('saveBtn');
   if(saveBtn){saveBtn.textContent='儲存中...';saveBtn.disabled=true;}
   try{
