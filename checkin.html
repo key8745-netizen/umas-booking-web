@@ -411,7 +411,7 @@ function render(){
       else if(col.id==='checked'){prog.arrived=true;prog.register=true;}
       else if(col.id==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
       delete prog.inRoom;
-      saveProgress(dragId,prog);
+      await saveProgress(dragId,prog);
       render();showToast('已移至「'+col.label+'」');
     });
   });
@@ -469,7 +469,7 @@ function render(){
       prog.inRoom=room.id;
       prog.key=true;
       prog.key_time=nowTime();
-      saveProgress(dragId,prog);
+      await saveProgress(dragId,prog);
       // 更新 Firebase 狀態為入住中
       await updateDoc(doc(db,'bookings',dragId),{status:'checkin'});
       render();showToast(`已帶位入房：${room.label}`);
@@ -593,7 +593,7 @@ function addTouchDrag(card){
       const isRoomCol=ROOM_COLS.some(r=>r.id===colId);
       if(isRoomCol){
         prog.inRoom=colId;prog.key=true;prog.key_time=nowTime();
-        saveProgress(touchDragId,prog);
+        await saveProgress(touchDragId,prog);
         await updateDoc(doc(db,'bookings',touchDragId),{status:'checkin'});
         showToast(`已帶位入房：${colId}`);
       } else {
@@ -601,7 +601,7 @@ function addTouchDrag(card){
         else if(colId==='checked'){prog.arrived=true;prog.register=true;}
         else if(colId==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
         delete prog.inRoom;
-        saveProgress(touchDragId,prog);
+        await saveProgress(touchDragId,prog);
         const colObj=FLOW_COLS.find(c=>c.id===colId);
         if(colObj)showToast('已移至「'+colObj.label+'」');
       }
@@ -619,7 +619,7 @@ function addTouchDrag(card){
   });
 }
 
-window.handleStep=function(e,fid,stepId){
+window.handleStep=async function(e,fid,stepId){
   e.stopPropagation();
   currentFid=fid;
   const prog=getProgress(fid);
@@ -669,21 +669,21 @@ Line：@umas
     document.getElementById('fareBg').classList.add('open');
   } else {
     prog[stepId]=true;prog[stepId+'_time']=nowTime();
-    saveProgress(fid,prog);
+    await saveProgress(fid,prog);
     render();
     showToast('✓ '+STEPS.find(s=>s.id===stepId)?.label);
   }
 };
 
-window.saveEta=()=>{
+window.saveEta=async()=>{
   const prog=getProgress(currentFid);
   prog.eta=true;prog.etaTime=document.getElementById('eta-time').value;prog.eta_time=nowTime();
-  saveProgress(currentFid,prog);closeModal('etaBg');render();showToast('✓ 預計抵達時間已記錄');
+  await saveProgress(currentFid,prog);closeModal('etaBg');render();showToast('✓ 預計抵達時間已記錄');
 };
-window.saveArrival=()=>{
+window.saveArrival=async()=>{
   const prog=getProgress(currentFid);
   prog.arrived=true;prog.arrivedTime=document.getElementById('arr-time').value;prog.arrived_time=nowTime();
-  saveProgress(currentFid,prog);closeModal('arrBg');render();showToast('✓ 已確認抵達');
+  await saveProgress(currentFid,prog);closeModal('arrBg');render();showToast('✓ 已確認抵達');
 };
 window.saveReg=async()=>{
   if(!document.getElementById('reg-agree').checked){alert('請確認客人已閱讀住宿須知');return;}
@@ -699,25 +699,25 @@ window.saveReg=async()=>{
   await setDoc(memoRef,{...(snap.exists()?snap.data():{}),idno,address:data.address,phone,name});
   const prog=getProgress(currentFid);
   prog.register=true;prog.register_time=nowTime();
-  saveProgress(currentFid,prog);closeModal('regBg');render();showToast('✓ 入住登記完成');
+  await saveProgress(currentFid,prog);closeModal('regBg');render();showToast('✓ 入住登記完成');
 };
 window.savePay=()=>{
   const prog=getProgress(currentFid);
   prog.payment=true;prog.payMethod=document.getElementById('pay-method').value;prog.payAmount=document.getElementById('pay-amount').value;prog.payment_time=nowTime();
-  saveProgress(currentFid,prog);closeModal('payBg');render();showToast('✓ 已記錄收款');
+  await saveProgress(currentFid,prog);closeModal('payBg');render();showToast('✓ 已記錄收款');
 };
 window.saveCo=()=>{
   if(!document.getElementById('co-key').checked||!document.getElementById('co-room').checked){alert('請確認鑰匙歸還和房間檢查');return;}
   const prog=getProgress(currentFid);
   prog.checkout=true;prog.checkout_time=nowTime();
-  saveProgress(currentFid,prog);closeModal('coBg');render();showToast('✓ 退房完成');
+  await saveProgress(currentFid,prog);closeModal('coBg');render();showToast('✓ 退房完成');
 };
 window.copyFare=()=>{
   const text=document.getElementById('fare-text').textContent;
   navigator.clipboard.writeText(text).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
   const prog=getProgress(window._fareFid);
   prog.farewell=true;prog.farewell_time=nowTime();
-  saveProgress(window._fareFid,prog);closeModal('fareBg');render();showToast('✓ 已複製歡送訊息');
+  await saveProgress(window._fareFid,prog);closeModal('fareBg');render();showToast('✓ 已複製歡送訊息');
 };
 
 // 看板水平拖動
@@ -747,7 +747,7 @@ onAuthStateChanged(auth,user=>{
       return b;
     });
     // 載入所有今日相關訂單的進度
-    const todayFids=bookings.filter(b=>isToday(b)||isStaying(b)).map(b=>b.firestoreId);
+    const todayFids=bookings.filter(b=>isCheckinToday(b)||isStaying(b)).map(b=>b.firestoreId);
     const newFids=todayFids.filter(fid=>!_progCache[fid]);
     if(newFids.length>0) await loadAllProgress(newFids);
     render();
