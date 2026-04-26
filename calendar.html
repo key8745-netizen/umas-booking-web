@@ -742,6 +742,7 @@ function renderGantt(){
               // 重算報價：每間房各自的天數 × 單價
               const newQuote=calcRoomNightsQuote(b, roomNights);
               const newDue=Math.max(0,newQuote-(b.deposit||0));
+              console.log('[adjust] roomNights:', roomNights, 'newQuote:', newQuote, 'b.pax:', b.pax, 'b.checkin:', b.checkin);
 
               pushUndo({type:'update',col:'bookings',fid,
                 before:{roomNights:b.roomNights||null,nights:b.nights,checkout:rawCo,quote:b.quote,due:b.due},
