@@ -337,18 +337,24 @@ function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function dateStr(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function parseDate(s){ 
   if(!s) return null;
-  // 支援 2026-07-09 和 2026/07/09 兩種格式
-  const norm = s.toString().replace(/\//g,'-').slice(0,10);
-  return new Date(norm+'T00:00');
+  const norm=s.toString().replace(/\//g,'-').slice(0,10);
+  const parts=norm.split('-');
+  if(parts.length!==3) return null;
+  // 用 Date.UTC 避免時區問題
+  const d=new Date(Date.UTC(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2])));
+  return isNaN(d)?null:d;
 }
+
 function addDays(s,n){ 
-  const d=parseDate(s); 
-  if(!d||isNaN(d)) return s; 
-  d.setDate(d.getDate()+n); 
-  // 不用 toISOString（會有時區問題），改用本地時間格式
-  const y=d.getFullYear();
-  const m=String(d.getMonth()+1).padStart(2,'0');
-  const day=String(d.getDate()).padStart(2,'0');
+  if(!s) return s;
+  const norm=s.toString().replace(/\//g,'-').slice(0,10);
+  const parts=norm.split('-');
+  if(parts.length!==3) return s;
+  const d=new Date(Date.UTC(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2])));
+  d.setUTCDate(d.getUTCDate()+n);
+  const y=d.getUTCFullYear();
+  const m=String(d.getUTCMonth()+1).padStart(2,'0');
+  const day=String(d.getUTCDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
 
@@ -613,8 +619,8 @@ function renderGantt(){
         const rawCo=getRoomCheckout(b,room.id);
         const coDate=parseDate(rawCo);
         if(!coDate||isNaN(coDate)){return;}
-        const monthStart=new Date(dateStr(viewYear,viewMonth,1)+'T00:00');
-        const nextMonth=viewMonth===11?new Date(viewYear+1,0,1):new Date(viewYear,viewMonth+1,1);
+        const monthStart=new Date(Date.UTC(viewYear,viewMonth,1));
+        const nextMonth=new Date(Date.UTC(viewMonth===11?viewYear+1:viewYear,viewMonth===11?0:viewMonth+1,1));
         if(coDate<=monthStart||ciDate>=nextMonth){return;}
         const startDay=ciDate>=monthStart?ciDate.getDate():1;
         const endDay=coDate<=nextMonth?coDate.getDate()-1:daysInMonth(viewYear,viewMonth);
