@@ -256,7 +256,7 @@ header h1{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing
 
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, doc, updateDoc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig={apiKey:"AIzaSyAedMeGyuaKI7QJVe3vDAHazyp6SX1ouFw",authDomain:"umas-booking-manager.firebaseapp.com",projectId:"umas-booking-manager",storageBucket:"umas-booking-manager.firebasestorage.app",messagingSenderId:"7381346891",appId:"1:7381346891:web:2affb529e6b8614f6b7bce"};
@@ -397,6 +397,7 @@ window.openDetail=function(key){
         <button class="btn" style="background:#f2f6ee;color:#4a6741;border-color:#c8d4b8;" onclick="newOrderFromCustomer('${key}')">＋ 新增訂房</button>
         <button class="btn green" onclick="analyzeCustomer('${key}')">🤖 AI 分析</button>
         <button class="btn" onclick="closeDetail()">關閉</button>
+        <button class="btn" style="color:var(--red);border-color:#f0c0c0;margin-left:auto;" onclick="deleteCustomer('${key}','${c.name||''}')">🗑 刪除客戶</button>
       </div>
     </div>
     <div class="detail-grid">
@@ -519,6 +520,21 @@ window.newOrderFromCustomer=function(key){
     name:c.name, phone:c.phone, line:c.line||'', fb:c.fb||''
   }));
   window.location.href='index.html?newOrder=1';
+};
+
+window.deleteCustomer=async function(key,name){
+  if(!confirm(`確定刪除「${name}」的客戶資料？\n注意：此操作只刪除備忘錄資料，不會刪除訂單記錄。`)) return;
+  try{
+    const _before=customerMemos[key]?{...customerMemos[key]}:null;
+    if(_before) pushUndo({type:'delete',col:'customer_memos',fid:key,data:_before});
+    await deleteDoc(doc(db,'customer_memos',key));
+    delete customerMemos[key];
+    closeDetail();
+    renderList();
+    showToast('✓ 已刪除客戶資料');
+  }catch(e){
+    showToast('刪除失敗：'+e.message);
+  }
 };
 
 window.openNewCustomerModal=function(){
