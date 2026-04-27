@@ -507,12 +507,11 @@ async function saveProgress(fid,p){
 // 取得訂單今日在控房看板的欄位
 function getCheckinCol(b,prog){
   const rooms=Array.isArray(b.roomtype)?b.roomtype:(b.roomtype?[b.roomtype]:[]);
-  // 已在某個房間
   for(const r of ROOM_COLS){if(rooms.includes(r.id)&&prog.inRoom===r.id)return r.id;}
-  if(prog.paid)return'paid';
-  if(prog.register||prog.rules)return'checked';
-  if(prog.arrived)return'arrived';
-  return'today';
+  if(prog.payment||prog.paid) return 'paid';
+  if(prog.register||prog.rules) return 'checked';
+  if(prog.arrived) return 'arrived';
+  return 'today';
 }
 
 async function render(){
@@ -582,9 +581,17 @@ async function render(){
       const bk=bookings.find(x=>x.firestoreId===id);
       if(!bk)return;
       const prog=getProgress(id);
-      if(col.id==='arrived')prog.arrived=true;
-      else if(col.id==='checked'){prog.arrived=true;prog.register=true;}
-      else if(col.id==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
+      if(col.id==='today'){
+        delete prog.arrived;delete prog.register;delete prog.payment;
+      } else if(col.id==='arrived'){
+        prog.arrived=true;
+        delete prog.register;delete prog.payment;
+      } else if(col.id==='checked'){
+        prog.arrived=true;prog.register=true;
+        delete prog.payment;
+      } else if(col.id==='paid'){
+        prog.arrived=true;prog.register=true;prog.payment=true;
+      }
       delete prog.inRoom;
       await saveProgress(id,prog);
       touchDragId=null;dragId=null;
@@ -808,10 +815,17 @@ async function addTouchDrag(card){
         await updateDoc(doc(db,'bookings',touchDragId),{status:'checkin'});
         showToast(`已帶位入房：${colId}`);
       } else {
-        if(colId==='arrived') prog.arrived=true;
-        else if(colId==='checked'){prog.arrived=true;prog.register=true;}
-        else if(colId==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
-        else if(colId==='today'){delete prog.arrived;delete prog.register;delete prog.payment;}
+        if(colId==='today'){
+          delete prog.arrived;delete prog.register;delete prog.payment;
+        } else if(colId==='arrived'){
+          prog.arrived=true;
+          delete prog.register;delete prog.payment;
+        } else if(colId==='checked'){
+          prog.arrived=true;prog.register=true;
+          delete prog.payment;
+        } else if(colId==='paid'){
+          prog.arrived=true;prog.register=true;prog.payment=true;
+        }
         delete prog.inRoom;
         await saveProgress(touchDragId,prog);
         const colObj=FLOW_COLS.find(c=>c.id===colId);
