@@ -783,14 +783,17 @@ async function addTouchDrag(card){
 
   card.addEventListener('touchend',async e=>{
     clearTimeout(longPressTimer);
+    // 先移除 clone，再偵測底下的元素
     if(touchClone){touchClone.remove();touchClone=null;}
     card.style.opacity='';
     document.querySelectorAll('.drop-hint').forEach(h=>h.classList.remove('active'));
     document.querySelectorAll('.col').forEach(c=>c.style.background='');
     if(!touchDragId){touchDragId=null;return;}
     const t=e.changedTouches[0];
+    // clone 已移除，現在 elementFromPoint 才能正確抓到底下的 col
     const el=document.elementFromPoint(t.clientX,t.clientY);
     const col=el?.closest('.col');
+    console.log('[touchend] target el:', el?.id, el?.className, 'col:', col?.id);
     if(col){
       const colId=col.id.replace('col-','');
       const bk=bookings.find(x=>x.firestoreId===touchDragId);
@@ -798,6 +801,8 @@ async function addTouchDrag(card){
       const prog=getProgress(touchDragId);
       const isRoomCol=ROOM_COLS.some(r=>r.id===colId);
       if(isRoomCol){
+        const allRooms=Array.isArray(bk.roomtype)?bk.roomtype:(bk.roomtype?[bk.roomtype]:[]);
+        if(allRooms.length>1){if(!prog.roomMap)prog.roomMap={};allRooms.forEach(r=>{prog.roomMap[r]=r===colId;});}
         prog.inRoom=colId;prog.key=true;prog.key_time=nowTime();
         await saveProgress(touchDragId,prog);
         await updateDoc(doc(db,'bookings',touchDragId),{status:'checkin'});
@@ -806,12 +811,15 @@ async function addTouchDrag(card){
         if(colId==='arrived') prog.arrived=true;
         else if(colId==='checked'){prog.arrived=true;prog.register=true;}
         else if(colId==='paid'){prog.arrived=true;prog.register=true;prog.payment=true;}
+        else if(colId==='today'){delete prog.arrived;delete prog.register;delete prog.payment;}
         delete prog.inRoom;
         await saveProgress(touchDragId,prog);
         const colObj=FLOW_COLS.find(c=>c.id===colId);
         if(colObj) showToast('已移至「'+colObj.label+'」');
       }
       render();
+    } else {
+      console.log('[touchend] 沒有找到目標 col，不更新');
     }
     touchDragId=null;
   });
