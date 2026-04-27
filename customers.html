@@ -523,15 +523,25 @@ window.newOrderFromCustomer=function(key){
 };
 
 window.deleteCustomer=async function(key,name){
-  if(!confirm(`確定刪除「${name}」的客戶資料？\n注意：此操作只刪除備忘錄資料，不會刪除訂單記錄。`)) return;
+  const c=buildCustomers().find(x=>x.key===key);
+  const orderCount=c?.orders?.length||0;
+  const msg=orderCount>0
+    ?`確定刪除「${name}」的所有資料？\n\n這將刪除：\n・客戶備忘錄\n・${orderCount} 筆訂單記錄\n\n此操作無法復原！`
+    :`確定刪除「${name}」的客戶資料？`;
+  if(!confirm(msg)) return;
   try{
-    const _before=customerMemos[key]?{...customerMemos[key]}:null;
-    if(_before) pushUndo({type:'delete',col:'customer_memos',fid:key,data:_before});
-    await deleteDoc(doc(db,'customer_memos',key));
-    delete customerMemos[key];
+    // 刪除備忘錄
+    if(customerMemos[key]){
+      await deleteDoc(doc(db,'customer_memos',key));
+      delete customerMemos[key];
+    }
+    // 刪除所有相關訂單
+    if(c?.orders?.length>0){
+      await Promise.all(c.orders.map(o=>deleteDoc(doc(db,'bookings',o.firestoreId))));
+    }
     closeDetail();
     renderList();
-    showToast('✓ 已刪除客戶資料');
+    showToast('✓ 已刪除客戶及所有訂單');
   }catch(e){
     showToast('刪除失敗：'+e.message);
   }
