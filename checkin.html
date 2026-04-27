@@ -677,6 +677,48 @@ async function render(){
     });
   });
 
+  // ── 已完成退房欄 ──
+  const checkedOutBookings=todayBookings.filter(b=>{
+    const prog=getProgress(b.firestoreId);
+    return prog.checkout_done||b.status==='checkout';
+  });
+
+  const outSep=document.createElement('div');
+  outSep.style.cssText='width:1px;background:var(--border);margin:0 4px;align-self:stretch;flex-shrink:0;';
+  board.appendChild(outSep);
+
+  const outCol=document.createElement('div');
+  outCol.className='col';
+  outCol.id='col-checkout-done';
+  outCol.style.cssText='min-width:140px;background:#f9f9f9;';
+  outCol.innerHTML=`
+    <div class="col-head">
+      <div class="col-dot" style="background:#888;"></div>
+      <span class="col-name">已完成退房</span>
+      <span class="col-count">${checkedOutBookings.length}</span>
+    </div>
+    <div class="drop-hint" id="hint-checkout-done">拖到這裡</div>
+    <div class="cards-area" id="area-checkout-done"></div>`;
+  board.appendChild(outCol);
+
+  const outArea=document.getElementById('area-checkout-done');
+  checkedOutBookings.forEach(b=>outArea.appendChild(makeCard(b,'checkout-done')));
+
+  // 拖入已完成退房
+  outCol.addEventListener('dragover',e=>e.preventDefault());
+  outCol.addEventListener('drop',async e=>{
+    e.preventDefault();
+    const id=dragId||touchDragId;
+    if(!id)return;
+    const prog=getProgress(id);
+    prog.checkout_done=true;prog.checkout_time=nowTime();
+    delete prog.inRoom;
+    await saveProgress(id,prog);
+    await updateDoc(doc(db,'bookings',id),{status:'checkout'});
+    touchDragId=null;dragId=null;
+    render();showToast('✓ 已完成退房');
+  });
+
   // 綁定拖曳
   setTimeout(()=>bindDrag(),50);
 }
@@ -807,7 +849,15 @@ async function addTouchDrag(card){
       if(!bk){touchDragId=null;return;}
       const prog=getProgress(touchDragId);
       const isRoomCol=ROOM_COLS.some(r=>r.id===colId);
-      if(isRoomCol){
+      const isCheckoutCol=colId==='checkout-done';
+
+      if(isCheckoutCol){
+        prog.checkout_done=true;prog.checkout_time=nowTime();
+        delete prog.inRoom;
+        await saveProgress(touchDragId,prog);
+        await updateDoc(doc(db,'bookings',touchDragId),{status:'checkout'});
+        showToast('✓ 已完成退房');
+      } else if(isRoomCol){
         const allRooms=Array.isArray(bk.roomtype)?bk.roomtype:(bk.roomtype?[bk.roomtype]:[]);
         if(allRooms.length>1){if(!prog.roomMap)prog.roomMap={};allRooms.forEach(r=>{prog.roomMap[r]=r===colId;});}
         prog.inRoom=colId;prog.key=true;prog.key_time=nowTime();
