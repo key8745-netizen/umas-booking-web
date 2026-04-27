@@ -714,9 +714,9 @@ async function render(){
     prog.checkout_done=true;prog.checkout_time=nowTime();
     delete prog.inRoom;
     await saveProgress(id,prog);
-    await updateDoc(doc(db,'bookings',id),{status:'checkout'});
+    // 不改狀態，只記錄退房完成，等確認歸檔才改
     touchDragId=null;dragId=null;
-    render();showToast('✓ 已完成退房');
+    render();showToast('✓ 已完成退房，請至主控板確認歸檔');
   });
 
   // 綁定拖曳
@@ -855,8 +855,7 @@ async function addTouchDrag(card){
         prog.checkout_done=true;prog.checkout_time=nowTime();
         delete prog.inRoom;
         await saveProgress(touchDragId,prog);
-        await updateDoc(doc(db,'bookings',touchDragId),{status:'checkout'});
-        showToast('✓ 已完成退房');
+        showToast('✓ 已完成退房，請至主控板確認歸檔');
       } else if(isRoomCol){
         const allRooms=Array.isArray(bk.roomtype)?bk.roomtype:(bk.roomtype?[bk.roomtype]:[]);
         if(allRooms.length>1){if(!prog.roomMap)prog.roomMap={};allRooms.forEach(r=>{prog.roomMap[r]=r===colId;});}

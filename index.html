@@ -733,7 +733,7 @@ select:focus{border-color:#888;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, setDoc, getDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initNotifications, generateDailyReminders } from "./notifications.js";
 
@@ -1137,7 +1137,7 @@ function matchSearch(b){if(!searchQ)return true;return(b.name+b.hotel+b.confirm+
 
 function cardHTML(b){const col=COLS.find(c=>c.id===b.status),ts=TAG[b.status]||'',cout=coDate(b.checkin,b.nights),skl=sortKeyLabel(b);
 const rooms=Array.isArray(b.roomtype)?b.roomtype.join('、'):(b.roomtype||'');
-return`<div class="card" id="card-${b.firestoreId}" draggable="true"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="tag" style="${ts}">${col?col.label:b.status}</span><span class="sort-key">${skl}</span></div><div class="card-name">${b.name||''}${b.pax>1?' ('+b.pax+'位)':''}</div><div class="card-hotel">${b.hotel||''}${rooms?' · '+rooms:''}</div>${b.checkin?`<div class="card-row"><span class="card-row-label">日期</span>${fmtDate(b.checkin)}${cout?' → '+cout:''} · ${b.nights||1}晚</div>`:''}${b.guesttype?`<div class="card-row"><span class="card-row-label">類型</span>${b.guesttype}</div>`:''}${b.platform?`<div class="card-row"><span class="card-row-label">平台</span>${b.platform}</div>`:''}${b.confirm?`<div class="card-row"><span class="card-row-label">編號</span>${b.confirm}</div>`:''}${b.meal?`<div class="card-row"><span class="card-row-label">用餐</span>${b.meal}${b.mealpax?' · '+b.mealpax+'人':''}</div>`:''}${b.activity?`<div class="card-row"><span class="card-row-label">活動</span>${b.activity}${b.actpax?' · '+b.actpax+'人':''}</div>`:''}${b.special||b.extra?`<div class="card-row"><span class="card-row-label">備註</span>${[b.special,b.extra].filter(Boolean).join('、')}</div>`:''}${b.quote?`<div class="card-money"><div class="money-item"><div class="money-label">報價</div><div class="money-val total">NT$${Number(b.quote).toLocaleString()}</div></div><div class="money-item"><div class="money-label">已付</div><div class="money-val paid">NT$${Number(b.deposit||0).toLocaleString()}</div></div><div class="money-item"><div class="money-label">尾款</div><div class="money-val due">NT$${Number(b.due||0).toLocaleString()}</div></div></div>`:''}<div class="card-actions"><button class="icon-btn" onclick="editBooking('${b.firestoreId}')">✏ 編輯</button><button class="icon-btn del" onclick="deleteBooking('${b.firestoreId}','${(b.name||'').replace(/'/g,'')}')">✕ 刪除</button></div></div>`;}
+return`<div class="card" id="card-${b.firestoreId}" draggable="true"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="tag" style="${ts}">${col?col.label:b.status}</span><span class="sort-key">${skl}</span></div><div class="card-name">${b.name||''}${b.pax>1?' ('+b.pax+'位)':''}</div><div class="card-hotel">${b.hotel||''}${rooms?' · '+rooms:''}</div>${b.checkin?`<div class="card-row"><span class="card-row-label">日期</span>${fmtDate(b.checkin)}${cout?' → '+cout:''} · ${b.nights||1}晚</div>`:''}${b.guesttype?`<div class="card-row"><span class="card-row-label">類型</span>${b.guesttype}</div>`:''}${b.platform?`<div class="card-row"><span class="card-row-label">平台</span>${b.platform}</div>`:''}${b.confirm?`<div class="card-row"><span class="card-row-label">編號</span>${b.confirm}</div>`:''}${b.meal?`<div class="card-row"><span class="card-row-label">用餐</span>${b.meal}${b.mealpax?' · '+b.mealpax+'人':''}</div>`:''}${b.activity?`<div class="card-row"><span class="card-row-label">活動</span>${b.activity}${b.actpax?' · '+b.actpax+'人':''}</div>`:''}${b.special||b.extra?`<div class="card-row"><span class="card-row-label">備註</span>${[b.special,b.extra].filter(Boolean).join('、')}</div>`:''}${b.quote?`<div class="card-money"><div class="money-item"><div class="money-label">報價</div><div class="money-val total">NT$${Number(b.quote).toLocaleString()}</div></div><div class="money-item"><div class="money-label">已付</div><div class="money-val paid">NT$${Number(b.deposit||0).toLocaleString()}</div></div><div class="money-item"><div class="money-label">尾款</div><div class="money-val due">NT$${Number(b.due||0).toLocaleString()}</div></div></div>`:''}<div class="card-actions"><button class="icon-btn" onclick="editBooking('${b.firestoreId}')">✏ 編輯</button>${b.status==='closed'?`<button class="icon-btn" style="background:#f0faf4;color:#2d6a4f;border-color:#b5d4b8;" onclick="archiveBooking('${b.firestoreId}')">📦 歸檔</button>`:''}<button class="icon-btn del" onclick="deleteBooking('${b.firestoreId}','${(b.name||'').replace(/'/g,'')}')">✕ 刪除</button></div></div>`;}
 
 
 let touchClone=null, touchDragId=null, touchMoved=false;
@@ -1378,6 +1378,40 @@ window.saveBooking=async function(){
     closeModal();
   }catch(e){alert('儲存失敗：'+e.message);}
   if(saveBtn){saveBtn.textContent='儲存';saveBtn.disabled=false;}
+};
+
+window.archiveBooking=async function(fid){
+  const b=bookings.find(x=>x.firestoreId===fid);
+  if(!b) return;
+  if(!confirm(`確定將「${b.name}」的訂單歸檔？\n歸檔後卡片將從看板移除，資料保留在客戶資料和訂單頁面。`)) return;
+
+  // 同步到客戶資料（以電話為 key）
+  const key=b.phone||b.name;
+  if(key){
+    try{
+      const memoRef=doc(db,'customer_memos',key);
+      const snap=await getDoc(memoRef);
+      const existing=snap.exists()?snap.data():{};
+      // 加入此次訂單到歷史記錄
+      const history=existing.orderHistory||[];
+      const alreadyIn=history.some(h=>h.firestoreId===fid);
+      if(!alreadyIn){
+        history.push({
+          firestoreId:fid,
+          checkin:b.checkin,checkout:b.checkout,
+          nights:b.nights,pax:b.pax,
+          roomtype:b.roomtype,quote:b.quote,
+          plan:b.plan,archivedAt:new Date().toISOString()
+        });
+      }
+      await setDoc(memoRef,{...existing,name:b.name,phone:b.phone||'',orderHistory:history},{merge:true});
+    }catch(e){ console.warn('archive memo error:',e); }
+  }
+
+  // 更新訂單狀態為 archived（從看板消失但訂單頁面還在）
+  pushUndo({type:'update',fid,before:{status:b.status},after:{status:'archived'}});
+  await updateDoc(doc(db,'bookings',fid),{status:'archived',archivedAt:new Date().toISOString()});
+  showToast('✓ 已歸檔，資料已同步至客戶資料');
 };
 
 window.editBooking=function(fid){const b=bookings.find(x=>x.firestoreId===fid);if(b)openModal(b);};
